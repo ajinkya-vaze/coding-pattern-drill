@@ -1,0 +1,218 @@
+[
+  {
+    "id": "number-of-islands", "title": "Number of Islands", "slug": "number-of-islands", "difficulty": "Medium",
+    "companies": ["Amazon"],
+    "statement": "Given a 2D grid of '1' (land) and '0' (water), count the islands. An island is land connected horizontally or vertically and surrounded by water.",
+    "pattern": "graph-traversal", "alternates": ["union-find"],
+    "nearMiss": [
+      { "p": "dp-2d", "why": "A grid suggests a DP table, but connectivity isn't a recurrence over row and column prefixes." },
+      { "p": "matrix", "why": "Matrix-manipulation problems transform indices (rotate, spiral); this one explores connected regions." },
+      { "p": "multi-source-bfs", "why": "There's no simultaneous spread to time; you flood one island at a time." }
+    ],
+    "trigger": { "answer": "connected horizontally or vertically", "wrong": ["a 2D grid", "surrounded by water", "count the islands"], "why": "Connected regions in a grid ⇒ flood fill (DFS/BFS) from each unvisited land cell; each flood is one island." },
+    "ds": { "answer": "The char[][] grid itself (mark visited by sinking to '0') or boolean[][] visited; recursion or ArrayDeque<int[]>", "wrong": ["int[][] dp of island counts per prefix", "PriorityQueue<int[]> by row", "HashMap<Integer, Integer> row → count"], "why": "Marking visited in place keeps extra space to the recursion/queue." },
+    "invariant": { "answer": "Every land cell reachable from an already-counted cell has been marked, so each new unvisited '1' starts a new island.", "wrong": ["Each row contains at most one island.", "Islands are counted when water is found.", "A cell is marked only after all four neighbours are checked."], "why": "Each flood fill consumes exactly one connected component." },
+    "time": { "answer": "O(rows × cols)", "wrong": ["O((rows × cols)²)", "O(rows + cols)", "O(rows × cols × log)"], "why": "Each cell visited a constant number of times." },
+    "space": { "answer": "O(rows × cols) worst case for the recursion stack or queue", "wrong": ["O(1) always", "O(rows + cols) always", "O((rows × cols)²)"], "why": "A grid full of land makes the DFS stack (or BFS queue) large." },
+    "whyNot": { "wrong": ["DP can't be used on grids.", "DP would count water instead of land.", "DP needs the grid to be square."] },
+    "approach": "For each cell == '1': count++, then DFS/BFS sinking all connected '1's to '0'."
+  },
+  {
+    "id": "word-ladder", "title": "Word Ladder", "slug": "word-ladder", "difficulty": "Hard",
+    "companies": ["Apple"],
+    "statement": "Given beginWord, endWord and a word list, return the number of words in the shortest transformation sequence from beginWord to endWord, changing one letter at a time, where every intermediate word must be in the list. Return 0 if impossible.",
+    "pattern": "graph-traversal", "alternates": [],
+    "nearMiss": [
+      { "p": "backtracking", "why": "DFS over all sequences explores exponentially many paths and doesn't find the shortest first." },
+      { "p": "dp-2d", "why": "Edit distance compares two fixed strings; here you need a path through a dictionary." },
+      { "p": "shortest-path", "why": "Dijkstra is for weighted edges; every step costs 1, so plain BFS is shortest." }
+    ],
+    "trigger": { "answer": "shortest transformation sequence", "wrong": ["changing one letter at a time", "Return 0 if impossible", "every intermediate word must be in the list"], "why": "Shortest number of equal-cost steps between states ⇒ BFS, generating neighbours by changing each letter." },
+    "ds": { "answer": "ArrayDeque<String> queue + HashSet<String> word set (remove words when visited)", "wrong": ["PriorityQueue<String> by distance", "int[][] edit-distance table", "TreeSet<String> sorted dictionary"], "why": "The set gives O(1) membership and doubles as the visited marker." },
+    "invariant": { "answer": "Words are dequeued in order of their distance from beginWord, and each is enqueued at most once.", "wrong": ["The queue is sorted alphabetically.", "Every word in the list is enqueued at the start.", "A word may be enqueued once per neighbour."], "why": "So the first time endWord is reached, its level is the shortest length." },
+    "time": { "answer": "O(N · L · 26), N words of length L (×L more for building strings)", "wrong": ["O(N²)", "O(26ᴸ)", "O(N!)"], "why": "Each word generates L · 26 candidate neighbours." },
+    "space": { "answer": "O(N · L)", "wrong": ["O(1)", "O(26ᴸ)", "O(N²)"], "why": "The set and the queue hold words." },
+    "whyNot": { "wrong": ["Backtracking can't change letters.", "Backtracking needs the word list sorted.", "Backtracking only works on words of length 3."] },
+    "approach": "BFS from beginWord, level by level. For each word, try every position × 'a'..'z'; if the candidate is in the set, remove it and enqueue. Return level + 1 when endWord appears."
+  },
+  {
+    "id": "clone-graph", "title": "Clone Graph", "slug": "clone-graph", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a reference to a node in a connected undirected graph (possibly with cycles), return a deep copy of the graph. Each node has a value and a list of neighbours.",
+    "pattern": "graph-traversal", "alternates": [],
+    "nearMiss": [
+      { "p": "tree-dfs", "why": "Tree recursion has no cycles; without a visited map, cloning a cyclic graph recurses forever." },
+      { "p": "linked-list", "why": "Copy List with Random Pointer is similar, but each node here has many neighbours, not one next." },
+      { "p": "union-find", "why": "You need to copy structure, not merge components." }
+    ],
+    "trigger": { "answer": "possibly with cycles", "wrong": ["a deep copy of the graph", "a list of neighbours", "connected undirected graph"], "why": "Traversal of a cyclic graph ⇒ DFS/BFS with a visited map; here the map is original → clone." },
+    "ds": { "answer": "HashMap<Node, Node> original → clone, plus recursion or ArrayDeque<Node>", "wrong": ["HashSet<Integer> of visited values", "ArrayList<Node> of clones in input order", "int[][] adjacency matrix"], "why": "The map is both the visited set and the lookup for already-made clones." },
+    "invariant": { "answer": "A node's clone is put in the map BEFORE its neighbours are visited, so cycles find the existing clone.", "wrong": ["Clones are created after all neighbours are cloned.", "Each node is cloned once per incoming edge.", "The map holds only leaf nodes."], "why": "Registering first is what stops infinite recursion." },
+    "time": { "answer": "O(V + E)", "wrong": ["O(V²)", "O(V · E)", "O(E log V)"], "why": "Each node and edge once." },
+    "space": { "answer": "O(V)", "wrong": ["O(1)", "O(E²)", "O(V²)"], "why": "The map and recursion/queue." },
+    "whyNot": { "wrong": ["Tree DFS can't copy values.", "Tree DFS only works on binary trees with sorted keys.", "Tree DFS would copy each node twice."] },
+    "approach": "clone(node): if in map return it; copy = new Node(val); map.put(node, copy); for each neighbour add clone(neighbour); return copy."
+  },
+  {
+    "id": "rotting-oranges", "title": "Rotting Oranges", "slug": "rotting-oranges", "difficulty": "Medium",
+    "companies": ["Amazon"],
+    "statement": "In a grid, 0 is empty, 1 is a fresh orange and 2 is a rotten orange. Every minute, fresh oranges next to a rotten one become rotten. Return the minimum minutes until no fresh orange remains, or −1 if impossible.",
+    "pattern": "multi-source-bfs", "alternates": [],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "One BFS per rotten orange repeats work; all rotten oranges spread at the same time." },
+      { "p": "dp-2d", "why": "Spread happens in all directions at once; a row/column DP sweep doesn't model simultaneous time steps." },
+      { "p": "union-find", "why": "Connectivity says whether oranges are reachable, not how many minutes it takes." }
+    ],
+    "trigger": { "answer": "Every minute, fresh oranges next to a rotten one become rotten", "wrong": ["0 is empty", "or −1 if impossible", "Return the minimum minutes"], "why": "Simultaneous spread from many sources, measured in time steps ⇒ multi-source BFS: all rotten cells start in the queue." },
+    "ds": { "answer": "ArrayDeque<int[]> seeded with every rotten cell + a fresh counter", "wrong": ["PriorityQueue<int[]> by distance", "boolean[][] visited with one BFS per source", "int[][] dp filled row by row"], "why": "One queue, one BFS; the fresh count detects −1." },
+    "invariant": { "answer": "After processing t layers, every orange within t steps of an initially rotten one is rotten.", "wrong": ["Each layer contains exactly one orange.", "The queue only ever holds the original rotten oranges.", "Fresh oranges are enqueued at the start."], "why": "BFS layers = minutes." },
+    "time": { "answer": "O(rows × cols)", "wrong": ["O((rows × cols)²)", "O(k × rows × cols) for k rotten", "O(rows + cols)"], "why": "Each cell enqueued at most once." },
+    "space": { "answer": "O(rows × cols)", "wrong": ["O(1)", "O(rows + cols)", "O(k)"], "why": "The queue in the worst case." },
+    "whyNot": { "wrong": ["BFS can't work on grids.", "Plain BFS can't detect unreachable oranges.", "BFS would need the grid sorted."] },
+    "approach": "Enqueue all 2s, count 1s. BFS layer by layer, rotting fresh neighbours and decrementing fresh; minutes++ per non-final layer. Return fresh == 0 ? minutes : −1."
+  },
+  {
+    "id": "01-matrix", "title": "01 Matrix", "slug": "01-matrix", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a binary matrix, return a matrix where each cell holds the distance to the nearest 0 (moving up, down, left or right).",
+    "pattern": "multi-source-bfs", "alternates": ["dp-2d"],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "A BFS from every 1 to find its nearest 0 is O((rows · cols)²)." },
+      { "p": "shortest-path", "why": "All steps cost 1, so Dijkstra's heap is unnecessary." },
+      { "p": "union-find", "why": "Components don't give distances." }
+    ],
+    "trigger": { "answer": "distance to the nearest 0", "wrong": ["a binary matrix", "up, down, left or right", "each cell holds"], "why": "Distance to the nearest of many sources ⇒ start BFS from all sources (every 0) at once." },
+    "ds": { "answer": "ArrayDeque<int[]> seeded with every 0 cell + int[][] dist initialised to −1 (unvisited)", "wrong": ["PriorityQueue<int[]> by distance", "HashMap<Integer, Integer> cell → nearest zero", "boolean[][] visited with one BFS per 1"], "why": "One BFS fills every distance." },
+    "invariant": { "answer": "Cells are dequeued in non-decreasing distance from the nearest 0, so a cell's first assigned distance is final.", "wrong": ["Each cell's distance is updated many times.", "Cells are processed row by row.", "Only cells containing 1 are enqueued at the start."], "why": "Standard BFS ordering from a super-source." },
+    "time": { "answer": "O(rows × cols)", "wrong": ["O((rows × cols)²)", "O(rows × cols × log(rows × cols))", "O(rows + cols)"], "why": "Each cell once." },
+    "space": { "answer": "O(rows × cols)", "wrong": ["O(1)", "O(rows + cols)", "O(number of zeros) only"], "why": "Queue and output." },
+    "whyNot": { "wrong": ["BFS can't handle binary values.", "One BFS per cell is O(1) per cell anyway.", "BFS needs the matrix to be square."] },
+    "approach": "Enqueue every 0 with dist 0; others −1. BFS: for each neighbour with dist −1, set dist = cur + 1 and enqueue. (Two DP sweeps also work.)"
+  },
+  {
+    "id": "course-schedule", "title": "Course Schedule", "slug": "course-schedule", "difficulty": "Medium",
+    "companies": ["Amazon"],
+    "statement": "There are numCourses courses and a list of prerequisite pairs [a, b] meaning you must take b before a. Return true if it is possible to finish all courses.",
+    "pattern": "topo-sort", "alternates": [],
+    "nearMiss": [
+      { "p": "union-find", "why": "Union-Find detects cycles in UNDIRECTED graphs; prerequisites are directed." },
+      { "p": "graph-traversal", "why": "Plain DFS/BFS reachability doesn't detect a directed cycle unless you add in-progress state (which is topological sort)." },
+      { "p": "greedy", "why": "Taking any available course first works only because of the topological order; the pattern is Kahn's algorithm." }
+    ],
+    "trigger": { "answer": "you must take b before a", "wrong": ["prerequisite pairs", "finish all courses", "numCourses courses"], "why": "Ordering constraints ⇒ directed graph; 'can everything finish?' ⇔ no directed cycle ⇔ a topological order exists." },
+    "ds": { "answer": "List<List<Integer>> adjacency + int[] in-degree + ArrayDeque<Integer> queue", "wrong": ["int[] parent for union-find", "boolean[][] adjacency with Floyd–Warshall", "PriorityQueue<Integer> of courses by number"], "why": "Kahn's algorithm needs edges, in-degrees and a queue of ready nodes." },
+    "invariant": { "answer": "A course enters the queue only when all its prerequisites have been taken.", "wrong": ["Courses are taken in numeric order.", "Every course starts in the queue.", "A course is enqueued once per prerequisite."], "why": "If fewer than numCourses are ever taken, the rest sit on a cycle." },
+    "time": { "answer": "O(V + E)", "wrong": ["O(V²)", "O(V · E)", "O(E log V)"], "why": "Each node and edge once." },
+    "space": { "answer": "O(V + E)", "wrong": ["O(1)", "O(V²) always", "O(E²)"], "why": "Adjacency lists and in-degrees." },
+    "whyNot": { "wrong": ["Union-Find can't store course numbers.", "Union-Find is too slow for 2000 courses.", "Union-Find only works on trees."] },
+    "approach": "Build adjacency b → a and in-degrees. Queue all 0-in-degree courses; pop, count, decrement neighbours, enqueue new zeros. Return count == numCourses."
+  },
+  {
+    "id": "course-schedule-ii", "title": "Course Schedule II", "slug": "course-schedule-ii", "difficulty": "Medium",
+    "companies": ["Apple"],
+    "statement": "Given numCourses and prerequisite pairs [a, b] (take b before a), return an order in which you can take all courses, or an empty array if that is impossible.",
+    "pattern": "topo-sort", "alternates": [],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "Sorting by some priority ignores the dependency edges." },
+      { "p": "union-find", "why": "Union-Find groups courses but can't order them, and misses directed cycles." },
+      { "p": "backtracking", "why": "Trying permutations of courses is factorial." }
+    ],
+    "trigger": { "answer": "return an order in which you can take all courses", "wrong": ["prerequisite pairs", "or an empty array", "take b before a"], "why": "Produce an ordering consistent with 'before' constraints ⇒ topological sort." },
+    "ds": { "answer": "Adjacency List<List<Integer>> + int[] in-degree + ArrayDeque<Integer>; output int[]", "wrong": ["TreeMap<Integer, List<Integer>> sorted by course", "int[] parent array", "PriorityQueue<int[]> by prerequisite count"], "why": "Same as Course Schedule; record the pop order." },
+    "invariant": { "answer": "The output so far lists courses whose prerequisites all appear earlier in it.", "wrong": ["The output is sorted by course number.", "Courses with more prerequisites appear first.", "The output always contains numCourses entries."], "why": "If it ends short of numCourses, there is a cycle ⇒ return empty." },
+    "time": { "answer": "O(V + E)", "wrong": ["O(V!)", "O(V²) always", "O(E log E)"], "why": "Kahn's algorithm." },
+    "space": { "answer": "O(V + E)", "wrong": ["O(1)", "O(V!)", "O(E²)"], "why": "Graph storage." },
+    "whyNot": { "wrong": ["A heap can't hold integers.", "A heap would need courses numbered from 1.", "Heaps only work when there are no prerequisites."] },
+    "approach": "Kahn's algorithm; append each popped course to the order. Return the order if its size is numCourses, else an empty array."
+  },
+  {
+    "id": "alien-dictionary", "title": "Alien Dictionary", "slug": "alien-dictionary", "difficulty": "Hard",
+    "companies": [],
+    "statement": "You are given words from an alien language, sorted lexicographically by that language's unknown letter order. Derive an order of the letters consistent with the list, or return \"\" if the list is invalid.",
+    "pattern": "topo-sort", "alternates": [],
+    "nearMiss": [
+      { "p": "trie", "why": "A trie stores prefixes, but the letter order comes from the first differing character of adjacent words, i.e. edges in a graph." },
+      { "p": "hashing", "why": "Counting letters doesn't reveal their order." },
+      { "p": "partition", "why": "You can't sort letters without first deriving the comparison rules." }
+    ],
+    "trigger": { "answer": "sorted lexicographically by that language's unknown letter order", "wrong": ["words from an alien language", "return \"\" if the list is invalid", "Derive an order of the letters"], "why": "Adjacent sorted words give 'x before y' edges at their first difference; an order consistent with all edges ⇒ topological sort." },
+    "ds": { "answer": "Map<Character, Set<Character>> edges + Map<Character, Integer> in-degree + ArrayDeque<Character>", "wrong": ["TrieNode tree of all words", "int[26] letter counts", "PriorityQueue<Character> alphabetical"], "why": "Sets avoid duplicate edges inflating in-degrees." },
+    "invariant": { "answer": "Each pair of adjacent words contributes at most one edge: the first position where they differ.", "wrong": ["Every pair of letters in a word creates an edge.", "Letters in the first word come first.", "Words are compared with every other word."], "why": "Only the first difference tells you anything; a longer word before its own prefix is invalid." },
+    "time": { "answer": "O(C), C = total characters in all words", "wrong": ["O(N²) comparisons of all word pairs", "O(26!)", "O(C log C)"], "why": "Adjacent comparisons plus a topological sort over ≤ 26 letters." },
+    "space": { "answer": "O(1) for the graph (≤ 26 letters, ≤ 26² edges)", "wrong": ["O(C²)", "O(N²)", "O(C) for a trie"], "why": "The alphabet bounds the graph." },
+    "whyNot": { "wrong": ["Tries can't store non-English letters.", "A trie needs the words unsorted.", "Tries only work when all words are the same length."] },
+    "approach": "Add every letter as a node. For each adjacent pair, find the first differing char → edge (invalid if the longer word is a prefix and comes first). Kahn's algorithm; if not all letters are output, return \"\"."
+  },
+  {
+    "id": "accounts-merge", "title": "Accounts Merge", "slug": "accounts-merge", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Each account is a name followed by emails. Two accounts belong to the same person if they share any email. Merge the accounts so each person has one account with their emails sorted.",
+    "pattern": "union-find", "alternates": ["graph-traversal"],
+    "nearMiss": [
+      { "p": "hashing", "why": "Grouping by name fails (different people can share a name), and pairwise email comparison is quadratic; you need transitive merging." },
+      { "p": "intervals", "why": "There are no ranges to sort and merge; 'merge' here means joining sets." },
+      { "p": "trie", "why": "Emails aren't queried by prefix." }
+    ],
+    "trigger": { "answer": "share any email", "wrong": ["sorted", "a name followed by emails", "one account"], "why": "Sharing an element ⇒ same group, transitively ⇒ union-find (or connected components over emails)." },
+    "ds": { "answer": "Union-Find over emails (HashMap<String, String> parent) + HashMap<String, String> email → name", "wrong": ["HashMap<String, List<String>> name → emails only", "TreeMap<String, Integer> email → account index without merging", "PriorityQueue<String> of all emails"], "why": "Union each account's emails with its first email; then group by root." },
+    "invariant": { "answer": "Two emails have the same root iff some chain of shared accounts connects them.", "wrong": ["Each email's parent is the next email alphabetically.", "Accounts with the same name are always unioned.", "Every email is its own root at the end."], "why": "Grouping by find(email) yields each person's full set." },
+    "time": { "answer": "O(E · α(E) + E log E), E = total emails", "wrong": ["O(E²)", "O(A²) over accounts", "O(E!)"], "why": "Near-constant unions/finds, plus sorting each group." },
+    "space": { "answer": "O(E)", "wrong": ["O(1)", "O(E²)", "O(A²)"], "why": "Parent and owner maps." },
+    "whyNot": { "wrong": ["Hash maps can't store strings.", "Hashing would sort the emails wrongly.", "Hashing can't handle more than two accounts."] },
+    "approach": "For each account, union every email with its first email and record email → name. Group emails by find(email), sort each group, prefix the name."
+  },
+  {
+    "id": "redundant-connection", "title": "Redundant Connection", "slug": "redundant-connection", "difficulty": "Medium",
+    "companies": [],
+    "statement": "A tree of n nodes had one extra undirected edge added. Given the edges in order, return an edge that can be removed so the result is a tree; if several work, return the one that appears last in the input.",
+    "pattern": "union-find", "alternates": ["graph-traversal"],
+    "nearMiss": [
+      { "p": "topo-sort", "why": "Topological sort detects cycles in DIRECTED graphs; these edges are undirected." },
+      { "p": "tree-dfs", "why": "With the extra edge it's no longer a tree, so tree recursion would loop." },
+      { "p": "greedy", "why": "No local choice; you need to know when an edge first closes a cycle." }
+    ],
+    "trigger": { "answer": "one extra undirected edge added", "wrong": ["A tree of n nodes", "appears last in the input", "Given the edges in order"], "why": "Process undirected edges in order; the first edge whose endpoints are already connected closes the cycle ⇒ union-find." },
+    "ds": { "answer": "int[] parent and int[] rank (union-find)", "wrong": ["int[] in-degree with a queue", "boolean[] visited without parent tracking", "TreeMap<Integer, Integer> edge → index"], "why": "union returns false exactly when the edge is redundant." },
+    "invariant": { "answer": "After processing edges 0..i, components reflect exactly those edges; an edge with both ends in one component closes a cycle.", "wrong": ["Each node's parent is its smallest neighbour.", "The number of components increases with each edge.", "The redundant edge always touches node 1."], "why": "In a tree plus one edge, that edge is the only one that fails to merge." },
+    "time": { "answer": "O(n · α(n))", "wrong": ["O(n²)", "O(n log n) required", "O(2ⁿ)"], "why": "One union/find per edge." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(n²)", "O(E²)"], "why": "Parent and rank arrays." },
+    "whyNot": { "wrong": ["Topological sort can't handle more than n edges.", "Topological sort needs node 1 to be the root.", "Topological sort would remove the first edge instead of the last."] },
+    "approach": "For each edge (u, v): if find(u) == find(v) return it; else union(u, v)."
+  },
+  {
+    "id": "network-delay-time", "title": "Network Delay Time", "slug": "network-delay-time", "difficulty": "Medium",
+    "companies": [],
+    "statement": "A network has n nodes and directed edges (u, v, w) where a signal takes w time to travel from u to v. A signal is sent from node k. Return the time until all nodes receive it, or −1 if some never do.",
+    "pattern": "shortest-path", "alternates": [],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "Plain BFS gives the fewest edges, not the least total time when edges have different weights." },
+      { "p": "topo-sort", "why": "Topological order needs a DAG and doesn't minimise weighted distance by itself." },
+      { "p": "multi-source-bfs", "why": "There's a single source and weighted edges; layer counting doesn't apply." }
+    ],
+    "trigger": { "answer": "takes w time to travel", "wrong": ["A signal is sent from node k", "or −1 if some never do", "directed edges"], "why": "Weighted (non-negative) edges + earliest arrival from one source ⇒ Dijkstra; the answer is the max shortest distance." },
+    "ds": { "answer": "Adjacency List<List<int[]>> + PriorityQueue<int[]> {dist, node} + int[] dist", "wrong": ["ArrayDeque<Integer> FIFO queue only", "int[][] matrix with Floyd–Warshall for one source", "Union-Find over nodes"], "why": "The heap always expands the closest unsettled node." },
+    "invariant": { "answer": "When a node is popped with d == dist[node], d is its final shortest time.", "wrong": ["Nodes are finalised in order of their number.", "dist only decreases for the source.", "Each node is pushed at most once."], "why": "Non-negative weights mean nothing popped later can improve it." },
+    "time": { "answer": "O(E log V)", "wrong": ["O(V + E)", "O(V³)", "O(V · E)"], "why": "Each edge relaxation may push onto the heap." },
+    "space": { "answer": "O(V + E)", "wrong": ["O(1)", "O(V²) always", "O(E²)"], "why": "Graph, heap and dist." },
+    "whyNot": { "wrong": ["BFS can't handle directed edges.", "BFS needs every node reachable.", "BFS only works when n is small."] },
+    "approach": "Dijkstra from k. If any dist is still infinity return −1, else return the maximum dist."
+  },
+  {
+    "id": "cheapest-flights-within-k-stops", "title": "Cheapest Flights Within K Stops", "slug": "cheapest-flights-within-k-stops", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given n cities and flights (from, to, price), return the cheapest price from src to dst using at most k stops (k + 1 flights), or −1 if no such route exists.",
+    "pattern": "shortest-path", "alternates": [],
+    "nearMiss": [
+      { "p": "greedy", "why": "Always taking the cheapest next flight can use too many stops or miss a cheaper overall route." },
+      { "p": "topo-sort", "why": "Flights may form cycles, and ordering doesn't enforce the stop limit." },
+      { "p": "union-find", "why": "Connectivity doesn't give prices or count stops." }
+    ],
+    "trigger": { "answer": "using at most k stops", "wrong": ["cheapest price from src to dst", "or −1 if no such route", "n cities and flights"], "why": "Weighted shortest path with an edge-count limit ⇒ Bellman-Ford for k + 1 rounds (or Dijkstra/BFS over (city, stops) states)." },
+    "ds": { "answer": "int[] prices copied each round (Bellman-Ford) over the edge list", "wrong": ["One int[] dist updated in place across rounds", "PriorityQueue<int[]> by price only, without stops", "Union-Find over cities"], "why": "Copying the previous round prevents chaining several flights in one round (which would exceed k)." },
+    "invariant": { "answer": "After round r, prices[v] is the cheapest cost to reach v using at most r flights.", "wrong": ["prices[v] is the cheapest cost with any number of flights.", "Each round adds one city to the route.", "prices only change for dst."], "why": "So after k + 1 rounds, prices[dst] respects the stop limit." },
+    "time": { "answer": "O(k · E)", "wrong": ["O(E log V) ignoring k", "O(V³)", "O(Vᵏ)"], "why": "k + 1 rounds over all flights." },
+    "space": { "answer": "O(V)", "wrong": ["O(V · E)", "O(1)", "O(Vᵏ)"], "why": "Two price arrays." },
+    "whyNot": { "wrong": ["Greedy can't handle prices.", "Greedy needs the flights sorted by city number.", "Greedy only works when k = 0."] },
+    "approach": "prices = ∞ except src = 0. Repeat k + 1 times: tmp = copy; for each flight (u, v, p) if prices[u] + p < tmp[v] then tmp[v] = prices[u] + p; prices = tmp. Return prices[dst] or −1."
+  }
+]

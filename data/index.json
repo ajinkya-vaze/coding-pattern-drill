@@ -1,0 +1,14 @@
+{
+  "problemFiles": [
+    "arrays-strings.json",
+    "linked-lists.json",
+    "searching.json",
+    "stacks.json",
+    "heaps.json",
+    "intervals-greedy.json",
+    "trees.json",
+    "graphs.json",
+    "dp.json",
+    "specialised.json"
+  ]
+}

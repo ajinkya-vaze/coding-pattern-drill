@@ -1,0 +1,110 @@
+[
+  {
+    "id": "validate-binary-search-tree", "title": "Validate Binary Search Tree", "slug": "validate-binary-search-tree", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given the root of a binary tree, decide whether it is a valid binary search tree: every node's left subtree holds only smaller keys and its right subtree only larger keys.",
+    "pattern": "tree-dfs", "alternates": [],
+    "nearMiss": [
+      { "p": "tree-bfs", "why": "Level order doesn't carry the min/max bounds each node inherits from all its ancestors." },
+      { "p": "binary-search", "why": "You aren't searching for a key; you're checking an ordering property across the whole tree." },
+      { "p": "stack", "why": "An explicit stack can drive an iterative inorder walk, but the idea is still a DFS that checks bounds (or inorder order)." }
+    ],
+    "trigger": { "answer": "every node's left subtree holds only smaller keys", "wrong": ["Given the root of a binary tree", "a valid binary search tree", "right subtree only larger keys"], "why": "A property that must hold for whole subtrees ⇒ recursive DFS passing (min, max) bounds down (or an inorder walk that must be increasing)." },
+    "ds": { "answer": "Recursion with Long (or nullable Integer) lower and upper bounds", "wrong": ["ArrayDeque<TreeNode> queue for level order", "HashSet<Integer> of seen keys", "int bounds initialised to Integer.MIN_VALUE / MAX_VALUE"], "why": "int bounds break when a node actually holds Integer.MIN_VALUE or MAX_VALUE." },
+    "invariant": { "answer": "valid(node, lo, hi) checks that every key in node's subtree lies strictly between lo and hi.", "wrong": ["Each node only needs to be compared with its direct children.", "The left child is always exactly one less than its parent.", "Bounds are reset at every level."], "why": "Going left tightens hi to node.val; going right tightens lo." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(h)"], "why": "Each node once." },
+    "space": { "answer": "O(h), h = tree height", "wrong": ["O(1)", "O(n²)", "O(log n) always"], "why": "Recursion depth; O(n) for a skewed tree." },
+    "whyNot": { "wrong": ["BFS can't visit every node.", "BFS only works on balanced trees.", "BFS would need the keys sorted first."] },
+    "approach": "valid(node, lo, hi): null ⇒ true; if node.val ≤ lo or ≥ hi ⇒ false; return valid(left, lo, node.val) && valid(right, node.val, hi)."
+  },
+  {
+    "id": "lowest-common-ancestor-of-a-binary-tree", "title": "Lowest Common Ancestor of a Binary Tree", "slug": "lowest-common-ancestor-of-a-binary-tree", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a binary tree (not a search tree) and two nodes p and q in it, return their lowest common ancestor: the deepest node that has both p and q as descendants (a node counts as its own descendant).",
+    "pattern": "tree-dfs", "alternates": [],
+    "nearMiss": [
+      { "p": "binary-search", "why": "The BST trick (go left if both are smaller) needs ordered keys; this tree is not a search tree." },
+      { "p": "tree-bfs", "why": "BFS with parent pointers works but needs O(n) maps; post-order DFS answers it directly." },
+      { "p": "union-find", "why": "Tarjan's offline LCA uses DSU for many queries; one query only needs one DFS." }
+    ],
+    "trigger": { "answer": "lowest common ancestor", "wrong": ["not a search tree", "a node counts as its own descendant", "two nodes p and q"], "why": "Answer depends on what each subtree contains ⇒ post-order DFS that bubbles up 'found p/q'." },
+    "ds": { "answer": "Recursion returning a TreeNode (p, q, the LCA, or null)", "wrong": ["HashMap<TreeNode, TreeNode> parent map with a HashSet of ancestors", "ArrayDeque<TreeNode> level-order queue", "int[] Euler tour with a sparse table"], "why": "The parent-map approach works but uses O(n) extra; the recursive return value is enough." },
+    "invariant": { "answer": "lca(node) returns p or q if found in that subtree, the LCA if both are found, else null.", "wrong": ["lca(node) returns the depth of node.", "lca always returns the root.", "lca returns true only when node equals p."], "why": "The first node where both sides return non-null is the LCA." },
+    "time": { "answer": "O(n)", "wrong": ["O(log n)", "O(n log n)", "O(h²)"], "why": "Each node visited once." },
+    "space": { "answer": "O(h)", "wrong": ["O(1)", "O(n²)", "O(log n) always"], "why": "Recursion stack." },
+    "whyNot": { "wrong": ["Binary search can't run on trees.", "Binary search would return the deepest node.", "Binary search needs p and q to be leaves."] },
+    "approach": "If node is null, p or q, return node. left = lca(node.left), right = lca(node.right). Both non-null ⇒ node; else return the non-null one."
+  },
+  {
+    "id": "binary-tree-maximum-path-sum", "title": "Binary Tree Maximum Path Sum", "slug": "binary-tree-maximum-path-sum", "difficulty": "Hard",
+    "companies": [],
+    "statement": "A path in a binary tree is any sequence of connected nodes (it need not pass through the root, and each node appears at most once). Node values may be negative. Return the maximum sum of any path.",
+    "pattern": "tree-dfs", "alternates": [],
+    "nearMiss": [
+      { "p": "kadane", "why": "Kadane's 'extend or restart' idea appears inside, but on a tree you must combine left and right subtrees with DFS." },
+      { "p": "tree-bfs", "why": "Level order can't combine the best downward paths of both children." },
+      { "p": "dp-1d", "why": "There's no linear index; the subproblems are subtrees." }
+    ],
+    "trigger": { "answer": "need not pass through the root", "wrong": ["Node values may be negative", "any sequence of connected nodes", "each node appears at most once"], "why": "Best path can bend at any node ⇒ DFS returns the best downward gain while a field tracks the best path through each node." },
+    "ds": { "answer": "Recursion returning an int gain, plus a field (or int[1]) for the global best", "wrong": ["int[n] dp indexed by node id", "PriorityQueue<Integer> of node values", "ArrayDeque<TreeNode> level queue"], "why": "What the parent can use (one branch) differs from the answer (both branches)." },
+    "invariant": { "answer": "gain(node) = node.val + max(0, gain(left), gain(right)); best is updated with node.val + max(0, gain(left)) + max(0, gain(right)).", "wrong": ["gain(node) includes both children.", "best only considers paths starting at the root.", "Negative nodes are skipped entirely."], "why": "A parent can extend only one branch; a bend uses both." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(2ⁿ)"], "why": "Each node once." },
+    "space": { "answer": "O(h)", "wrong": ["O(1)", "O(n²)", "O(2ⁿ)"], "why": "Recursion stack." },
+    "whyNot": { "wrong": ["Kadane only works on positive numbers.", "Kadane needs the tree to be balanced.", "Kadane can't be applied to integers."] },
+    "approach": "gain(node): if null 0; l = max(0, gain(left)); r = max(0, gain(right)); best = max(best, node.val + l + r); return node.val + max(l, r)."
+  },
+  {
+    "id": "binary-tree-level-order-traversal", "title": "Binary Tree Level Order Traversal", "slug": "binary-tree-level-order-traversal", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given the root of a binary tree, return its node values level by level, from left to right within each level.",
+    "pattern": "tree-bfs", "alternates": [],
+    "nearMiss": [
+      { "p": "tree-dfs", "why": "DFS with a depth index can fill per-level lists, but BFS gives level order naturally." },
+      { "p": "stack", "why": "A stack is LIFO; level order needs FIFO." },
+      { "p": "graph-traversal", "why": "Same BFS idea, but a tree needs no visited set and the point here is grouping by level." }
+    ],
+    "trigger": { "answer": "level by level", "wrong": ["from left to right", "Given the root", "return its node values"], "why": "Per-level output ⇒ queue BFS, snapshotting queue.size() for each level." },
+    "ds": { "answer": "ArrayDeque<TreeNode> as a queue (offer / poll)", "wrong": ["ArrayDeque<TreeNode> used as a stack (push / pop)", "PriorityQueue<TreeNode> by value", "HashMap<Integer, TreeNode> depth → node"], "why": "FIFO order keeps levels in order." },
+    "invariant": { "answer": "At the start of each outer loop, the queue holds exactly one full level, left to right.", "wrong": ["The queue always holds all nodes seen so far.", "The queue is sorted by value.", "Each level is processed by popping until the queue is empty."], "why": "Processing exactly size nodes empties that level and enqueues the next." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(h)"], "why": "Each node enqueued and dequeued once." },
+    "space": { "answer": "O(w), w = widest level (≤ n)", "wrong": ["O(1)", "O(h) only", "O(n²)"], "why": "The queue holds one level at a time (plus the output)." },
+    "whyNot": { "wrong": ["DFS can't visit every node.", "DFS only works on BSTs.", "DFS needs O(n²) memory."] },
+    "approach": "Queue the root. While non-empty: size = queue.size(); poll size nodes into a list, enqueue their children; add the list."
+  },
+  {
+    "id": "binary-tree-right-side-view", "title": "Binary Tree Right Side View", "slug": "binary-tree-right-side-view", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Imagine standing on the right side of a binary tree. Return the values of the nodes you can see, ordered from top to bottom.",
+    "pattern": "tree-bfs", "alternates": ["tree-dfs"],
+    "nearMiss": [
+      { "p": "linked-list", "why": "Following only right pointers misses levels where the rightmost node is in a left subtree." },
+      { "p": "stack", "why": "A plain stack walk doesn't group nodes by depth." },
+      { "p": "monotonic-stack", "why": "No next-greater relationship is involved." }
+    ],
+    "trigger": { "answer": "from top to bottom", "wrong": ["standing on the right side", "Return the values", "the nodes you can see"], "why": "One answer per level (the last node of each level) ⇒ level-order BFS. (DFS visiting right-first and recording the first node at each depth also works.)" },
+    "ds": { "answer": "ArrayDeque<TreeNode> queue, recording the last node of each level", "wrong": ["HashSet<TreeNode> of visited nodes", "PriorityQueue<TreeNode> by depth", "ArrayList<TreeNode> of right children only"], "why": "Level snapshots identify the rightmost node directly." },
+    "invariant": { "answer": "When processing a level of size s, the s-th node polled is the rightmost node at that depth.", "wrong": ["The rightmost node is always a right child.", "The root's right child is visible at every level.", "Each level has at most two nodes."], "why": "BFS processes each level left to right." },
+    "time": { "answer": "O(n)", "wrong": ["O(h)", "O(n log n)", "O(n²)"], "why": "Every node is visited (the visible one may be deep in a left subtree)." },
+    "space": { "answer": "O(w)", "wrong": ["O(1)", "O(n²)", "O(log n) always"], "why": "Queue width (DFS: O(h))." },
+    "whyNot": { "wrong": ["Linked lists can't store tree values.", "Following right pointers is O(n²).", "Linked-list traversal needs the tree balanced."] },
+    "approach": "BFS by level; append the last node polled in each level. Or DFS(node, depth) visiting right before left, adding node when depth == result.size()."
+  },
+  {
+    "id": "binary-tree-vertical-order-traversal", "title": "Binary Tree Vertical Order Traversal", "slug": "binary-tree-vertical-order-traversal", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Return the vertical order traversal of a binary tree's values: column by column from left to right, and within a column from top to bottom (left before right when two nodes share a row and column).",
+    "pattern": "tree-bfs", "alternates": [],
+    "nearMiss": [
+      { "p": "tree-dfs", "why": "Plain DFS visits deeper left nodes before shallower right ones, breaking top-to-bottom order unless you also track and sort by row." },
+      { "p": "hashing", "why": "Bucketing by column is part of it, but the order within a column comes from BFS." },
+      { "p": "heap-topk", "why": "Sorting everything with a heap by (col, row) works in O(n log n), but BFS gives the order for free." }
+    ],
+    "trigger": { "answer": "within a column from top to bottom", "wrong": ["column by column from left to right", "vertical order traversal", "share a row and column"], "why": "Top-to-bottom order within each column ⇒ BFS carrying a column index; bucket by column." },
+    "ds": { "answer": "ArrayDeque of (node, column) pairs + HashMap<Integer, List<Integer>> column → values with min/max column tracked", "wrong": ["TreeMap<Integer, Integer> column → single value", "ArrayDeque<TreeNode> stack (DFS) only", "int[n] array indexed by column"], "why": "Tracking min and max column avoids sorting keys; a TreeMap also works at O(log n) per insert." },
+    "invariant": { "answer": "Nodes are dequeued in row order (and left before right within a row), so appending to column lists keeps each column top to bottom.", "wrong": ["Columns are processed one at a time.", "Each column holds exactly one node.", "The root is always column 0 and leaves are column −1."], "why": "Root column 0; left child column − 1; right child column + 1." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n) required", "O(h)"], "why": "BFS plus O(1) map operations; no sort with min/max tracking." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(h)", "O(w²)"], "why": "Queue and column lists." },
+    "whyNot": { "wrong": ["DFS can't compute columns.", "DFS only works for complete trees.", "DFS needs a heap to visit nodes."] },
+    "approach": "BFS with (node, col). Append node.val to map[col]; enqueue (left, col − 1), (right, col + 1). Output map from minCol to maxCol."
+  }
+]

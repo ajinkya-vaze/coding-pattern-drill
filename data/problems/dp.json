@@ -1,0 +1,272 @@
+[
+  {
+    "id": "subsets", "title": "Subsets", "slug": "subsets", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given an array of distinct integers, return all possible subsets (the power set). The result must not contain duplicate subsets.",
+    "pattern": "backtracking", "alternates": ["bit"],
+    "nearMiss": [
+      { "p": "dp-1d", "why": "DP counts or optimises; here you must list every subset, and there are 2ⁿ of them." },
+      { "p": "sliding-window", "why": "Subsets aren't contiguous." },
+      { "p": "greedy", "why": "There's no single best choice to commit to; every combination is required." }
+    ],
+    "trigger": { "answer": "return all possible subsets", "wrong": ["distinct integers", "must not contain duplicate subsets", "the power set"], "why": "'Return ALL …' with exponential output ⇒ backtracking: include/skip each element (bitmasks also work)." },
+    "ds": { "answer": "List<Integer> path (add / remove last) + List<List<Integer>> result", "wrong": ["int[] dp of subset counts", "HashSet<List<Integer>> to remove duplicates", "PriorityQueue<List<Integer>> by size"], "why": "Choose, recurse, un-choose on one path; copy it into the result." },
+    "invariant": { "answer": "path always holds a subset of nums[0..start) in index order, and is restored after each recursive call.", "wrong": ["path always holds exactly k elements.", "path is cleared at the start of every call.", "The result is added to only at the leaves of the recursion tree."], "why": "Adding a copy at every node of the recursion tree yields each subset exactly once." },
+    "time": { "answer": "O(n · 2ⁿ)", "wrong": ["O(2ⁿ) without copying", "O(n²)", "O(n!)"], "why": "2ⁿ subsets, each copied in O(n)." },
+    "space": { "answer": "O(n) besides the output", "wrong": ["O(1)", "O(2ⁿ) for the recursion stack", "O(n²)"], "why": "Recursion depth and path length are at most n." },
+    "whyNot": { "wrong": ["DP can't handle distinct integers.", "DP would return subsets in the wrong order.", "DP only works when n is a power of two."] },
+    "approach": "backtrack(start): add copy of path; for i from start: path.add(nums[i]); backtrack(i + 1); path.removeLast()."
+  },
+  {
+    "id": "combination-sum", "title": "Combination Sum", "slug": "combination-sum", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given distinct positive candidates and a target, return all unique combinations whose values sum to the target. The same candidate may be used an unlimited number of times.",
+    "pattern": "backtracking", "alternates": [],
+    "nearMiss": [
+      { "p": "knapsack", "why": "Unbounded knapsack DP counts combinations or checks reachability; listing every combination needs backtracking." },
+      { "p": "two-pointers", "why": "Two pointers find pairs with a sum; combinations here can have any length." },
+      { "p": "greedy", "why": "Taking the largest candidate first can miss valid combinations." }
+    ],
+    "trigger": { "answer": "return all unique combinations", "wrong": ["distinct positive candidates", "used an unlimited number of times", "sum to the target"], "why": "List every combination ⇒ backtracking; reuse ⇒ recurse with the same start index; positive values ⇒ prune when the remainder < 0." },
+    "ds": { "answer": "List<Integer> path + List<List<Integer>> result; candidates sorted for pruning", "wrong": ["boolean[] dp of reachable sums", "HashMap<Integer, Integer> remainder → count", "PriorityQueue<Integer> of candidates"], "why": "Sorting lets you break the loop as soon as a candidate exceeds the remainder." },
+    "invariant": { "answer": "path is non-decreasing in candidate index, so each combination is generated once; remaining = target − sum(path).", "wrong": ["path never repeats a candidate.", "path always has length ≤ 2.", "remaining is always positive inside the recursion."], "why": "Only allowing indices ≥ start removes permutations of the same combination." },
+    "time": { "answer": "Exponential: O(n^(T/m)), T = target, m = smallest candidate", "wrong": ["O(n · T)", "O(n²)", "O(T log n)"], "why": "Depth up to T/m, branching up to n." },
+    "space": { "answer": "O(T/m) recursion depth (besides the output)", "wrong": ["O(1)", "O(n · T)", "O(2ⁿ)"], "why": "The deepest path uses the smallest candidate repeatedly." },
+    "whyNot": { "wrong": ["Knapsack can't handle positive numbers.", "Knapsack DP doesn't allow reusing items.", "Knapsack needs the target to be even."] },
+    "approach": "Sort. backtrack(start, remaining): if 0 record; for i from start: if c[i] > remaining break; add, backtrack(i, remaining − c[i]), remove."
+  },
+  {
+    "id": "word-search", "title": "Word Search", "slug": "word-search", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a grid of letters and a word, return true if the word can be built from letters of sequentially adjacent cells (horizontal or vertical neighbours). The same cell may not be used more than once.",
+    "pattern": "backtracking", "alternates": [],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "Flood fill marks cells permanently; here a cell must be un-marked when a path fails, so another path can use it." },
+      { "p": "trie", "why": "A trie helps when searching MANY words (Word Search II); one word needs only backtracking." },
+      { "p": "dp-2d", "why": "The 'no reuse' rule makes the state the whole path, so a grid DP table can't capture it." }
+    ],
+    "trigger": { "answer": "may not be used more than once", "wrong": ["a grid of letters", "sequentially adjacent cells", "return true"], "why": "A path where visited cells must be released on the way back ⇒ DFS with choose / un-choose (backtracking)." },
+    "ds": { "answer": "The char[][] board with a temporary marker (e.g. '#') restored after recursion", "wrong": ["boolean[][] visited that is never reset", "ArrayDeque<int[]> BFS queue", "HashSet<String> of all paths"], "why": "Marking in place and restoring is O(1) per step and needs no extra grid." },
+    "invariant": { "answer": "Cells on the current path are marked; every cell is restored when its recursive call returns.", "wrong": ["Once a cell is visited it is never visited again by any path.", "The path always moves right or down.", "The board is copied for each recursive call."], "why": "Restoring keeps other paths free to use the cell." },
+    "time": { "answer": "O(rows × cols × 3ᴸ), L = word length", "wrong": ["O(rows × cols)", "O(rows × cols × L)", "O(4^(rows × cols))"], "why": "From each start, at most 3 new directions per step (you can't go back)." },
+    "space": { "answer": "O(L)", "wrong": ["O(rows × cols) for a visited copy per call", "O(1)", "O(3ᴸ)"], "why": "Recursion depth equals the word length." },
+    "whyNot": { "wrong": ["BFS/DFS can't run on letter grids.", "Graph traversal would only find words in one row.", "Graph traversal needs the word to be sorted."] },
+    "approach": "For each cell, dfs(r, c, i): bounds and board[r][c] == word[i]; if i is last return true; mark; try 4 neighbours with i + 1; restore; return result."
+  },
+  {
+    "id": "climbing-stairs", "title": "Climbing Stairs", "slug": "climbing-stairs", "difficulty": "Easy",
+    "companies": ["Bloomberg"],
+    "statement": "You climb a staircase of n steps, taking 1 or 2 steps at a time. In how many distinct ways can you reach the top?",
+    "pattern": "dp-1d", "alternates": [],
+    "nearMiss": [
+      { "p": "backtracking", "why": "Enumerating every sequence is exponential; you only need the count, and subproblems overlap." },
+      { "p": "greedy", "why": "There's nothing to optimise; it's a counting problem." },
+      { "p": "bit", "why": "There's no bitwise structure; the count follows a Fibonacci recurrence." }
+    ],
+    "trigger": { "answer": "how many distinct ways", "wrong": ["taking 1 or 2 steps at a time", "a staircase of n steps", "reach the top"], "why": "'Number of ways' with overlapping subproblems ⇒ DP: ways(i) = ways(i − 1) + ways(i − 2)." },
+    "ds": { "answer": "Two int variables (or int[n + 1])", "wrong": ["HashSet<List<Integer>> of step sequences", "ArrayDeque<Integer> BFS queue", "int[n][n] table"], "why": "Each state depends only on the two before it." },
+    "invariant": { "answer": "ways[i] = number of distinct ways to stand on step i.", "wrong": ["ways[i] = minimum steps to reach i.", "ways[i] = ways[i − 1] × 2.", "ways[i] counts only paths using 2-steps."], "why": "The last move onto step i was a 1 (from i − 1) or a 2 (from i − 2)." },
+    "time": { "answer": "O(n)", "wrong": ["O(2ⁿ)", "O(n²)", "O(log n) required"], "why": "One pass. (Matrix exponentiation gives O(log n), but no one expects it.)" },
+    "space": { "answer": "O(1)", "wrong": ["O(2ⁿ)", "O(n²)", "O(n) required"], "why": "Two rolling variables." },
+    "whyNot": { "wrong": ["Backtracking can't count paths.", "Backtracking only works when n is even.", "Backtracking would count each path twice."] },
+    "approach": "a = 1, b = 1 (ways to reach steps 0 and 1); repeat n − 1 times: (a, b) = (b, a + b). Return b."
+  },
+  {
+    "id": "house-robber", "title": "House Robber", "slug": "house-robber", "difficulty": "Medium",
+    "companies": ["Microsoft", "Apple"],
+    "statement": "Houses in a row hold given amounts of money. You cannot rob two adjacent houses. Return the maximum amount you can rob.",
+    "pattern": "dp-1d", "alternates": [],
+    "nearMiss": [
+      { "p": "greedy", "why": "Taking the richest house first (or every other house) can be wrong: [2, 1, 1, 2] needs houses 0 and 3." },
+      { "p": "sliding-window", "why": "The chosen houses aren't contiguous; the constraint is about neighbours." },
+      { "p": "backtracking", "why": "Trying every valid subset is exponential; subproblems overlap." }
+    ],
+    "trigger": { "answer": "cannot rob two adjacent houses", "wrong": ["Houses in a row", "Return the maximum amount", "given amounts of money"], "why": "Max over a sequence of take/skip choices with a local constraint ⇒ dp[i] = max(dp[i − 1], dp[i − 2] + nums[i])." },
+    "ds": { "answer": "Two int variables (prev, prevPrev)", "wrong": ["PriorityQueue<Integer> of house values", "boolean[] chosen houses", "int[n][n] table"], "why": "Only the last two best totals matter." },
+    "invariant": { "answer": "best(i) = the maximum loot from houses 0..i.", "wrong": ["best(i) always includes house i.", "best(i) = best(i − 1) + nums[i].", "best(i) counts only even-indexed houses."], "why": "Either skip house i (best(i − 1)) or rob it (best(i − 2) + nums[i])." },
+    "time": { "answer": "O(n)", "wrong": ["O(2ⁿ)", "O(n²)", "O(n log n)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n²)", "O(2ⁿ)", "O(n) required"], "why": "Two variables." },
+    "whyNot": { "wrong": ["Greedy can't add numbers.", "Greedy only works with an odd number of houses.", "Greedy needs the amounts sorted first, which is not allowed."] },
+    "approach": "prev2 = 0, prev1 = 0; for x: cur = max(prev1, prev2 + x); prev2 = prev1; prev1 = cur. Return prev1."
+  },
+  {
+    "id": "coin-change", "title": "Coin Change", "slug": "coin-change", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given coin denominations (unlimited supply of each) and an amount, return the fewest number of coins that make up that amount, or −1 if it can't be made.",
+    "pattern": "dp-1d", "alternates": ["graph-traversal"],
+    "nearMiss": [
+      { "p": "greedy", "why": "Largest-coin-first fails for coins like [1, 3, 4] and amount 6 (greedy 4+1+1, optimal 3+3)." },
+      { "p": "backtracking", "why": "Trying every combination is exponential; the subproblem 'fewest coins for amount a' repeats." },
+      { "p": "bs-answer", "why": "There's no monotonic feasibility check that's easier than the DP itself." }
+    ],
+    "trigger": { "answer": "the fewest number of coins", "wrong": ["unlimited supply of each", "or −1 if it can't be made", "coin denominations"], "why": "Minimum over choices with overlapping subproblems (amounts) ⇒ dp[a] = min over coins of dp[a − c] + 1. (BFS over amounts also works.)" },
+    "ds": { "answer": "int[amount + 1] dp filled with amount + 1 as 'infinity'", "wrong": ["PriorityQueue<Integer> of coins (largest first)", "int[] dp filled with Integer.MAX_VALUE then + 1", "HashSet<List<Integer>> of combinations"], "why": "MAX_VALUE + 1 overflows to negative; amount + 1 is a safe infinity." },
+    "invariant": { "answer": "dp[a] is the fewest coins that sum to exactly a, for every a computed so far.", "wrong": ["dp[a] is the number of ways to make a.", "dp[a] uses only the largest coin.", "dp[a] ≤ dp[a − 1] always."], "why": "Computed in increasing a, so dp[a − c] is final when needed." },
+    "time": { "answer": "O(amount × coins)", "wrong": ["O(coins^amount)", "O(amount log coins)", "O(amount²)"], "why": "Each amount tries each coin." },
+    "space": { "answer": "O(amount)", "wrong": ["O(1)", "O(amount × coins)", "O(coins)"], "why": "One 1D table." },
+    "whyNot": { "wrong": ["Greedy can't handle more than two coins.", "Greedy needs the amount to be even.", "Greedy would always return −1."] },
+    "approach": "dp[0] = 0, others amount + 1. For a in 1..amount, for each coin ≤ a: dp[a] = min(dp[a], dp[a − c] + 1). Return dp[amount] > amount ? −1 : dp[amount]."
+  },
+  {
+    "id": "word-break", "title": "Word Break", "slug": "word-break", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a string s and a dictionary of words, return true if s can be segmented into a space-separated sequence of one or more dictionary words (words may be reused).",
+    "pattern": "dp-1d", "alternates": [],
+    "nearMiss": [
+      { "p": "greedy", "why": "Taking the longest (or first) matching word can strand the rest: 'aaaab' style cases fail." },
+      { "p": "trie", "why": "A trie can speed up prefix matching, but the core is still dp[i] = can s[0..i) be segmented." },
+      { "p": "sliding-window", "why": "Segments vary in length and must tile the whole string; there's no window property." }
+    ],
+    "trigger": { "answer": "can be segmented", "wrong": ["a dictionary of words", "words may be reused", "space-separated sequence"], "why": "Can a prefix be built? depends on smaller prefixes ⇒ dp[i] = OR over j of dp[j] && s[j..i) in dict." },
+    "ds": { "answer": "boolean[n + 1] dp + HashSet<String> of words", "wrong": ["PriorityQueue<String> by length", "ArrayDeque<Character> stack", "int[26] letter counts"], "why": "The set makes each substring check O(length)." },
+    "invariant": { "answer": "dp[i] is true iff s[0..i) can be split into dictionary words.", "wrong": ["dp[i] is true iff s[i] is the first letter of a word.", "dp[i] counts the number of words used.", "dp[i] is true iff s[0..i) is itself a single word."], "why": "dp[0] = true (empty prefix); answer dp[n]." },
+    "time": { "answer": "O(n² · L) (O(n · maxWordLen · L) when limiting j)", "wrong": ["O(2ⁿ)", "O(n)", "O(n log n)"], "why": "Two nested indices; substring hashing costs up to L." },
+    "space": { "answer": "O(n + dictionary size)", "wrong": ["O(1)", "O(2ⁿ)", "O(n²) required"], "why": "dp array and word set." },
+    "whyNot": { "wrong": ["Greedy can't read strings.", "Greedy only works with one dictionary word.", "Greedy needs the dictionary sorted."] },
+    "approach": "dp[0] = true. For i in 1..n, for j < i: if dp[j] and s.substring(j, i) in set, dp[i] = true; break. Return dp[n]."
+  },
+  {
+    "id": "longest-increasing-subsequence", "title": "Longest Increasing Subsequence", "slug": "longest-increasing-subsequence", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given an integer array, return the length of the longest strictly increasing subsequence (elements need not be adjacent). Can you do better than O(n²)?",
+    "pattern": "dp-1d", "alternates": ["binary-search"],
+    "nearMiss": [
+      { "p": "sliding-window", "why": "A subsequence skips elements; sliding windows only cover contiguous runs." },
+      { "p": "monotonic-stack", "why": "A monotonic stack pops elements that may still belong to the best subsequence." },
+      { "p": "greedy", "why": "Always extending with the next larger element can lock in a poor early choice (without the tails-array refinement)." }
+    ],
+    "trigger": { "answer": "longest strictly increasing subsequence", "wrong": ["elements need not be adjacent", "better than O(n²)", "Given an integer array"], "why": "Best subsequence ending at each index depends on earlier ones ⇒ DP (O(n²)); the follow-up uses binary search on tails (O(n log n))." },
+    "ds": { "answer": "int[] tails (smallest tail for each length) with binary search; or int[] dp for O(n²)", "wrong": ["ArrayDeque<Integer> monotonic stack", "HashMap<Integer, Integer> value → index", "PriorityQueue<Integer> min-heap"], "why": "tails stays sorted, so each element's position is a lower-bound search." },
+    "invariant": { "answer": "tails[k] is the smallest possible tail of an increasing subsequence of length k + 1 seen so far; tails is strictly increasing.", "wrong": ["tails is the longest increasing subsequence itself.", "tails[k] is the k-th smallest element.", "tails only grows, never changes existing entries."], "why": "Replacing a tail with a smaller value keeps more future options open." },
+    "time": { "answer": "O(n log n)", "wrong": ["O(n²) is optimal", "O(n)", "O(2ⁿ)"], "why": "One binary search per element. (Plain DP is O(n²).)" },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(n²)", "O(log n)"], "why": "The tails array." },
+    "whyNot": { "wrong": ["Sliding windows can't handle strictly increasing values.", "Sliding window needs the array sorted.", "A window would count duplicates twice."] },
+    "approach": "For x: find the first tail ≥ x (lower bound); replace it, or append if none. Answer = tails length. (O(n²): dp[i] = 1 + max dp[j] for j < i with nums[j] < nums[i].)"
+  },
+  {
+    "id": "longest-common-subsequence", "title": "Longest Common Subsequence", "slug": "longest-common-subsequence", "difficulty": "Medium",
+    "companies": ["Apple"],
+    "statement": "Given two strings text1 and text2, return the length of their longest common subsequence (characters in the same relative order, not necessarily contiguous).",
+    "pattern": "dp-2d", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Greedily matching characters with one pointer per string can lock in a bad match; you need to consider skipping either side." },
+      { "p": "hashing", "why": "Common characters ignore order." },
+      { "p": "sliding-window", "why": "Subsequences aren't contiguous; a window finds common substrings at best." }
+    ],
+    "trigger": { "answer": "two strings", "wrong": ["not necessarily contiguous", "return the length", "the same relative order"], "why": "Two sequences compared position by position ⇒ dp[i][j] over prefixes of each." },
+    "ds": { "answer": "int[m + 1][n + 1] table (or two rolling rows)", "wrong": ["HashMap<Character, Integer> counts", "int[m] 1D array indexed by text1 only", "TreeMap<Integer, Integer> index pairs"], "why": "Row/column 0 represent empty prefixes." },
+    "invariant": { "answer": "dp[i][j] is the LCS length of text1[0..i) and text2[0..j).", "wrong": ["dp[i][j] is the LCS ending exactly at i and j.", "dp[i][j] counts equal characters at the same index.", "dp[i][j] is the edit distance of the prefixes."], "why": "Match ⇒ dp[i−1][j−1] + 1, else max(dp[i−1][j], dp[i][j−1])." },
+    "time": { "answer": "O(m × n)", "wrong": ["O(2^(m+n))", "O(m + n)", "O((m + n) log(m + n))"], "why": "Each cell is O(1)." },
+    "space": { "answer": "O(m × n) (O(min(m, n)) with rolling rows)", "wrong": ["O(1)", "O(m + n) required", "O(2ᵐ)"], "why": "The table." },
+    "whyNot": { "wrong": ["Two pointers can't compare characters.", "Two pointers need both strings sorted.", "Two pointers only work on equal-length strings."] },
+    "approach": "Fill dp row by row: if text1[i−1] == text2[j−1] then dp[i][j] = dp[i−1][j−1] + 1 else max(dp[i−1][j], dp[i][j−1]). Return dp[m][n]."
+  },
+  {
+    "id": "edit-distance", "title": "Edit Distance", "slug": "edit-distance", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given two words, return the minimum number of operations (insert a character, delete a character, replace a character) to convert word1 into word2.",
+    "pattern": "dp-2d", "alternates": [],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "BFS over all intermediate strings explodes; the prefix table captures the same choices in O(m × n)." },
+      { "p": "greedy", "why": "Fixing the first mismatch locally (always replace) can cost more than inserting or deleting." },
+      { "p": "two-pointers", "why": "A single pointer per word can't explore insert vs delete vs replace together." }
+    ],
+    "trigger": { "answer": "minimum number of operations", "wrong": ["insert a character", "convert word1 into word2", "Given two words"], "why": "Optimal alignment of two sequences ⇒ dp[i][j] = cost for prefixes, choosing min of insert/delete/replace." },
+    "ds": { "answer": "int[m + 1][n + 1] table with dp[i][0] = i and dp[0][j] = j", "wrong": ["HashMap<String, Integer> memo of whole strings", "int[m] 1D array without base cases", "ArrayDeque<String> BFS queue"], "why": "Base rows: converting to/from an empty prefix costs its length." },
+    "invariant": { "answer": "dp[i][j] is the minimum edits to turn word1[0..i) into word2[0..j).", "wrong": ["dp[i][j] counts matching characters.", "dp[i][j] only considers replacements.", "dp[i][j] ≥ dp[i + 1][j + 1] always."], "why": "Equal chars ⇒ dp[i−1][j−1]; else 1 + min(insert dp[i][j−1], delete dp[i−1][j], replace dp[i−1][j−1])." },
+    "time": { "answer": "O(m × n)", "wrong": ["O(3^(m+n))", "O(m + n)", "O(m² × n²)"], "why": "Constant work per cell." },
+    "space": { "answer": "O(m × n) (O(n) with rolling rows)", "wrong": ["O(1)", "O(3ᵐ)", "O(m + n) required"], "why": "The table." },
+    "whyNot": { "wrong": ["BFS can't handle strings.", "BFS only supports insertions.", "BFS needs the words sorted."] },
+    "approach": "Base row/column = index. For each cell: same char ⇒ diagonal; else 1 + min(left, up, diagonal). Return dp[m][n]."
+  },
+  {
+    "id": "partition-equal-subset-sum", "title": "Partition Equal Subset Sum", "slug": "partition-equal-subset-sum", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given an array of positive integers, return true if it can be split into two subsets with equal sums.",
+    "pattern": "knapsack", "alternates": [],
+    "nearMiss": [
+      { "p": "greedy", "why": "Assigning each number to the currently smaller side fails on cases like [3, 3, 2, 2, 2]." },
+      { "p": "two-pointers", "why": "Subsets aren't pairs or contiguous ranges; sorting and converging doesn't decide membership." },
+      { "p": "backtracking", "why": "Trying all 2ⁿ splits is exponential; the reachable sums repeat, so DP is O(n · sum)." }
+    ],
+    "trigger": { "answer": "two subsets with equal sums", "wrong": ["positive integers", "return true", "can be split"], "why": "Equal halves ⇔ some subset sums to total / 2 ⇒ 0/1 subset-sum knapsack." },
+    "ds": { "answer": "boolean[total / 2 + 1] dp iterated from high sums down", "wrong": ["boolean[] dp iterated from low sums up", "HashMap<Integer, List<Integer>> sum → subset", "PriorityQueue<Integer> max-heap of numbers"], "why": "Downward iteration ensures each number is used at most once." },
+    "invariant": { "answer": "After processing the first i numbers, dp[s] is true iff some subset of them sums to s.", "wrong": ["dp[s] is true iff s appears in the array.", "dp[s] counts subsets summing to s.", "dp is reset for every number."], "why": "dp[s] |= dp[s − x] adds number x to every previously reachable sum." },
+    "time": { "answer": "O(n × total / 2)", "wrong": ["O(2ⁿ)", "O(n log n)", "O(n²)"], "why": "Pseudo-polynomial: one pass over sums per number." },
+    "space": { "answer": "O(total / 2)", "wrong": ["O(1)", "O(n × total)", "O(2ⁿ)"], "why": "One 1D boolean array." },
+    "whyNot": { "wrong": ["Greedy can't handle positive integers.", "Greedy only works with an even count of numbers.", "Greedy needs the total to be odd."] },
+    "approach": "If total is odd return false. dp[0] = true; for each x, for s from target down to x: dp[s] |= dp[s − x]. Return dp[target]."
+  },
+  {
+    "id": "last-stone-weight-ii", "title": "Last Stone Weight II", "slug": "last-stone-weight-ii", "difficulty": "Medium",
+    "companies": ["Apple"],
+    "statement": "Stones have weights. Repeatedly smash any two stones x ≤ y: if equal both vanish, otherwise y becomes y − x. Return the smallest possible weight of the last remaining stone (0 if none remain).",
+    "pattern": "knapsack", "alternates": [],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "Always smashing the two heaviest (Last Stone Weight I) is not optimal here; any pair may be chosen." },
+      { "p": "greedy", "why": "Local smashing choices don't minimise the final result; the real question is how to split stones into two piles." },
+      { "p": "backtracking", "why": "Simulating every smash order is exponential." }
+    ],
+    "trigger": { "answer": "smallest possible weight of the last remaining stone", "wrong": ["smash any two stones", "if equal both vanish", "Stones have weights"], "why": "Every smash sequence ends as (sum of one group) − (sum of the other) ⇒ find the subset sum closest to total / 2: knapsack." },
+    "ds": { "answer": "boolean[total / 2 + 1] reachable sums (iterate downward)", "wrong": ["PriorityQueue<Integer> max-heap of stones", "ArrayDeque<Integer> simulation queue", "int[][] dp over every pair of stones"], "why": "The heap simulates version I, which is the wrong question here." },
+    "invariant": { "answer": "dp[s] is true iff some subset of the processed stones weighs exactly s.", "wrong": ["dp[s] is the weight left after s smashes.", "dp[s] is true iff a stone weighs s.", "The heaviest stone is always in the first pile."], "why": "Answer = total − 2 × (largest reachable s ≤ total / 2)." },
+    "time": { "answer": "O(n × total / 2)", "wrong": ["O(n log n)", "O(2ⁿ)", "O(n²)"], "why": "Subset-sum DP." },
+    "space": { "answer": "O(total / 2)", "wrong": ["O(n)", "O(1)", "O(2ⁿ)"], "why": "1D boolean array." },
+    "whyNot": { "wrong": ["A heap can't hold equal weights.", "A heap gives the largest stone, which is always the answer.", "Heaps only work with an even number of stones."] },
+    "approach": "Subset-sum DP up to total / 2. Find the largest reachable s; return total − 2s."
+  },
+  {
+    "id": "target-sum", "title": "Target Sum", "slug": "target-sum", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given an array of non-negative integers and a target, put a + or − sign in front of every number. Return how many sign assignments make the expression evaluate to the target.",
+    "pattern": "knapsack", "alternates": ["backtracking"],
+    "nearMiss": [
+      { "p": "prefix-sum", "why": "Prefix sums count contiguous subarrays; here every number gets a sign independently." },
+      { "p": "greedy", "why": "No single sign choice is locally best; you need a count over all assignments." },
+      { "p": "two-pointers", "why": "There's no pair condition to converge on." }
+    ],
+    "trigger": { "answer": "how many sign assignments", "wrong": ["non-negative integers", "a + or − sign", "evaluate to the target"], "why": "P − N = target and P + N = total ⇒ count subsets with sum (total + target) / 2: 0/1 knapsack counting. (Memoised DFS also works.)" },
+    "ds": { "answer": "int[(total + target) / 2 + 1] count dp iterated downward", "wrong": ["boolean[] dp (reachability only)", "HashMap<String, Integer> memo of whole sign strings", "PriorityQueue<Integer> of numbers"], "why": "Counts, not booleans; downward for 0/1 use." },
+    "invariant": { "answer": "After processing i numbers, dp[s] = number of subsets of them with sum s.", "wrong": ["dp[s] = whether s equals the target.", "dp[s] = number of minus signs used.", "dp[s] counts each subset once per permutation."], "why": "dp[s] += dp[s − x] adds x to every subset counted before." },
+    "time": { "answer": "O(n × total)", "wrong": ["O(2ⁿ) is optimal", "O(n log n)", "O(n²)"], "why": "Pseudo-polynomial. (Plain backtracking is O(2ⁿ).)" },
+    "space": { "answer": "O(total)", "wrong": ["O(2ⁿ)", "O(1)", "O(n × total) required"], "why": "1D dp." },
+    "whyNot": { "wrong": ["Prefix sums can't use minus signs.", "Prefix sums need the array sorted.", "Prefix sums only work with negative numbers."] },
+    "approach": "If (total + target) is odd or |target| > total return 0. P = (total + target) / 2; dp[0] = 1; for x, for s from P down to x: dp[s] += dp[s − x]. Return dp[P]."
+  },
+  {
+    "id": "best-time-to-buy-and-sell-stock-with-cooldown", "title": "Best Time to Buy and Sell Stock with Cooldown", "slug": "best-time-to-buy-and-sell-stock-with-cooldown", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given daily prices, you may complete as many transactions as you like, but after you sell you must wait one day (cooldown) before buying again, and you can hold at most one share. Return the maximum profit.",
+    "pattern": "state-dp", "alternates": [],
+    "nearMiss": [
+      { "p": "greedy", "why": "Summing every price rise works without a cooldown; the cooldown makes some rises incompatible." },
+      { "p": "kadane", "why": "Kadane's running minimum handles one transaction, not many with a cooldown rule." },
+      { "p": "dp-2d", "why": "A 2D table over (day, day) is unnecessary; a few states per day are enough." }
+    ],
+    "trigger": { "answer": "wait one day (cooldown) before buying again", "wrong": ["as many transactions as you like", "hold at most one share", "Return the maximum profit"], "why": "Each day you're in one of a few states (holding, just sold, resting) with restricted transitions ⇒ state-machine DP." },
+    "ds": { "answer": "Three int variables: hold, sold, rest", "wrong": ["int[n][n] profit table", "PriorityQueue<Integer> of prices", "ArrayDeque<Integer> monotonic stack"], "why": "Each state updates from yesterday's states only." },
+    "invariant": { "answer": "After day i, hold / sold / rest are the best profits ending day i in that state.", "wrong": ["hold is the cheapest price so far.", "sold is the total of all price rises.", "rest is always 0."], "why": "hold = max(hold, rest − p); sold = hold + p; rest = max(rest, previous sold)." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(2ⁿ)", "O(n log n)"], "why": "Constant work per day." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(n²)", "O(3n) required"], "why": "Three variables (save old values before updating)." },
+    "whyNot": { "wrong": ["Greedy can't handle prices that go down.", "Greedy only works with one transaction.", "Greedy needs the prices sorted."] },
+    "approach": "hold = −∞, sold = 0, rest = 0. For p: prevSold = sold; sold = hold + p; hold = max(hold, rest − p); rest = max(rest, prevSold). Return max(sold, rest)."
+  },
+  {
+    "id": "best-time-to-buy-and-sell-stock-with-transaction-fee", "title": "Best Time to Buy and Sell Stock with Transaction Fee", "slug": "best-time-to-buy-and-sell-stock-with-transaction-fee", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given daily prices and a fee charged once per completed transaction, you may trade as many times as you like but hold at most one share at a time. Return the maximum profit.",
+    "pattern": "state-dp", "alternates": [],
+    "nearMiss": [
+      { "p": "greedy", "why": "Summing every rise pays the fee on each small rise; merging rises into one trade can be better." },
+      { "p": "kadane", "why": "One running minimum handles a single transaction, not many with fees." },
+      { "p": "intervals", "why": "There are no given ranges; you're choosing when to be in or out." }
+    ],
+    "trigger": { "answer": "a fee charged once per completed transaction", "wrong": ["as many times as you like", "hold at most one share", "daily prices"], "why": "Two states (holding / not holding) with a cost on one transition ⇒ state-machine DP." },
+    "ds": { "answer": "Two int variables: cash (not holding) and hold", "wrong": ["int[n][2] table required", "PriorityQueue<Integer> of prices", "ArrayDeque<int[]> of trades"], "why": "Yesterday's two states are enough." },
+    "invariant": { "answer": "cash = best profit ending today without a share; hold = best profit ending today holding one.", "wrong": ["cash is always ≥ hold + price.", "hold only changes on price drops.", "The fee is paid on both buy and sell."], "why": "cash = max(cash, hold + p − fee); hold = max(hold, cash − p)." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(2ⁿ)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(n²)", "O(log n)"], "why": "Two variables." },
+    "whyNot": { "wrong": ["Greedy can't subtract fees.", "Greedy needs the fee to be zero to run at all.", "Greedy only works on increasing prices."] },
+    "approach": "cash = 0, hold = −prices[0]. For p: cash = max(cash, hold + p − fee); hold = max(hold, cash − p). Return cash."
+  }
+]

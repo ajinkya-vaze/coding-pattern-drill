@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pattern Drill tests</title>
+  <style>
+    body { font: 14px/1.5 system-ui, sans-serif; margin: 16px; background: #fff; color: #111; }
+    .pass { color: #15803d; } .fail { color: #b91c1c; } .warn { color: #a16207; }
+    h2 { font-size: 16px; margin-top: 24px; }
+    li { margin: 2px 0; }
+  </style>
+</head>
+<body>
+  <h1 id="summary">Running…</h1>
+  <h2>Engine tests</h2>
+  <ul id="tests"></ul>
+  <h2>Question bank</h2>
+  <ul id="bank"></ul>
+  <script type="module">
+    import { run } from './test/harness.js';
+    import './test/engine.test.js';
+    import { loadBank, browserReadJson } from './src/engine/bank.js';
+    import { validateBank } from './src/engine/validate.js';
+
+    const li = (parent, cls, text) => {
+      const el = document.createElement('li');
+      el.className = cls;
+      el.textContent = text;
+      document.getElementById(parent).append(el);
+    };
+
+    const results = await run();
+    for (const r of results) li('tests', r.pass ? 'pass' : 'fail', `${r.pass ? '✓' : '✗'} ${r.name}${r.error ? ' — ' + r.error : ''}`);
+
+    let bankErrors = 0;
+    try {
+      const bank = await loadBank(browserReadJson);
+      const v = validateBank(bank);
+      bankErrors = v.errors.length;
+      li('bank', 'pass', `${v.counts.patterns} patterns, ${v.counts.problems} problems`);
+      for (const e of v.errors) li('bank', 'fail', `✗ ${e}`);
+      for (const w of v.warnings) li('bank', 'warn', `! ${w}`);
+    } catch (e) {
+      bankErrors = 1;
+      li('bank', 'fail', `✗ could not load bank: ${e.message}`);
+    }
+
+    const failed = results.filter((r) => !r.pass).length;
+    const summary = document.getElementById('summary');
+    summary.textContent = `${results.length - failed}/${results.length} tests pass · bank errors: ${bankErrors}`;
+    summary.className = failed || bankErrors ? 'fail' : 'pass';
+    window.__testResult = { failed, bankErrors, total: results.length };
+  </script>
+</body>
+</html>

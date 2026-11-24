@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pattern Drill</title>
+  <meta name="description" content="Coding-interview pattern recognition drills: name the pattern, Java data structure, invariant and complexity for real FAANG problems.">
+  <meta name="theme-color" content="#f7f6f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#15171c" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Pattern Drill">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/">Pattern Drill</a>
+  </header>
+  <main id="app" class="container" tabindex="-1">
+    <p class="muted">Loading…</p>
+  </main>
+  <nav class="nav" aria-label="Main">
+    <a href="#/" data-nav="home"><span aria-hidden="true">⌂</span>Home</a>
+    <a href="#/learn" data-nav="learn"><span aria-hidden="true">▤</span>Learn</a>
+    <a href="#/play" data-nav="play"><span aria-hidden="true">▶</span>Play</a>
+    <a href="#/progress" data-nav="progress"><span aria-hidden="true">▦</span>Progress</a>
+    <a href="#/sync" data-nav="sync"><span aria-hidden="true">⇅</span>Sync</a>
+  </nav>
+  <div id="sheet" class="sheet" aria-hidden="true"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

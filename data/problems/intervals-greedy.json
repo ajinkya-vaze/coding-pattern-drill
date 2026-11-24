@@ -1,0 +1,110 @@
+[
+  {
+    "id": "merge-intervals", "title": "Merge Intervals", "slug": "merge-intervals", "difficulty": "Medium",
+    "companies": ["Amazon", "Microsoft", "Apple", "Bloomberg"],
+    "statement": "Given an array of intervals [start, end], merge all overlapping intervals and return the non-overlapping intervals that cover the same ranges.",
+    "pattern": "intervals", "alternates": [],
+    "nearMiss": [
+      { "p": "union-find", "why": "Union-Find can group overlaps, but checking all pairs is O(n²); sorting by start makes it one sweep." },
+      { "p": "greedy", "why": "Choosing a maximum set of non-overlapping intervals is greedy by end; merging is a sweep by start." },
+      { "p": "heap-topk", "why": "A heap helps when counting concurrent intervals (rooms); merging needs only the last merged interval." }
+    ],
+    "trigger": { "answer": "merge all overlapping intervals", "wrong": ["an array of intervals", "cover the same ranges", "return the non-overlapping intervals"], "why": "Overlap / merge on [start, end] pairs ⇒ sort by start, compare with the last merged end." },
+    "ds": { "answer": "int[][] sorted by start (Comparator.comparingInt(a -> a[0])) + List<int[]> result", "wrong": ["TreeMap<Integer, Integer> start → end without sorting logic", "PriorityQueue<int[]> by end time", "boolean[] covering every integer point"], "why": "After sorting, only the last merged interval can overlap the next one. A boolean[] per point blows up with large coordinates." },
+    "invariant": { "answer": "After processing interval i, the result is the merged form of intervals 0..i, and only its last entry can still grow.", "wrong": ["The result is sorted by end time.", "Every interval is compared with every earlier interval.", "The last merged interval never changes once added."], "why": "Sorted starts mean a new interval either extends the last one or begins a gap." },
+    "time": { "answer": "O(n log n)", "wrong": ["O(n)", "O(n²)", "O(n · range)"], "why": "Dominated by the sort." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(range)", "O(n²)"], "why": "Output list (and sort space)." },
+    "whyNot": { "wrong": ["Union-Find can't store intervals.", "Union-Find only works on sorted data.", "Union-Find would merge non-overlapping intervals too."] },
+    "approach": "Sort by start. For each interval: if it starts after the last merged end, append it; otherwise extend the last end to max(lastEnd, end)."
+  },
+  {
+    "id": "insert-interval", "title": "Insert Interval", "slug": "insert-interval", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a list of non-overlapping intervals sorted by start and a new interval, insert it so the list stays sorted and non-overlapping, merging where necessary.",
+    "pattern": "intervals", "alternates": [],
+    "nearMiss": [
+      { "p": "binary-search", "why": "Binary search finds where to insert in O(log n), but merging and copying the output is O(n) anyway." },
+      { "p": "heap-topk", "why": "The list is already sorted; a heap adds O(n log n) for nothing." },
+      { "p": "two-pointers", "why": "There is no pair to converge on; it's a single left-to-right sweep in three phases." }
+    ],
+    "trigger": { "answer": "merging where necessary", "wrong": ["sorted by start", "a new interval", "stays sorted and non-overlapping"], "why": "Interval overlap + already sorted ⇒ one sweep: copy before, merge overlapping, copy after." },
+    "ds": { "answer": "List<int[]> result built in one pass, with an index into the input", "wrong": ["TreeMap<Integer, Integer> rebuilt from scratch", "PriorityQueue<int[]> of all intervals", "int[] coverage array over the coordinate range"], "why": "The input is sorted; no extra structure is needed." },
+    "invariant": { "answer": "Intervals ending before the new start are copied as-is; every interval overlapping the new one is folded into it; the rest are copied after.", "wrong": ["The new interval is always appended at the end.", "Only the first overlapping interval is merged.", "The output may contain overlaps that a second pass removes."], "why": "Three phases in order keep the output sorted and disjoint." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(log n)", "O(n²)"], "why": "One sweep; no sort needed." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(range)"], "why": "The output list." },
+    "whyNot": { "wrong": ["Binary search can't work on intervals.", "Binary search needs the intervals unsorted.", "Binary search would merge every interval."] },
+    "approach": "Copy intervals with end < newStart. While interval start ≤ newEnd, newStart = min, newEnd = max. Add the new interval, then copy the rest."
+  },
+  {
+    "id": "meeting-rooms-ii", "title": "Meeting Rooms II", "slug": "meeting-rooms-ii", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given meeting time intervals [start, end], return the minimum number of conference rooms required so that no two meetings in the same room overlap.",
+    "pattern": "intervals", "alternates": ["heap-topk"],
+    "nearMiss": [
+      { "p": "greedy", "why": "Choosing which meetings to keep is greedy by end; here every meeting must be held, so you count overlaps." },
+      { "p": "union-find", "why": "Grouping overlapping meetings doesn't give the peak number happening at once." },
+      { "p": "dp-1d", "why": "There is no choice to optimise; the answer is the maximum overlap depth." }
+    ],
+    "trigger": { "answer": "minimum number of conference rooms", "wrong": ["meeting time intervals", "no two meetings in the same room overlap", "[start, end]"], "why": "Max number of intervals overlapping at once ⇒ sort starts and ends (sweep line) or a min-heap of end times." },
+    "ds": { "answer": "Intervals sorted by start + PriorityQueue<Integer> min-heap of end times (or two sorted arrays of starts and ends)", "wrong": ["HashMap<Integer, Integer> start → end", "TreeSet<Integer> of start times only", "List<int[]> of merged intervals"], "why": "The heap's size is the number of rooms in use; its root is the earliest room to free up." },
+    "invariant": { "answer": "The heap holds the end times of meetings still running at the current start time.", "wrong": ["The heap holds every meeting ever scheduled.", "The heap is ordered by start time.", "The heap size never decreases."], "why": "Before each start, pop the root if it has ended; the max heap size is the answer." },
+    "time": { "answer": "O(n log n)", "wrong": ["O(n)", "O(n²)", "O(n · maxEnd)"], "why": "Sort plus heap operations." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(maxEnd)", "O(n²)"], "why": "The heap in the worst case (all overlap)." },
+    "whyNot": { "wrong": ["Greedy can't sort meetings.", "Greedy only works with one room.", "Greedy would need the meetings to be non-overlapping."] },
+    "approach": "Sort by start. For each meeting: if the heap's earliest end ≤ start, poll it; offer this end. Answer = max heap size (= final size with this variant)."
+  },
+  {
+    "id": "non-overlapping-intervals", "title": "Non-overlapping Intervals", "slug": "non-overlapping-intervals", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given intervals [start, end], return the minimum number of intervals you need to remove so that the remaining intervals do not overlap.",
+    "pattern": "greedy", "alternates": ["intervals"],
+    "nearMiss": [
+      { "p": "dp-1d", "why": "A DP over sorted intervals works in O(n²) (or n log n with binary search), but the earliest-end greedy is simpler and optimal." },
+      { "p": "heap-topk", "why": "Counting concurrent intervals with a heap answers 'how many rooms', not 'how few removals'." },
+      { "p": "backtracking", "why": "Trying every subset to remove is exponential." }
+    ],
+    "trigger": { "answer": "minimum number of intervals you need to remove", "wrong": ["do not overlap", "Given intervals", "the remaining intervals"], "why": "Fewest removals = keep the most non-overlapping intervals ⇒ classic interval scheduling: greedy by earliest end." },
+    "ds": { "answer": "int[][] sorted by END (Comparator.comparingInt(a -> a[1])) and one int lastEnd", "wrong": ["int[][] sorted by start with a merge list", "PriorityQueue<Integer> of end times", "TreeMap<Integer, Integer> start → end"], "why": "Sorting by end is the crux; sorting by start needs extra care to pick which to drop." },
+    "invariant": { "answer": "lastEnd is the end of the last kept interval, which is the earliest possible end for that many kept intervals.", "wrong": ["lastEnd is the largest end seen so far.", "Intervals are kept in order of their start.", "Every interval longer than the average is removed."], "why": "Ending earliest leaves the most room for the rest (exchange argument)." },
+    "time": { "answer": "O(n log n)", "wrong": ["O(n²)", "O(n)", "O(2ⁿ)"], "why": "The sort; the sweep is linear." },
+    "space": { "answer": "O(1) extra (besides the sort)", "wrong": ["O(n²)", "O(n) for a dp array", "O(2ⁿ)"], "why": "One variable for lastEnd." },
+    "whyNot": { "wrong": ["DP can't handle intervals.", "DP would give the maximum removals instead.", "DP needs the intervals to be disjoint already."] },
+    "approach": "Sort by end. Keep a count of kept intervals and lastEnd; if start ≥ lastEnd keep it (lastEnd = end), else remove it. Answer = n − kept."
+  },
+  {
+    "id": "jump-game", "title": "Jump Game", "slug": "jump-game", "difficulty": "Medium",
+    "companies": [],
+    "statement": "You start at index 0 of an array where each value is your maximum jump length from that position. Return true if you can reach the last index.",
+    "pattern": "greedy", "alternates": ["dp-1d"],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "BFS over every jump works but can be O(n²) edges; tracking the farthest reach is O(n)." },
+      { "p": "backtracking", "why": "Trying every jump sequence is exponential." },
+      { "p": "sliding-window", "why": "There's no window property; the only state is how far you can reach." }
+    ],
+    "trigger": { "answer": "maximum jump length", "wrong": ["start at index 0", "reach the last index", "Return true"], "why": "Reachability where every position up to the farthest reach is also reachable ⇒ one greedy variable: farthest." },
+    "ds": { "answer": "One int: farthest index reachable so far", "wrong": ["boolean[] reachable table updated for every jump", "ArrayDeque<Integer> BFS queue", "HashSet<Integer> of visited indices"], "why": "Reachable positions form a prefix, so its end is all you need." },
+    "invariant": { "answer": "Every index ≤ farthest is reachable; if i > farthest you are stuck.", "wrong": ["farthest is always the last index.", "You always jump the maximum length.", "farthest only increases when nums[i] is the largest seen."], "why": "Extending farthest = max(farthest, i + nums[i]) keeps the prefix property." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(2ⁿ)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(n²)", "O(log n)"], "why": "One variable." },
+    "whyNot": { "wrong": ["BFS can't handle arrays.", "BFS would need the jumps sorted.", "BFS only works when all jumps are 1."] },
+    "approach": "farthest = 0; for i: if i > farthest return false; farthest = max(farthest, i + nums[i]). Return true."
+  },
+  {
+    "id": "task-scheduler", "title": "Task Scheduler", "slug": "task-scheduler", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given CPU tasks labelled A–Z and a cooldown n, identical tasks must be at least n intervals apart (idle slots allowed). Return the minimum number of intervals needed to finish all tasks.",
+    "pattern": "greedy", "alternates": ["heap-topk"],
+    "nearMiss": [
+      { "p": "sliding-window", "why": "The cooldown looks like a window, but you're constructing a schedule, not scanning a given sequence." },
+      { "p": "dp-1d", "why": "No subproblem recurrence is needed; the most frequent task dictates the frame." },
+      { "p": "topo-sort", "why": "There are no dependencies between different tasks, only spacing between identical ones." }
+    ],
+    "trigger": { "answer": "at least n intervals apart", "wrong": ["labelled A–Z", "idle slots allowed", "finish all tasks"], "why": "The most frequent task forces (maxCount − 1) frames of length n + 1; greedily fill gaps with others (or simulate with a max-heap)." },
+    "ds": { "answer": "int[26] counts (formula) or PriorityQueue<Integer> max-heap of counts with a cooldown queue", "wrong": ["HashMap<Character, List<Integer>> task → times", "TreeMap<Integer, Character> time → task", "ArrayDeque<Character> of the original order"], "why": "Only counts matter, not task identities or order." },
+    "invariant": { "answer": "Scheduling the most frequent remaining task first never makes the total longer.", "wrong": ["Tasks run in alphabetical order.", "Idle slots are inserted after every task.", "The answer is always the number of tasks."], "why": "The answer is max(tasks, (maxCount − 1)(n + 1) + numberOfTasksWithMaxCount)." },
+    "time": { "answer": "O(T) with the formula (T = number of tasks)", "wrong": ["O(T²)", "O(T log T) required", "O(26ⁿ)"], "why": "One counting pass; 26 is constant." },
+    "space": { "answer": "O(1)", "wrong": ["O(T)", "O(n)", "O(T · n)"], "why": "26 counters." },
+    "whyNot": { "wrong": ["Sliding windows can't count letters.", "A window would need the tasks sorted.", "Sliding window only works when n = 0."] },
+    "approach": "Count tasks; maxCount = top count; ties = number of tasks with that count. Answer = max(tasks.length, (maxCount − 1) × (n + 1) + ties)."
+  }
+]

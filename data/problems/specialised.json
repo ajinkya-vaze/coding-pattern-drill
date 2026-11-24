@@ -1,0 +1,290 @@
+[
+  {
+    "id": "implement-trie-prefix-tree", "title": "Implement Trie (Prefix Tree)", "slug": "implement-trie-prefix-tree", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Implement a class with insert(word), search(word) returning whether the exact word was inserted, and startsWith(prefix) returning whether any inserted word begins with prefix.",
+    "pattern": "trie", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "A HashSet answers exact search, but startsWith would scan every word (or store every prefix)." },
+      { "p": "binary-search", "why": "A sorted list supports prefix lookups in O(L log n), but inserts are O(n)." },
+      { "p": "design", "why": "It is a class, but the one structure that fits all three operations is a trie." }
+    ],
+    "trigger": { "answer": "begins with prefix", "wrong": ["Implement a class", "the exact word was inserted", "insert(word)"], "why": "Prefix queries over a dictionary ⇒ trie: one node per character, shared prefixes share nodes." },
+    "ds": { "answer": "TrieNode with TrieNode[26] children and a boolean isWord", "wrong": ["HashSet<String> of words", "TreeSet<String> sorted words", "HashMap<String, Integer> prefix → count of every prefix"], "why": "The prefix-count map works but stores O(L²) characters per word." },
+    "invariant": { "answer": "The path from the root to a node spells exactly the prefix that node represents; isWord marks where an inserted word ends.", "wrong": ["Each node stores a whole word.", "Children are sorted by insertion time.", "A node exists only for complete words."], "why": "search needs isWord at the end node; startsWith only needs the node to exist." },
+    "time": { "answer": "O(L) per operation, L = word length", "wrong": ["O(n · L) per operation", "O(log n) per operation", "O(L²) per operation"], "why": "One step per character, independent of how many words are stored." },
+    "space": { "answer": "O(total characters inserted × 26) worst case", "wrong": ["O(1)", "O(number of words)", "O(26ᴸ)"], "why": "Each new character may add a node with 26 child slots." },
+    "whyNot": { "wrong": ["A HashSet can't store strings.", "Hash lookups are O(L²).", "A HashSet can't tell whether a word was inserted."] },
+    "approach": "insert: walk/create child nodes per char, mark isWord. search: walk; return node != null && node.isWord. startsWith: walk; return node != null."
+  },
+  {
+    "id": "word-search-ii", "title": "Word Search II", "slug": "word-search-ii", "difficulty": "Hard",
+    "companies": [],
+    "statement": "Given a grid of letters and a list of words, return all words that can be formed from sequentially adjacent cells (no cell reused within a word).",
+    "pattern": "trie", "alternates": [],
+    "nearMiss": [
+      { "p": "backtracking", "why": "Running Word Search once per word repeats the same grid walks; one DFS guided by a trie prunes all words at once." },
+      { "p": "hashing", "why": "A HashSet of words can't tell you to stop early when the current path isn't a prefix of any word." },
+      { "p": "graph-traversal", "why": "Flood fill marks cells permanently; paths here must release cells on the way back." }
+    ],
+    "trigger": { "answer": "a list of words", "wrong": ["sequentially adjacent cells", "no cell reused within a word", "a grid of letters"], "why": "Many words searched at once over the same grid ⇒ build a trie of the words and DFS the grid, following trie edges." },
+    "ds": { "answer": "Trie of the words (TrieNode[26] + String word at end nodes) + backtracking DFS on the board", "wrong": ["HashSet<String> of words checked at every step", "PriorityQueue<String> by length", "boolean[][] visited that is never reset"], "why": "The trie node you're at says which letters can continue any word." },
+    "invariant": { "answer": "During DFS, the current trie node corresponds exactly to the letters on the current grid path; if the child for the next letter is null, that branch is cut.", "wrong": ["Each word is searched independently.", "Visited cells stay marked for later words.", "The trie is rebuilt for every starting cell."], "why": "Clearing a found word (set word = null) avoids duplicates; pruning emptied nodes speeds it up." },
+    "time": { "answer": "O(rows × cols × 3ᴸ) worst case, L = longest word", "wrong": ["O(words × rows × cols × 3ᴸ)", "O(rows × cols)", "O(total letters in words)"], "why": "One DFS per cell, bounded by the longest word; independent of the number of words in the worst case." },
+    "space": { "answer": "O(total letters in words)", "wrong": ["O(rows × cols × words)", "O(1)", "O(3ᴸ)"], "why": "The trie, plus O(L) recursion." },
+    "whyNot": { "wrong": ["Backtracking can't run on grids.", "Backtracking only finds the first word.", "Backtracking needs the word list sorted."] },
+    "approach": "Insert all words into a trie (store the word at its end node). DFS from each cell following trie children, marking the cell; when node.word != null add it and null it; restore the cell."
+  },
+  {
+    "id": "design-add-and-search-words-data-structure", "title": "Design Add and Search Words Data Structure", "slug": "design-add-and-search-words-data-structure", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Design a structure with addWord(word) and search(pattern), where the pattern may contain '.' that matches any single letter. search returns true if any added word matches.",
+    "pattern": "trie", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "A HashSet handles exact lookups, but '.' would force checking every stored word." },
+      { "p": "sliding-window", "why": "Patterns match whole words, not windows inside a string." },
+      { "p": "dp-2d", "why": "Wildcard DP is for '*' patterns against one string; here '.' is one letter and there are many words." }
+    ],
+    "trigger": { "answer": "'.' that matches any single letter", "wrong": ["Design a structure", "any added word matches", "addWord(word)"], "why": "Character-by-character matching over many words, with branching on '.' ⇒ trie + DFS over children at wildcards." },
+    "ds": { "answer": "TrieNode[26] trie with recursive search that tries every child on '.'", "wrong": ["HashSet<String> plus regex matching for each word", "TreeSet<String> sorted words", "HashMap<Integer, List<String>> length → words scanned linearly"], "why": "Bucketing by length helps but still scans words; the trie shares prefixes." },
+    "invariant": { "answer": "search(node, i) is true iff some word below node matches pattern[i..].", "wrong": ["'.' matches the empty string as well.", "search stops at the first child it tries.", "Every node marks the end of a word."], "why": "At '.', OR over all non-null children; at a letter, follow one child." },
+    "time": { "answer": "addWord O(L); search O(L) without dots, up to O(26ᵈ · L) with d dots", "wrong": ["O(1) for both", "search O(n · L) always", "addWord O(26ᴸ)"], "why": "Wildcards branch into up to 26 children each." },
+    "space": { "answer": "O(total characters added × 26)", "wrong": ["O(1)", "O(26ᴸ)", "O(number of words²)"], "why": "Trie nodes." },
+    "whyNot": { "wrong": ["Hash sets can't store words with dots.", "Hashing is O(n²) per lookup.", "A HashSet can't add words after creation."] },
+    "approach": "addWord: standard trie insert. search(node, i): if i == len return node.isWord; c = pattern[i]; if '.', try every child; else follow child c."
+  },
+  {
+    "id": "lru-cache", "title": "LRU Cache", "slug": "lru-cache", "difficulty": "Medium",
+    "companies": ["Amazon", "Microsoft", "Apple"],
+    "statement": "Design a cache with a fixed capacity supporting get(key) and put(key, value), both in O(1) average time. When full, put evicts the least recently used key.",
+    "pattern": "design", "alternates": [],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "A heap by last-used time gives O(log n) and can't update a key's recency in O(1)." },
+      { "p": "hashing", "why": "A HashMap gives O(1) lookup but has no notion of recency order." },
+      { "p": "linked-list", "why": "A doubly linked list keeps recency order, but finding a key in it is O(n) without a map." }
+    ],
+    "trigger": { "answer": "evicts the least recently used key", "wrong": ["a fixed capacity", "both in O(1) average time", "get(key) and put(key, value)"], "why": "O(1) lookup AND O(1) reorder/evict ⇒ combine a HashMap with a doubly linked list (or LinkedHashMap with accessOrder)." },
+    "ds": { "answer": "HashMap<Integer, Node> + doubly linked list with dummy head/tail (or LinkedHashMap with accessOrder = true)", "wrong": ["PriorityQueue<int[]> by timestamp", "TreeMap<Long, Integer> time → key", "ArrayDeque<Integer> of keys"], "why": "The map finds the node; the list moves/removes it in O(1). The deque can't remove from the middle in O(1)." },
+    "invariant": { "answer": "The list is ordered from most to least recently used, and the map holds exactly the keys in the list.", "wrong": ["The list is sorted by key.", "The map may contain evicted keys.", "The head of the list is the next key to evict."], "why": "get/put move the node to the front; eviction removes the tail." },
+    "time": { "answer": "O(1) per operation", "wrong": ["O(log n) per operation", "O(n) per get", "O(capacity) per put"], "why": "Hash lookup plus constant pointer updates." },
+    "space": { "answer": "O(capacity)", "wrong": ["O(1)", "O(number of operations)", "O(capacity²)"], "why": "One node and one map entry per cached key." },
+    "whyNot": { "wrong": ["Heaps can't store integer keys.", "Heaps give the most recently used key only.", "A heap would need the capacity to be a power of two."] },
+    "approach": "get: if absent −1; else move node to front, return value. put: update + move to front, or insert at front; if size > capacity remove tail node and its map entry."
+  },
+  {
+    "id": "design-hit-counter", "title": "Design Hit Counter", "slug": "design-hit-counter", "difficulty": "Medium",
+    "companies": ["Apple"],
+    "statement": "Design a counter with hit(timestamp) and getHits(timestamp) returning the number of hits in the past 5 minutes (300 seconds). Calls arrive in chronological order.",
+    "pattern": "design", "alternates": ["sliding-window"],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "Timestamps already arrive in order; a heap adds O(log n) for nothing." },
+      { "p": "prefix-sum", "why": "Prefix counts over all time grow without bound; only the last 300 seconds matter." },
+      { "p": "binary-search", "why": "Binary search over a growing list works, but old hits are never discarded and memory grows forever." }
+    ],
+    "trigger": { "answer": "the past 5 minutes (300 seconds)", "wrong": ["Calls arrive in chronological order", "hit(timestamp)", "Design a counter"], "why": "A count over a moving time window with in-order arrivals ⇒ queue that drops expired timestamps (or a 300-slot circular buffer)." },
+    "ds": { "answer": "ArrayDeque<Integer> of timestamps (or int[300] times + int[300] counts circular buffer)", "wrong": ["PriorityQueue<Integer> of timestamps", "HashMap<Integer, Integer> timestamp → count for all time", "TreeMap<Integer, Integer> without eviction"], "why": "Chronological order makes the oldest hit always at the front." },
+    "invariant": { "answer": "After evicting from the front, the queue holds exactly the hits with timestamp > now − 300.", "wrong": ["The queue holds the 300 most recent hits.", "The queue is sorted by count.", "Hits are evicted when the queue is full."], "why": "getHits returns the queue size after eviction." },
+    "time": { "answer": "O(1) amortised per call (circular buffer: O(300) = O(1) per getHits)", "wrong": ["O(n) per call", "O(log n) per call", "O(300²)"], "why": "Each hit is enqueued and evicted once." },
+    "space": { "answer": "O(hits in the window) (circular buffer: O(300))", "wrong": ["O(all hits ever)", "O(1) with a single counter", "O(timestamp)"], "why": "Expired hits are discarded." },
+    "whyNot": { "wrong": ["Heaps can't store timestamps.", "A heap would count hits twice.", "Heaps only work when hits arrive out of order."] },
+    "approach": "hit: offer timestamp. getHits: while front ≤ timestamp − 300 poll; return size. (Or bucket by timestamp % 300, resetting a bucket when its stored time is stale.)"
+  },
+  {
+    "id": "insert-delete-getrandom-o1", "title": "Insert Delete GetRandom O(1)", "slug": "insert-delete-getrandom-o1", "difficulty": "Medium",
+    "companies": ["Apple"],
+    "statement": "Design a set supporting insert(val), remove(val) and getRandom() returning a uniformly random element, each in average O(1) time.",
+    "pattern": "design", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "A HashSet inserts and removes in O(1), but has no O(1) way to pick a random element." },
+      { "p": "linked-list", "why": "A linked list removes in O(1) given the node, but random access is O(n)." },
+      { "p": "binary-search", "why": "A sorted structure gives O(log n), not O(1), and random access by rank needs extra work." }
+    ],
+    "trigger": { "answer": "uniformly random element", "wrong": ["each in average O(1) time", "insert(val)", "Design a set"], "why": "Random access needs an array; O(1) removal from an array needs value → index + swap-with-last ⇒ ArrayList + HashMap." },
+    "ds": { "answer": "ArrayList<Integer> values + HashMap<Integer, Integer> value → index", "wrong": ["HashSet<Integer> only", "LinkedList<Integer> + HashMap<Integer, Node>", "TreeSet<Integer> with random rank selection"], "why": "Remove: move the last element into the removed slot, update its index, drop the last slot." },
+    "invariant": { "answer": "map.get(v) is v's current index in the list, and the list has no gaps.", "wrong": ["The list is sorted.", "Removed values stay in the list as null.", "The map stores counts of each value."], "why": "No gaps means random index in [0, size) is uniform." },
+    "time": { "answer": "O(1) average per operation", "wrong": ["O(log n) per operation", "O(n) remove", "O(n) getRandom"], "why": "Hash ops plus O(1) array swap and removal at the end." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(n²)", "O(maxValue)"], "why": "List and map." },
+    "whyNot": { "wrong": ["A HashSet can't remove elements.", "HashSet inserts are O(n).", "A HashSet allows duplicates, which breaks uniformity."] },
+    "approach": "insert: if absent, map.put(val, list.size()); list.add(val). remove: idx = map.get(val); last = list.get(end); list.set(idx, last); map.put(last, idx); remove end; map.remove(val). getRandom: list.get(random index)."
+  },
+  {
+    "id": "snapshot-array", "title": "Snapshot Array", "slug": "snapshot-array", "difficulty": "Medium",
+    "companies": ["Apple"],
+    "statement": "Design an array of a given length supporting set(index, val), snap() returning a snapshot id, and get(index, snap_id) returning the value at index when that snapshot was taken. Many snaps may occur with few sets.",
+    "pattern": "design", "alternates": ["binary-search"],
+    "nearMiss": [
+      { "p": "hashing", "why": "A map per snapshot copies the whole array on each snap: O(length) per snap." },
+      { "p": "prefix-sum", "why": "No sums are involved; you need the latest version at or before a snapshot." },
+      { "p": "heap-topk", "why": "A heap gives the newest version, not the newest one ≤ snap_id." }
+    ],
+    "trigger": { "answer": "when that snapshot was taken", "wrong": ["Many snaps may occur with few sets", "set(index, val)", "returning a snapshot id"], "why": "Per-index version history queried at a point in time ⇒ store (snapId, value) per index and floor-search by snapId." },
+    "ds": { "answer": "TreeMap<Integer, Integer>[] (snapId → value per index) using floorEntry, or List<int[]> per index + binary search", "wrong": ["int[][] full copy of the array per snap", "HashMap<Integer, Integer> index → latest value only", "PriorityQueue<int[]> per index"], "why": "Only changed indices store versions; floorEntry(snapId) finds the right one." },
+    "invariant": { "answer": "For each index, versions are stored with increasing snap ids, and the floor of snap_id is the answer.", "wrong": ["Every snap copies every index.", "Versions are stored newest first and the first one is returned.", "snap() clears all values."], "why": "Set overwrites the version for the current (not yet taken) snap id." },
+    "time": { "answer": "set O(log s), snap O(1), get O(log s), s = versions at that index", "wrong": ["snap O(length)", "get O(1) with a full copy and set O(1)", "all O(n)"], "why": "Floor lookup per get; snap just increments a counter." },
+    "space": { "answer": "O(length + number of sets)", "wrong": ["O(length × snaps)", "O(1)", "O(snaps²)"], "why": "Only changes are stored." },
+    "whyNot": { "wrong": ["Hash maps can't store snapshot ids.", "Hashing would return the oldest value.", "Hash maps are O(log n) per lookup."] },
+    "approach": "Per index keep a TreeMap snapId → value (seed {0: 0}). set: map[index].put(snapId, val). snap: return snapId++. get: map[index].floorEntry(snap_id).getValue()."
+  },
+  {
+    "id": "first-missing-positive", "title": "First Missing Positive", "slug": "first-missing-positive", "difficulty": "Hard",
+    "companies": [],
+    "statement": "Given an unsorted integer array, return the smallest positive integer that does not appear in it. You must run in O(n) time and use O(1) auxiliary space.",
+    "pattern": "cyclic-sort", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "A HashSet answers it in O(n) time, but uses O(n) space; the constraint is O(1)." },
+      { "p": "binary-search", "why": "Sorting first is O(n log n)." },
+      { "p": "bit", "why": "XOR finds a single missing value in a full range; here values can be anything, with duplicates and negatives." }
+    ],
+    "trigger": { "answer": "use O(1) auxiliary space", "wrong": ["unsorted integer array", "smallest positive integer", "run in O(n) time"], "why": "The answer is in 1..n+1, so values can be placed at index value − 1 in the array itself. O(n) + O(1) space ⇒ cyclic sort / index marking." },
+    "ds": { "answer": "The input int[] itself (swap each value v to index v − 1)", "wrong": ["HashSet<Integer> of values", "boolean[n + 1] seen", "PriorityQueue<Integer> min-heap"], "why": "The array is the hash table; no extra memory." },
+    "invariant": { "answer": "After placement, for every v in 1..n present in the array, nums[v − 1] == v.", "wrong": ["The array ends up fully sorted.", "Negative numbers are moved to the front.", "nums[i] == i for every index."], "why": "The first index i with nums[i] != i + 1 gives the answer i + 1 (or n + 1)." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(maxValue)"], "why": "Each swap puts one value in its final place, so at most n swaps in total." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(maxValue)"], "why": "In place." },
+    "whyNot": { "wrong": ["A HashSet can't store negative numbers.", "Hashing is O(n²) here.", "A HashSet would return the largest missing value."] },
+    "approach": "For each i: while 1 ≤ nums[i] ≤ n and nums[nums[i] − 1] != nums[i], swap them. Then return the first i + 1 with nums[i] != i + 1, else n + 1."
+  },
+  {
+    "id": "find-all-numbers-disappeared-in-an-array", "title": "Find All Numbers Disappeared in an Array", "slug": "find-all-numbers-disappeared-in-an-array", "difficulty": "Easy",
+    "companies": [],
+    "statement": "An array of n integers has values in the range 1..n; some appear twice and others not at all. Return all values in 1..n that do not appear, without extra space (the output doesn't count) in O(n) time.",
+    "pattern": "cyclic-sort", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "A HashSet or boolean[] works in O(n) but uses O(n) extra space." },
+      { "p": "bit", "why": "XOR tricks find one missing value, not several." },
+      { "p": "two-pointers", "why": "There's no sorted order or pair condition; the values map to indices." }
+    ],
+    "trigger": { "answer": "values in the range 1..n", "wrong": ["some appear twice", "the output doesn't count", "in O(n) time"], "why": "Values in 1..n for length n ⇒ use index v − 1 as the 'seen' flag (negate it) or cyclic-sort." },
+    "ds": { "answer": "The input int[] with sign marking (nums[|v| − 1] made negative)", "wrong": ["HashSet<Integer>", "boolean[n] seen", "int[n] count array"], "why": "Signs store a bit per index without extra memory." },
+    "invariant": { "answer": "nums[i] is negative iff value i + 1 has been seen.", "wrong": ["nums[i] is negative iff nums[i] was originally negative.", "The array is sorted after marking.", "Duplicates are removed during marking."], "why": "Unmarked (positive) indices at the end are the missing values." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(1)"], "why": "Two passes." },
+    "space": { "answer": "O(1) extra", "wrong": ["O(n)", "O(log n)", "O(√n)"], "why": "In-place marking." },
+    "whyNot": { "wrong": ["A HashSet can't hold duplicates, so it fails here.", "Hashing would need the array sorted.", "A HashSet can't return missing values."] },
+    "approach": "For each v: idx = |v| − 1; nums[idx] = −|nums[idx]|. Collect i + 1 for every nums[i] > 0."
+  },
+  {
+    "id": "single-number", "title": "Single Number", "slug": "single-number", "difficulty": "Easy",
+    "companies": ["Meta", "Bloomberg"],
+    "statement": "In a non-empty array, every element appears twice except for one. Find that single one using linear time and constant extra space.",
+    "pattern": "bit", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "A count map or set finds it in O(n), but uses O(n) space; constant space is required." },
+      { "p": "partition", "why": "Sorting/partitioning to pair duplicates costs O(n log n) or mutates the array." },
+      { "p": "cyclic-sort", "why": "Values aren't guaranteed to be in 1..n, so they can't be placed by index." }
+    ],
+    "trigger": { "answer": "every element appears twice except for one", "wrong": ["a non-empty array", "linear time", "constant extra space"], "why": "Pairs cancel under XOR (x ^ x = 0), leaving the single element." },
+    "ds": { "answer": "One int accumulator using ^", "wrong": ["HashSet<Integer> add/remove", "HashMap<Integer, Integer> counts", "int[] sorted copy"], "why": "XOR is associative and commutative, so order doesn't matter." },
+    "invariant": { "answer": "acc equals the XOR of all elements processed so far, so every complete pair has cancelled.", "wrong": ["acc is the largest element seen.", "acc is the sum of elements modulo 2.", "acc holds the last duplicated value."], "why": "At the end only the unpaired value remains." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(log n)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(32n)"], "why": "One int." },
+    "whyNot": { "wrong": ["A HashMap can't count negative numbers.", "HashMap lookups are O(n) each.", "A HashMap would return the most frequent element."] },
+    "approach": "acc = 0; for x: acc ^= x; return acc."
+  },
+  {
+    "id": "counting-bits", "title": "Counting Bits", "slug": "counting-bits", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Given n, return an array where entry i is the number of 1 bits in the binary representation of i, for every i from 0 to n, in O(n) total time.",
+    "pattern": "bit", "alternates": ["dp-1d"],
+    "nearMiss": [
+      { "p": "hashing", "why": "Memoising counts in a map adds overhead; the recurrence only looks at a smaller index." },
+      { "p": "backtracking", "why": "There are no choices to explore." },
+      { "p": "binary-search", "why": "Nothing is being searched; each answer is derived from a smaller number." }
+    ],
+    "trigger": { "answer": "number of 1 bits in the binary representation", "wrong": ["for every i from 0 to n", "in O(n) total time", "Given n"], "why": "Bit counts ⇒ bit manipulation; reusing smaller answers (i >> 1) makes it O(n)." },
+    "ds": { "answer": "int[n + 1] where bits[i] = bits[i >> 1] + (i & 1)", "wrong": ["HashMap<Integer, Integer> memo", "String binary forms counted char by char", "PriorityQueue<Integer> of counts"], "why": "Dropping the last bit gives a smaller, already-computed number." },
+    "invariant": { "answer": "bits[j] is final for every j < i before bits[i] is computed.", "wrong": ["bits[i] = bits[i − 1] + 1 always.", "bits[i] is the position of the highest set bit.", "bits is filled from n down to 0."], "why": "i >> 1 < i, so the recurrence only reads finished entries." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(log n)"], "why": "O(1) per entry. (Integer.bitCount per i is O(n log n) in principle.)" },
+    "space": { "answer": "O(1) extra (the output is O(n))", "wrong": ["O(n log n)", "O(n²)", "O(log n)"], "why": "Only the output array." },
+    "whyNot": { "wrong": ["Hash maps can't store bit counts.", "Hashing would need n to be a power of two.", "A map can't hold more than 32 entries."] },
+    "approach": "bits[0] = 0; for i in 1..n: bits[i] = bits[i >> 1] + (i & 1)."
+  },
+  {
+    "id": "rotate-image", "title": "Rotate Image", "slug": "rotate-image", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Rotate an n × n matrix by 90 degrees clockwise in place, without allocating another matrix.",
+    "pattern": "matrix", "alternates": [],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "Nothing is explored; every cell moves to a fixed new position." },
+      { "p": "two-pointers", "why": "Reversing rows uses two pointers, but the core is the transpose + reverse index transformation." },
+      { "p": "dp-2d", "why": "No values are computed from neighbours; it's a permutation of cells." }
+    ],
+    "trigger": { "answer": "90 degrees clockwise in place", "wrong": ["an n × n matrix", "without allocating another matrix", "Rotate"], "why": "In-place 2D index transformation ⇒ transpose then reverse each row (or rotate four cells per layer)." },
+    "ds": { "answer": "The int[][] itself with index swaps", "wrong": ["int[n][n] copy", "ArrayDeque<Integer> of all values", "HashMap<Integer, Integer> old index → new index"], "why": "In place by definition." },
+    "invariant": { "answer": "After the transpose, m[i][j] holds the original m[j][i]; reversing each row then puts every value at its rotated position.", "wrong": ["Each row is reversed before transposing for clockwise rotation.", "Only the outer layer needs moving.", "The diagonal elements move to the corners."], "why": "Clockwise: (i, j) → (j, n − 1 − i) = transpose followed by a row reversal." },
+    "time": { "answer": "O(n²)", "wrong": ["O(n)", "O(n² log n)", "O(n³)"], "why": "Each cell moved a constant number of times." },
+    "space": { "answer": "O(1)", "wrong": ["O(n²)", "O(n)", "O(log n)"], "why": "Swaps only." },
+    "whyNot": { "wrong": ["BFS can't visit matrix cells.", "BFS would rotate counter-clockwise.", "BFS needs the matrix to be sorted."] },
+    "approach": "Transpose (swap m[i][j] and m[j][i] for j > i), then reverse every row."
+  },
+  {
+    "id": "spiral-matrix", "title": "Spiral Matrix", "slug": "spiral-matrix", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given an m × n matrix, return all its elements in spiral order: across the top row, down the right column, back along the bottom, up the left, and inwards.",
+    "pattern": "matrix", "alternates": [],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "A DFS with a direction rule can simulate it, but shrinking four boundaries is the clean O(1)-space approach." },
+      { "p": "tree-bfs", "why": "There are no levels from a root; the order is a fixed walk around layers." },
+      { "p": "stack", "why": "No nesting or LIFO order is involved." }
+    ],
+    "trigger": { "answer": "in spiral order", "wrong": ["an m × n matrix", "down the right column", "and inwards"], "why": "Layer-by-layer walk ⇒ four boundaries (top, bottom, left, right) that shrink after each side." },
+    "ds": { "answer": "Four int boundaries + List<Integer> output", "wrong": ["boolean[m][n] visited with a direction array", "ArrayDeque<int[]> BFS queue", "int[m × n] copy then sort"], "why": "Boundaries replace a visited grid." },
+    "invariant": { "answer": "Every cell outside [top..bottom] × [left..right] has already been output exactly once.", "wrong": ["top and bottom move together every step.", "The output is sorted.", "Each layer has exactly four elements."], "why": "Re-check top ≤ bottom and left ≤ right before the bottom and left passes (non-square matrices)." },
+    "time": { "answer": "O(m × n)", "wrong": ["O(m + n)", "O((m × n)²)", "O(m × n × log)"], "why": "Each cell once." },
+    "space": { "answer": "O(1) besides the output", "wrong": ["O(m × n) for visited", "O(m + n)", "O(log(m × n))"], "why": "Four integers." },
+    "whyNot": { "wrong": ["DFS can't move in four directions.", "DFS only works on square matrices.", "DFS would visit the matrix row by row."] },
+    "approach": "While top ≤ bottom and left ≤ right: walk top row → top++; right column → right--; if top ≤ bottom walk bottom row backwards → bottom--; if left ≤ right walk left column upwards → left++."
+  },
+  {
+    "id": "sort-colors", "title": "Sort Colors", "slug": "sort-colors", "difficulty": "Medium",
+    "companies": [],
+    "statement": "An array holds only the values 0, 1 and 2 (red, white, blue). Sort it in place so equal colours are adjacent in the order 0, 1, 2, in a single pass with O(1) extra space.",
+    "pattern": "partition", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "Counting each colour then rewriting (counting sort) takes two passes; the follow-up asks for one." },
+      { "p": "two-pointers", "why": "Two pointers partition into two groups; three groups need a third pointer (low / mid / high)." },
+      { "p": "heap-topk", "why": "A heap sort is O(n log n) and not single-pass." }
+    ],
+    "trigger": { "answer": "only the values 0, 1 and 2", "wrong": ["in place", "a single pass", "O(1) extra space"], "why": "Three categories partitioned in one pass in place ⇒ Dutch national flag." },
+    "ds": { "answer": "Three int indices (low, mid, high) on the array", "wrong": ["int[3] counts then rewrite", "ArrayList<Integer> per colour", "PriorityQueue<Integer>"], "why": "Counts work in two passes; the three pointers do it in one." },
+    "invariant": { "answer": "[0, low) are 0s, [low, mid) are 1s, (high, end] are 2s, and [mid, high] is unprocessed.", "wrong": ["[0, mid) is fully sorted including 2s.", "low and high always move together.", "mid advances after swapping with high."], "why": "After swapping with high, the new nums[mid] is unchecked, so mid stays." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(3n) is required"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(3)", "O(log n)"], "why": "Three indices." },
+    "whyNot": { "wrong": ["Counting can't handle the value 0.", "Counting sort uses O(n²) time.", "Counting would change the colours' values."] },
+    "approach": "low = mid = 0, high = n − 1. While mid ≤ high: 0 → swap(low++, mid++); 1 → mid++; 2 → swap(mid, high--)."
+  },
+  {
+    "id": "longest-palindromic-substring", "title": "Longest Palindromic Substring", "slug": "longest-palindromic-substring", "difficulty": "Medium",
+    "companies": ["Meta", "Amazon", "Google", "Microsoft", "Bloomberg"],
+    "statement": "Given a string s, return the longest substring of s that reads the same forwards and backwards.",
+    "pattern": "expand-center", "alternates": ["dp-2d"],
+    "nearMiss": [
+      { "p": "sliding-window", "why": "Palindromes aren't monotonic: a longer window can be a palindrome when a shorter one isn't." },
+      { "p": "two-pointers", "why": "Converging pointers check ONE given string; finding the longest needs expansion from every centre." },
+      { "p": "stack", "why": "A stack reverses, but checking every substring with it is O(n³)." }
+    ],
+    "trigger": { "answer": "reads the same forwards and backwards", "wrong": ["Given a string s", "the longest substring", "return the"], "why": "Palindromic substrings grow symmetrically from a centre ⇒ expand around each of the 2n − 1 centres." },
+    "ds": { "answer": "Two int indices per centre; track best start and length", "wrong": ["boolean[n][n] is-palindrome table (required)", "HashMap<String, Boolean> memo", "ArrayDeque<Character> stack"], "why": "The DP table works but uses O(n²) space; expansion needs O(1)." },
+    "invariant": { "answer": "While expanding, s[l..r] is a palindrome centred on the current centre.", "wrong": ["Only odd-length palindromes need checking.", "l and r always move in the same direction.", "The best palindrome always contains s[0]."], "why": "Stop as soon as s[l] != s[r]; the palindrome is s[l + 1..r − 1]." },
+    "time": { "answer": "O(n²)", "wrong": ["O(n)", "O(n³)", "O(n log n)"], "why": "2n − 1 centres, each expanding up to O(n). (Manacher: O(n).)" },
+    "space": { "answer": "O(1)", "wrong": ["O(n²)", "O(n)", "O(log n)"], "why": "A few indices." },
+    "whyNot": { "wrong": ["Sliding windows can't handle strings.", "A window needs the string sorted.", "Sliding window only finds even-length palindromes."] },
+    "approach": "For each centre c (odd: c, c; even: c, c + 1) expand while s[l] == s[r]; keep the longest span."
+  },
+  {
+    "id": "palindromic-substrings", "title": "Palindromic Substrings", "slug": "palindromic-substrings", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a string, count how many of its substrings are palindromes. Substrings at different positions count separately even if equal.",
+    "pattern": "expand-center", "alternates": ["dp-2d"],
+    "nearMiss": [
+      { "p": "hashing", "why": "Hashing distinct substrings loses the 'different positions count separately' rule and is still O(n²) substrings." },
+      { "p": "backtracking", "why": "Partitioning into palindromes is a different problem; here you just count substrings." },
+      { "p": "prefix-sum", "why": "There's no numeric sum to difference." }
+    ],
+    "trigger": { "answer": "substrings are palindromes", "wrong": ["count separately even if equal", "Given a string", "different positions"], "why": "Every palindrome has a centre; each successful expansion step is one more palindrome ⇒ expand around centres and count." },
+    "ds": { "answer": "Two int indices per centre and a counter", "wrong": ["HashSet<String> of palindromes", "ArrayDeque<Character> stack per substring", "TreeMap<Integer, Integer> length → count"], "why": "Counting during expansion needs no storage." },
+    "invariant": { "answer": "Each step where s[l] == s[r] while expanding from a centre adds exactly one new palindrome.", "wrong": ["Each centre contributes exactly one palindrome.", "Only palindromes longer than 1 are counted.", "Equal substrings are counted once."], "why": "Different (centre, radius) pairs are different positions." },
+    "time": { "answer": "O(n²)", "wrong": ["O(n³)", "O(n)", "O(n log n)"], "why": "2n − 1 centres × O(n) expansion." },
+    "space": { "answer": "O(1)", "wrong": ["O(n²)", "O(n)", "O(number of palindromes)"], "why": "Counters only." },
+    "whyNot": { "wrong": ["Hash sets can't store substrings.", "Hashing would count single letters twice.", "A HashSet needs the string sorted."] },
+    "approach": "For every centre (odd and even) expand while characters match, incrementing the count each step."
+  }
+]

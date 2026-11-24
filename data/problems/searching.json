@@ -1,0 +1,92 @@
+[
+  {
+    "id": "search-in-rotated-sorted-array", "title": "Search in Rotated Sorted Array", "slug": "search-in-rotated-sorted-array", "difficulty": "Medium",
+    "companies": [],
+    "statement": "A sorted array of distinct integers was rotated at an unknown pivot (e.g. [4,5,6,7,0,1,2]). Return the index of a target value, or −1. Your algorithm must run in O(log n) time.",
+    "pattern": "binary-search", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Scanning from both ends is O(n); O(log n) on (mostly) sorted data means binary search." },
+      { "p": "hashing", "why": "Building a value → index map takes O(n), which breaks the O(log n) bound." },
+      { "p": "bs-answer", "why": "You are locating an index holding a value, not the smallest parameter that passes a feasibility check." }
+    ],
+    "trigger": { "answer": "must run in O(log n) time", "wrong": ["rotated at an unknown pivot", "distinct integers", "Return the index of a target value"], "why": "O(log n) + sorted structure ⇒ binary search. The rotation only changes how you decide which half to keep." },
+    "ds": { "answer": "lo / hi / mid indices on the array", "wrong": ["HashMap<Integer, Integer> value → index", "TreeMap<Integer, Integer> value → index", "ArrayDeque<Integer> of candidate indices"], "why": "Nothing beyond the indices." },
+    "invariant": { "answer": "If the target exists, it is inside [lo, hi]; at each mid one half is sorted, and you keep the half whose range can contain the target.", "wrong": ["nums[lo] ≤ nums[hi] at every step.", "mid always lands on the rotation pivot.", "The left half is always the sorted half."], "why": "Comparing nums[lo] with nums[mid] tells you which half is sorted; its endpoints tell you if the target is inside." },
+    "time": { "answer": "O(log n)", "wrong": ["O(n)", "O(n log n)", "O(log² n)"], "why": "Halving each step." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(√n)"], "why": "Iterative indices." },
+    "whyNot": { "wrong": ["Two pointers can't be used on rotated arrays at all.", "Two pointers needs a target sum, not a target value.", "Two pointers would need O(n) extra memory."] },
+    "approach": "Binary search. If nums[lo] ≤ nums[mid], the left half is sorted: go left if lo ≤ target < mid value, else right. Otherwise the right half is sorted: go right if mid value < target ≤ nums[hi], else left."
+  },
+  {
+    "id": "median-of-two-sorted-arrays", "title": "Median of Two Sorted Arrays", "slug": "median-of-two-sorted-arrays", "difficulty": "Hard",
+    "companies": ["Meta", "Amazon", "Google", "Microsoft", "Bloomberg"],
+    "statement": "Given two sorted arrays of sizes m and n, return the median of the combined values. The overall run time must be O(log (m+n)).",
+    "pattern": "binary-search", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Merging with two pointers up to the middle is O(m + n); the bound demands logarithmic time." },
+      { "p": "two-heaps", "why": "Two heaps give a running median of a stream in O(log n) per insert; here both inputs are already sorted, and building heaps is linear at best." },
+      { "p": "partition", "why": "Quickselect on the concatenated array is O(m + n) average and ignores that both arrays are sorted." }
+    ],
+    "trigger": { "answer": "O(log (m+n))", "wrong": ["two sorted arrays", "return the median", "sizes m and n"], "why": "Logarithmic time on sorted input ⇒ binary search; here you binary search the cut position in the shorter array." },
+    "ds": { "answer": "lo / hi indices for a cut in the shorter array; four boundary values", "wrong": ["PriorityQueue<Integer> max-heap and min-heap", "int[m + n] merged array", "TreeMap<Integer, Integer> value → count"], "why": "Only the elements either side of the two cuts matter." },
+    "invariant": { "answer": "The cuts split the combined values into two halves of equal size (±1); you search for the cut where maxLeftA ≤ minRightB and maxLeftB ≤ minRightA.", "wrong": ["The median is always at index (m + n) / 2 of the shorter array.", "Both cuts are always at the middle of their arrays.", "The left half contains only elements of the shorter array."], "why": "A valid cut means everything on the left is ≤ everything on the right, so the median is at the boundary." },
+    "time": { "answer": "O(log min(m, n))", "wrong": ["O(m + n)", "O((m + n) log(m + n))", "O(log m · log n)"], "why": "Binary search over the shorter array's cut positions." },
+    "space": { "answer": "O(1)", "wrong": ["O(m + n)", "O(log(m + n))", "O(min(m, n))"], "why": "A few indices and values." },
+    "whyNot": { "wrong": ["Two pointers can't handle arrays of different sizes.", "Two pointers only work on a single array.", "Two pointers would give the mean, not the median."] },
+    "approach": "Binary search i in the shorter array A; j = (m + n + 1) / 2 − i. If A[i−1] > B[j] move left; if B[j−1] > A[i] move right; else the median comes from max(left sides) and min(right sides)."
+  },
+  {
+    "id": "time-based-key-value-store", "title": "Time Based Key-Value Store", "slug": "time-based-key-value-store", "difficulty": "Medium",
+    "companies": ["Apple"],
+    "statement": "Design a store with set(key, value, timestamp) and get(key, timestamp). get returns the value set for key at the largest timestamp less than or equal to the given timestamp, or \"\" if none. Timestamps for set calls are strictly increasing.",
+    "pattern": "binary-search", "alternates": ["design"],
+    "nearMiss": [
+      { "p": "hashing", "why": "A map keyed by key alone keeps only the latest value; you need the value at or before an arbitrary timestamp." },
+      { "p": "heap-topk", "why": "A heap gives the max timestamp, not the largest one ≤ t." },
+      { "p": "monotonic-stack", "why": "There is no next-greater relationship; queries ask for a floor among already-sorted timestamps." }
+    ],
+    "trigger": { "answer": "largest timestamp less than or equal to", "wrong": ["Design a store", "or \"\" if none", "strictly increasing"], "why": "'Largest ≤ t' is a floor query on sorted keys: binary search per key, or TreeMap.floorEntry." },
+    "ds": { "answer": "HashMap<String, TreeMap<Integer, String>> using floorEntry (or a list of pairs + binary search)", "wrong": ["HashMap<String, String> latest value only", "PriorityQueue<int[]> per key", "HashMap<Integer, String> timestamp → value"], "why": "Per key, timestamps are sorted, so floor lookups are O(log n). Know floorKey/ceilingKey/higherKey/lowerKey." },
+    "invariant": { "answer": "Each key's timestamps are kept in increasing order, so the floor of t is found by binary search.", "wrong": ["Each key stores only its most recent value.", "All keys share one sorted list of timestamps.", "Timestamps are stored in decreasing order to make get O(1)."], "why": "Strictly increasing set timestamps make appending keep the list sorted for free." },
+    "time": { "answer": "set O(1) amortised (O(log n) with TreeMap), get O(log n)", "wrong": ["set O(n), get O(1)", "set O(1), get O(n)", "both O(n log n)"], "why": "Append (or tree insert) and a binary search per get." },
+    "space": { "answer": "O(total set calls)", "wrong": ["O(1)", "O(number of keys)", "O(maxTimestamp)"], "why": "Every value is kept." },
+    "whyNot": { "wrong": ["A HashMap can't use strings as keys.", "HashMap lookups are O(log n), too slow here.", "A HashMap would need timestamps sorted in decreasing order."] },
+    "approach": "map key → list of (timestamp, value) appended in order. get: binary search the last timestamp ≤ t (or use TreeMap.floorEntry)."
+  },
+  {
+    "id": "koko-eating-bananas", "title": "Koko Eating Bananas", "slug": "koko-eating-bananas", "difficulty": "Medium",
+    "companies": ["Amazon"],
+    "statement": "There are piles of bananas and h hours. Each hour Koko eats up to k bananas from one pile. Return the minimum integer eating speed k that lets her finish all piles within h hours.",
+    "pattern": "bs-answer", "alternates": [],
+    "nearMiss": [
+      { "p": "greedy", "why": "A greedy pass can CHECK whether a given speed works, but it can't choose the minimum speed on its own." },
+      { "p": "heap-topk", "why": "Eating from the largest pile first doesn't determine the speed; every pile is finished regardless of order." },
+      { "p": "dp-1d", "why": "There are no overlapping subproblems; the answer is one number with a monotonic yes/no check." }
+    ],
+    "trigger": { "answer": "minimum integer eating speed", "wrong": ["piles of bananas", "within h hours", "from one pile"], "why": "'Minimum value such that a check passes', where faster always still passes ⇒ binary search over the answer." },
+    "ds": { "answer": "lo / hi bounds on the speed (1..max pile) and a feasibility loop", "wrong": ["PriorityQueue<Integer> max-heap of piles", "int[] dp of hours per speed", "TreeMap<Integer, Integer> pile → count"], "why": "The search space is speeds, not array indices." },
+    "invariant": { "answer": "Every speed below lo is too slow and hi is fast enough; the gap halves each step.", "wrong": ["lo and hi are always valid pile sizes.", "The hours needed increase with speed.", "mid is always the average pile size."], "why": "hours(k) is non-increasing in k, so feasibility is monotonic." },
+    "time": { "answer": "O(n log M), M = largest pile", "wrong": ["O(n · M)", "O(n log n)", "O(M log n)"], "why": "log M candidate speeds, each checked in O(n)." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(M)", "O(log M)"], "why": "A few counters." },
+    "whyNot": { "wrong": ["Greedy algorithms can't use division.", "Greedy would need the piles sorted, which is too slow.", "Greedy only works when h equals the number of piles."] },
+    "approach": "lo = 1, hi = max(piles). While lo < hi: mid; hours = Σ ceil(p / mid); if hours ≤ h then hi = mid else lo = mid + 1."
+  },
+  {
+    "id": "capacity-to-ship-packages-within-d-days", "title": "Capacity To Ship Packages Within D Days", "slug": "capacity-to-ship-packages-within-d-days", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Packages with given weights must ship in the given order on a conveyor. Each day you load packages in order without exceeding the ship's capacity. Return the least capacity that ships everything within days days.",
+    "pattern": "bs-answer", "alternates": [],
+    "nearMiss": [
+      { "p": "greedy", "why": "Greedy loading checks a given capacity, but can't pick the least capacity by itself." },
+      { "p": "sliding-window", "why": "Packages are contiguous per day, but the number of days is fixed and the capacity unknown: you search the capacity, not a window." },
+      { "p": "heap-topk", "why": "Order is fixed, so picking heaviest packages first is not allowed." }
+    ],
+    "trigger": { "answer": "the least capacity", "wrong": ["in the given order", "within days days", "without exceeding the ship's capacity"], "why": "Least value such that a greedy check passes, and bigger capacities always pass ⇒ binary search on the answer." },
+    "ds": { "answer": "lo = max weight, hi = sum of weights, plus a greedy day counter", "wrong": ["PriorityQueue<Integer> of weights", "int[][] dp over (package, day)", "ArrayDeque<Integer> sliding window of weights"], "why": "Bounds come from the data; the check is one pass." },
+    "invariant": { "answer": "Capacities below lo can't ship in time; hi can. If mid works, the answer is ≤ mid.", "wrong": ["lo is always the lightest package.", "Days needed increase as capacity increases.", "mid always equals the average daily load."], "why": "Monotonic feasibility in the capacity." },
+    "time": { "answer": "O(n log(sum − max))", "wrong": ["O(n²)", "O(n · days)", "O(n log n)"], "why": "Binary search over the capacity range, O(n) per check." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(days)", "O(n · days)"], "why": "Counters only." },
+    "whyNot": { "wrong": ["Greedy can't keep packages in order.", "Greedy needs the weights sorted.", "Greedy only works when days = 1."] },
+    "approach": "Binary search capacity in [max, sum]. Check: walk weights, start a new day when the load would exceed capacity; feasible if days used ≤ D."
+  }
+]

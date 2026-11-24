@@ -1,0 +1,128 @@
+[
+  {
+    "id": "kth-largest-element-in-an-array", "title": "Kth Largest Element in an Array", "slug": "kth-largest-element-in-an-array", "difficulty": "Medium",
+    "companies": ["Meta"],
+    "statement": "Given an unsorted integer array and an integer k, return the kth largest element. Can you do it without fully sorting the array?",
+    "pattern": "heap-topk", "alternates": ["partition"],
+    "nearMiss": [
+      { "p": "binary-search", "why": "The array is unsorted; sorting first is the O(n log n) baseline the follow-up asks you to beat." },
+      { "p": "two-heaps", "why": "Two heaps track the middle (median) of a stream; one size-k heap is enough for the kth largest." },
+      { "p": "monotonic-stack", "why": "Next-greater relationships don't rank elements globally." }
+    ],
+    "trigger": { "answer": "kth largest element", "wrong": ["unsorted integer array", "without fully sorting the array", "an integer k"], "why": "'kth largest' ⇒ size-k min-heap (O(n log k)) or quickselect (O(n) average)." },
+    "ds": { "answer": "PriorityQueue<Integer> min-heap capped at size k", "wrong": [{ "t": "PriorityQueue<Integer> max-heap of all n elements", "why": "Works, but O(n + k log n) with O(n) space; the size-k min-heap is the expected answer." }, "TreeSet<Integer> of all values", "int[] sorted copy"], "why": "The root of a size-k min-heap is the kth largest. TreeSet would also drop duplicates." },
+    "invariant": { "answer": "The heap holds the k largest elements seen so far; its root is the smallest of them, i.e. the current kth largest.", "wrong": ["The heap holds the k smallest elements seen so far.", "The heap's root is the largest element seen.", "The heap holds every element greater than the root's initial value."], "why": "Anything smaller than the root can't be in the top k." },
+    "time": { "answer": "O(n log k)", "wrong": ["O(n log n)", "O(k log n)", "O(n · k)"], "why": "n pushes and pops on a heap of size k. (Quickselect: O(n) average.)" },
+    "space": { "answer": "O(k)", "wrong": ["O(n)", "O(1)", "O(n log k)"], "why": "The heap. (Quickselect: O(1).)" },
+    "whyNot": { "wrong": ["Binary search can't find the largest element.", "Binary search needs k to be a power of two.", "Binary search only works on arrays without duplicates."] },
+    "approach": "Push each number into a min-heap; pop when size > k. Return the root. Alternative: quickselect with a random pivot."
+  },
+  {
+    "id": "top-k-frequent-elements", "title": "Top K Frequent Elements", "slug": "top-k-frequent-elements", "difficulty": "Medium",
+    "companies": ["Amazon"],
+    "statement": "Given an integer array and k, return the k most frequent elements in any order. Your solution must be better than O(n log n).",
+    "pattern": "heap-topk", "alternates": ["partition"],
+    "nearMiss": [
+      { "p": "hashing", "why": "Counting needs a map, but a map alone doesn't select the top k; that step is the heap (or bucket sort)." },
+      { "p": "sliding-window", "why": "Frequency is global over the array, not within a contiguous window." },
+      { "p": "two-heaps", "why": "Two heaps balance halves for a median; top-k needs one bounded heap." }
+    ],
+    "trigger": { "answer": "the k most frequent elements", "wrong": ["in any order", "better than O(n log n)", "Given an integer array"], "why": "'k most …' ⇒ count, then keep a size-k heap ordered by count (or bucket by count)." },
+    "ds": { "answer": "HashMap<Integer, Integer> counts + PriorityQueue<int[]> min-heap by count, size k", "wrong": ["TreeMap<Integer, Integer> value → count", "int[] counts sorted descending", "ArrayDeque<Integer> of values"], "why": "Count in O(n), select in O(u log k) for u distinct values. Bucket sort by count is the O(n) alternative." },
+    "invariant": { "answer": "The heap holds the k highest-count elements seen so far; the root has the lowest count among them.", "wrong": ["The heap holds the k elements with the largest values.", "The heap root is the most frequent element.", "The heap contains every distinct element."], "why": "Any element with a smaller count than the root is not in the top k." },
+    "time": { "answer": "O(n log k)", "wrong": ["O(n log n)", "O(n · k)", "O(k log n)"], "why": "Counting is O(n); heap work O(u log k) with u ≤ n." },
+    "space": { "answer": "O(n)", "wrong": ["O(k)", "O(1)", "O(n log k)"], "why": "The count map dominates." },
+    "whyNot": { "wrong": ["A HashMap can't count integers.", "Hash maps are O(n log n) per lookup.", "A HashMap would return the k largest values instead."] },
+    "approach": "Count with a map. Push (value, count) into a min-heap by count; pop when size > k. Return the heap's values. Or bucket sort: buckets[count] lists, read from high counts."
+  },
+  {
+    "id": "find-median-from-data-stream", "title": "Find Median from Data Stream", "slug": "find-median-from-data-stream", "difficulty": "Hard",
+    "companies": [],
+    "statement": "Design a structure that supports addNum(num) for a stream of integers and findMedian() returning the median of all numbers added so far. Both should be efficient for many calls.",
+    "pattern": "two-heaps", "alternates": [],
+    "nearMiss": [
+      { "p": "binary-search", "why": "Binary-search insertion into a sorted list finds the slot in O(log n) but shifting elements makes each insert O(n)." },
+      { "p": "heap-topk", "why": "One heap gives an extreme (min or max), not the middle." },
+      { "p": "partition", "why": "Quickselect per query is O(n) each time; the stream needs incremental updates." }
+    ],
+    "trigger": { "answer": "median of all numbers added so far", "wrong": ["a stream of integers", "efficient for many calls", "Design a structure"], "why": "Running median ⇒ max-heap for the lower half, min-heap for the upper half." },
+    "ds": { "answer": "PriorityQueue<Integer> max-heap (low half) + PriorityQueue<Integer> min-heap (high half)", "wrong": ["ArrayList<Integer> kept sorted", "TreeSet<Integer> of values", "One PriorityQueue<Integer> min-heap"], "why": "Tops of the two heaps are the middle elements. TreeSet would also lose duplicates." },
+    "invariant": { "answer": "max(low) ≤ min(high), and low has the same number of elements as high or one more.", "wrong": ["Both heaps always hold the same number of elements.", "low holds the newest half of the stream.", "high's root is the median."], "why": "Then the median is low's top, or the average of both tops." },
+    "time": { "answer": "addNum O(log n), findMedian O(1)", "wrong": ["addNum O(n), findMedian O(1)", "addNum O(1), findMedian O(n log n)", "both O(n)"], "why": "A constant number of heap operations per insert." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(√n)"], "why": "Every number is stored once." },
+    "whyNot": { "wrong": ["Binary search can't find a median.", "Binary search needs the stream to be finite.", "Binary search would need two arrays."] },
+    "approach": "Add to low; move low's top to high; if high is bigger, move its top back to low. Median = low.peek() (odd) or (low.peek() + high.peek()) / 2.0."
+  },
+  {
+    "id": "ipo", "title": "IPO", "slug": "ipo", "difficulty": "Hard",
+    "companies": [],
+    "statement": "You start with capital w and may finish at most k projects. Each project has a required capital and a profit that is added to your capital when done. Choose projects to maximise final capital.",
+    "pattern": "two-heaps", "alternates": ["greedy"],
+    "nearMiss": [
+      { "p": "knapsack", "why": "Capital grows after each project, so this isn't a fixed-capacity knapsack; greedily taking the best affordable project is optimal." },
+      { "p": "backtracking", "why": "Trying every order of k projects is exponential." },
+      { "p": "intervals", "why": "Projects have no start/end times to sort and merge." }
+    ],
+    "trigger": { "answer": "a profit that is added to your capital", "wrong": ["at most k projects", "start with capital w", "maximise final capital"], "why": "Affordable set grows over time: keep unaffordable projects in a min-heap by capital, move them into a max-heap by profit as capital rises, take the best." },
+    "ds": { "answer": "PriorityQueue<int[]> min-heap by capital + PriorityQueue<Integer> max-heap by profit", "wrong": ["int[] dp over capital values", "TreeMap<Integer, Integer> profit → capital", "ArrayDeque<int[]> of projects"], "why": "One heap gates projects by requirement, the other picks the most profitable unlocked one." },
+    "invariant": { "answer": "Every project with capital ≤ w is in the profit heap; every other project waits in the capital heap.", "wrong": ["The profit heap holds all projects from the start.", "Projects are taken in input order.", "The capital heap holds completed projects."], "why": "Then taking the profit heap's top is always the best affordable choice." },
+    "time": { "answer": "O((n + k) log n)", "wrong": ["O(n · k)", "O(2ⁿ)", "O(n · w)"], "why": "Each project moves between heaps once; k pops." },
+    "space": { "answer": "O(n)", "wrong": ["O(k)", "O(1)", "O(w)"], "why": "Both heaps." },
+    "whyNot": { "wrong": ["Knapsack can't handle profits.", "Knapsack needs k to be 1.", "Knapsack only works when capitals are sorted."] },
+    "approach": "Sort/heap projects by capital. Repeat k times: move every project with capital ≤ w into a max-heap by profit; if empty stop; w += pop."
+  },
+  {
+    "id": "meeting-rooms-iii", "title": "Meeting Rooms III", "slug": "meeting-rooms-iii", "difficulty": "Hard",
+    "companies": ["Apple"],
+    "statement": "There are n rooms numbered 0..n−1. Meetings with unique start times are assigned in start order to the lowest-numbered free room; if none is free, the meeting is delayed until the earliest room frees up, keeping its duration. Return the room that held the most meetings.",
+    "pattern": "two-heaps", "alternates": ["intervals"],
+    "nearMiss": [
+      { "p": "greedy", "why": "The assignment rule is fixed (lowest free room), so there's nothing to choose; the difficulty is simulating it efficiently." },
+      { "p": "union-find", "why": "Rooms aren't merged into groups; they cycle between free and busy." },
+      { "p": "sliding-window", "why": "There's no contiguous window property; it's an event simulation." }
+    ],
+    "trigger": { "answer": "lowest-numbered free room", "wrong": ["unique start times", "keeping its duration", "the room that held the most meetings"], "why": "Two orderings at once: free rooms by number, busy rooms by end time ⇒ two min-heaps." },
+    "ds": { "answer": "PriorityQueue<Integer> free rooms by index + PriorityQueue<long[]> busy rooms by (endTime, index)", "wrong": ["TreeMap<Integer, Integer> start → room", "int[] next free time scanned linearly", "ArrayDeque<Integer> queue of rooms"], "why": "Scanning all n rooms per meeting is O(m · n); heaps make each step O(log n). Use long for end times." },
+    "invariant": { "answer": "Before assigning a meeting, every room whose meeting ended by its start time has been moved from busy to free.", "wrong": ["Free rooms are always kept in the order they became free.", "Busy rooms are ordered by room number.", "A delayed meeting keeps its original end time."], "why": "Then the free heap's top is the lowest-numbered available room; if empty, the busy heap's top frees first." },
+    "time": { "answer": "O(m log m + m log n)", "wrong": ["O(m · n)", "O(n log m)", "O(m²)"], "why": "Sort meetings, then constant heap operations per meeting." },
+    "space": { "answer": "O(n)", "wrong": ["O(m · n)", "O(1)", "O(m²)"], "why": "Heaps and counters per room." },
+    "whyNot": { "wrong": ["Greedy algorithms can't handle delays.", "Greedy needs meetings sorted by end time.", "Greedy would always pick room 0."] },
+    "approach": "Sort by start. For each meeting: release busy rooms with end ≤ start into free. If free is non-empty, take its smallest room; else pop the earliest-ending busy room and shift the meeting to start at that end. Count per room."
+  },
+  {
+    "id": "merge-k-sorted-lists", "title": "Merge k Sorted Lists", "slug": "merge-k-sorted-lists", "difficulty": "Hard",
+    "companies": [],
+    "statement": "You are given k linked lists, each sorted in ascending order. Merge them into one sorted linked list and return it.",
+    "pattern": "k-way-merge", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Two pointers merge TWO lists; merging k lists one by one is O(N · k)." },
+      { "p": "partition", "why": "Sorting all values again ignores that every list is already sorted: O(N log N)." },
+      { "p": "linked-list", "why": "The pointer work is easy; the hard part is picking the smallest head among k quickly." }
+    ],
+    "trigger": { "answer": "k linked lists, each sorted", "wrong": ["in ascending order", "return it", "one sorted linked list"], "why": "k sorted sources and you always need the smallest current head ⇒ heap of heads." },
+    "ds": { "answer": "PriorityQueue<ListNode> ordered by val, plus a dummy head", "wrong": ["ArrayList<Integer> of all values then sort", "TreeMap<Integer, ListNode>", "ArrayDeque<ListNode> queue of heads"], "why": "Comparator.comparingInt(n -> n.val); poll the smallest, offer its next." },
+    "invariant": { "answer": "The heap holds exactly one unconsumed node from each non-empty list, so its root is the smallest remaining node overall.", "wrong": ["The heap holds all N nodes at once.", "The heap is ordered by list index.", "The heap's root is the largest remaining node."], "why": "Each list's next element can only be ≥ its current head." },
+    "time": { "answer": "O(N log k), N = total nodes", "wrong": ["O(N · k)", "O(N log N)", "O(k log N)"], "why": "N polls and offers on a heap of size k." },
+    "space": { "answer": "O(k)", "wrong": ["O(N)", "O(1)", "O(N log k)"], "why": "The heap (the output reuses the input nodes)." },
+    "whyNot": { "wrong": ["Two pointers can't work on linked lists.", "Two pointers only work on arrays of equal length.", "Two pointers would lose the sorted order."] },
+    "approach": "Offer all non-null heads to a min-heap. Poll the smallest, append to tail, offer its next. Return dummy.next. (Divide-and-conquer pairwise merging is also O(N log k).)"
+  },
+  {
+    "id": "find-k-pairs-with-smallest-sums", "title": "Find K Pairs with Smallest Sums", "slug": "find-k-pairs-with-smallest-sums", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given two integer arrays sorted in ascending order and an integer k, return the k pairs (u, v), with u from the first array and v from the second, that have the smallest sums.",
+    "pattern": "k-way-merge", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Two pointers can't enumerate pairs in sum order: the next-smallest pair may move either index." },
+      { "p": "backtracking", "why": "Generating all m · n pairs and sorting is O(mn log mn)." },
+      { "p": "binary-search", "why": "Binary searching a sum threshold can count pairs, but listing exactly k in order is simpler with a heap." }
+    ],
+    "trigger": { "answer": "the k pairs", "wrong": ["sorted in ascending order", "the smallest sums", "u from the first array"], "why": "Each u defines a sorted list of pairs (u, v₀), (u, v₁), …; you want the k smallest across those lists ⇒ k-way merge." },
+    "ds": { "answer": "PriorityQueue<int[]> of {sum, i, j} seeded with (i, 0) for the first k values of i", "wrong": ["int[m][n] table of all sums", "TreeMap<Integer, List<int[]>> sum → pairs", "ArrayDeque<int[]> of pairs"], "why": "When (i, j) is popped, push (i, j + 1): the next element of that row's list." },
+    "invariant": { "answer": "The heap holds the next unseen pair from each row list; the root is the smallest unseen pair overall.", "wrong": ["The heap holds all m · n pairs.", "The heap is ordered by i.", "Pairs are popped in order of v."], "why": "Within a row, sums only increase as j increases." },
+    "time": { "answer": "O(k log k)", "wrong": ["O(m · n log(m · n))", "O(m · n)", "O(k²)"], "why": "At most k pops and k pushes on a heap of size ≤ k." },
+    "space": { "answer": "O(k)", "wrong": ["O(m · n)", "O(1)", "O(m + n)"], "why": "The heap and the output." },
+    "whyNot": { "wrong": ["Two pointers can't add numbers.", "Two pointers need equal-length arrays.", "Two pointers would return pairs from the same array."] },
+    "approach": "Push (nums1[i] + nums2[0], i, 0) for i < min(k, m). Repeat k times: pop (s, i, j), record the pair, push (i, j + 1) if j + 1 < n."
+  }
+]

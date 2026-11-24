@@ -1,0 +1,92 @@
+[
+  {
+    "id": "linked-list-cycle-ii", "title": "Linked List Cycle II", "slug": "linked-list-cycle-ii", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given the head of a singly linked list, return the node where a cycle begins, or null if there is no cycle. Use O(1) extra memory and do not modify the list.",
+    "pattern": "fast-slow", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "A visited HashSet finds the entry, but it costs O(n) memory and the problem asks for O(1)." },
+      { "p": "linked-list", "why": "Reversing or rewiring links would modify the list, and it still wouldn't locate the entry node." },
+      { "p": "two-pointers", "why": "There is no far end to converge from: a singly linked list (possibly cyclic) is only walked forward." }
+    ],
+    "trigger": { "answer": "where a cycle begins", "wrong": ["singly linked list", "do not modify the list", "return the node"], "why": "A cycle in a 'next'-linked sequence with O(1) memory is Floyd's tortoise and hare: meet inside the cycle, then reset one pointer to find the entry." },
+    "ds": { "answer": "Two ListNode references (slow, fast), then a third from head", "wrong": ["HashSet<ListNode> of visited nodes", "ArrayDeque<ListNode> used as a stack", "HashMap<ListNode, Integer> node → position"], "why": "Pointers only; that is what makes it O(1) space." },
+    "invariant": { "answer": "Inside the cycle, fast closes the gap to slow by one node per step, so they must meet; then head and the meeting point are equally far from the entry.", "wrong": ["slow and fast are always the same distance apart.", "fast reaches null exactly when a cycle exists.", "The meeting point is always the cycle entry."], "why": "The distance algebra (2(a + b) = a + b + k·c ⇒ a = k·c − b) is why resetting one pointer to head works." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(c²) for cycle length c"], "why": "Each phase walks at most a constant number of laps." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(c) for cycle length c"], "why": "Three references." },
+    "whyNot": { "wrong": ["A HashSet can't store ListNode objects.", "Hashing would need the list sorted first.", "A HashSet can detect a cycle but never its entry."] },
+    "approach": "slow += 1, fast += 2 until they meet (or fast hits null ⇒ no cycle). Then move a pointer from head and one from the meeting point one step at a time; where they meet is the entry."
+  },
+  {
+    "id": "find-the-duplicate-number", "title": "Find the Duplicate Number", "slug": "find-the-duplicate-number", "difficulty": "Medium",
+    "companies": [],
+    "statement": "An array of n + 1 integers holds values in the range 1..n, so at least one value repeats. Return the repeated value without modifying the array and using only O(1) extra space.",
+    "pattern": "fast-slow", "alternates": ["bs-answer"],
+    "nearMiss": [
+      { "p": "cyclic-sort", "why": "Swapping values into their home index finds it quickly, but it modifies the array, which is not allowed." },
+      { "p": "hashing", "why": "A HashSet finds it in O(n) time but needs O(n) extra space." },
+      { "p": "bit", "why": "XOR cancellation only works when the duplicate appears exactly twice; here it may appear many times." }
+    ],
+    "trigger": { "answer": "without modifying the array and using only O(1) extra space", "wrong": ["values in the range 1..n", "at least one value repeats", "an array of n + 1 integers"], "why": "Values in 1..n can be read as 'next' links (i → nums[i]); a duplicate value means two links into one node: a cycle. No modification + O(1) space ⇒ Floyd." },
+    "ds": { "answer": "Two int 'pointers' following i → nums[i]", "wrong": ["HashSet<Integer> of seen values", "boolean[] seen of size n + 1", "int[] sorted copy"], "why": "The array itself is the linked structure; two indices walk it." },
+    "invariant": { "answer": "Following i → nums[i] from index 0 forms a path into a cycle, and the cycle's entry is the duplicated value.", "wrong": ["The duplicate is always at index n.", "nums[i] == i for every non-duplicate i.", "The slow pointer only visits each index once in total."], "why": "Two indices hold the duplicate value, so two edges point at that node: the entry of the cycle." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(log n)"], "why": "Floyd's two phases are linear. (Binary search on the value range would be O(n log n).)" },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(√n)"], "why": "Two indices." },
+    "whyNot": { "wrong": ["Cyclic sort only works on sorted arrays.", "Cyclic sort needs values in 0..n−1, not 1..n.", "Cyclic sort uses O(n) extra space."] },
+    "approach": "slow = nums[slow], fast = nums[nums[fast]] until equal. Then reset one to 0 and step both by one; where they meet is the duplicate."
+  },
+  {
+    "id": "reverse-linked-list", "title": "Reverse Linked List", "slug": "reverse-linked-list", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Given the head of a singly linked list, reverse the list in place and return the new head.",
+    "pattern": "linked-list", "alternates": [],
+    "nearMiss": [
+      { "p": "stack", "why": "Pushing nodes onto a stack and rebuilding works, but uses O(n) extra space; rewiring pointers is O(1)." },
+      { "p": "two-pointers", "why": "Swapping values from both ends needs random access, which a singly linked list doesn't have." },
+      { "p": "fast-slow", "why": "Fast/slow finds positions (middle, cycle); reversal is about rewiring each link." }
+    ],
+    "trigger": { "answer": "reverse the list in place", "wrong": ["singly linked list", "return the new head", "Given the head"], "why": "In-place reversal of links = the prev / curr / next three-pointer walk." },
+    "ds": { "answer": "Three ListNode references: prev, curr, next", "wrong": ["ArrayDeque<ListNode> as a stack", "ArrayList<Integer> of values", "HashMap<ListNode, ListNode> child → parent"], "why": "Save next, point curr back to prev, advance." },
+    "invariant": { "answer": "prev is the head of the already-reversed part; curr is the head of the untouched remainder.", "wrong": ["prev always points to the original head.", "curr.next is always null.", "The list is fully reversed after the first iteration."], "why": "Each step moves one node from the remainder to the front of the reversed part." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(1)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(n²)"], "why": "Three references (the recursive version uses O(n) stack)." },
+    "whyNot": { "wrong": ["A stack can't hold ListNode objects.", "A stack would reverse the list twice.", "A stack only works for lists with an even length."] },
+    "approach": "prev = null; while curr != null: next = curr.next; curr.next = prev; prev = curr; curr = next. Return prev."
+  },
+  {
+    "id": "reverse-nodes-in-k-group", "title": "Reverse Nodes in k-Group", "slug": "reverse-nodes-in-k-group", "difficulty": "Hard",
+    "companies": [],
+    "statement": "Reverse the nodes of a linked list k at a time and return the modified list. If fewer than k nodes remain at the end, leave them as they are. Use only O(1) extra memory.",
+    "pattern": "linked-list", "alternates": [],
+    "nearMiss": [
+      { "p": "stack", "why": "A stack of k nodes reverses each group easily, but costs O(k) memory, and the problem asks for O(1)." },
+      { "p": "fast-slow", "why": "Speed-difference pointers find middles and cycles; here you count k nodes and rewire them." },
+      { "p": "two-pointers", "why": "Swapping values from the ends of each group needs random access; a singly linked list only goes forward." }
+    ],
+    "trigger": { "answer": "k at a time", "wrong": ["return the modified list", "fewer than k nodes remain", "Use only O(1) extra memory"], "why": "Reversing sub-lists in place = the reversal walk applied per group, with a dummy head to reconnect groups." },
+    "ds": { "answer": "A dummy ListNode plus groupPrev / prev / curr / next references", "wrong": ["ArrayDeque<ListNode> holding k nodes", "ArrayList<ListNode> of all nodes", "int[] of values, then rebuild"], "why": "The dummy removes the head special case; groupPrev reconnects each reversed group." },
+    "invariant": { "answer": "Everything before groupPrev.next is final; each group is reversed only after confirming k nodes exist.", "wrong": ["Every group, including the last partial one, is reversed.", "groupPrev always points to the original head.", "The list length is always a multiple of k."], "why": "Checking k nodes ahead before rewiring keeps the tail intact." },
+    "time": { "answer": "O(n)", "wrong": ["O(n · k)", "O(n²)", "O(n log k)"], "why": "Each node is visited a constant number of times (count ahead, then reverse)." },
+    "space": { "answer": "O(1)", "wrong": ["O(k)", "O(n)", "O(n / k)"], "why": "Only a few references." },
+    "whyNot": { "wrong": ["A stack can't reverse linked-list nodes.", "A stack would reverse the whole list instead of groups.", "A stack only works when k is even."] },
+    "approach": "dummy → head. Repeatedly: find the kth node from groupPrev (stop if missing); reverse the group with the prev/curr walk; connect groupPrev to the new group head and the old group head to the next group; advance groupPrev."
+  },
+  {
+    "id": "add-two-numbers", "title": "Add Two Numbers", "slug": "add-two-numbers", "difficulty": "Medium",
+    "companies": ["Meta", "Amazon", "Google", "Microsoft", "Bloomberg"],
+    "statement": "Two non-empty linked lists store non-negative integers with their digits in reverse order (ones digit first). Add the two numbers and return the sum as a linked list in the same reverse-digit format.",
+    "pattern": "linked-list", "alternates": [],
+    "nearMiss": [
+      { "p": "stack", "why": "Stacks are needed when digits are stored most-significant first (Add Two Numbers II); here they already come ones-first." },
+      { "p": "bit", "why": "Converting the lists to int/long overflows for long numbers; add digit by digit with a carry." },
+      { "p": "fast-slow", "why": "Both lists advance one node per step; there is no speed difference involved." }
+    ],
+    "trigger": { "answer": "digits in reverse order", "wrong": ["non-negative integers", "Two non-empty linked lists", "return the sum as a linked list"], "why": "Ones digit first means you can add left to right with a carry while building a new list behind a dummy head." },
+    "ds": { "answer": "A dummy ListNode with a tail pointer, plus an int carry", "wrong": ["ArrayDeque<Integer> stacks for both lists", "long accumulators for both numbers", "BigInteger converted from strings"], "why": "Build the result node by node; the carry is the only state." },
+    "invariant": { "answer": "After each step, the result list holds the correct low digits of the sum so far, and carry is what flows into the next digit.", "wrong": ["carry is always 0 or 2.", "Both lists always have the same length.", "The result list is built from the most significant digit."], "why": "Standard column addition, one column per node." },
+    "time": { "answer": "O(max(m, n))", "wrong": ["O(m · n)", "O((m + n) log(m + n))", "O(1)"], "why": "One pass over the longer list (plus a final carry)." },
+    "space": { "answer": "O(1) extra (the output list is not counted)", "wrong": ["O(m · n)", "O(m + n) for two stacks", "O(log n)"], "why": "Only the carry and pointers besides the output." },
+    "whyNot": { "wrong": ["Stacks can't store digits.", "A stack would make the sum overflow.", "Stacks only work when both lists are the same length."] },
+    "approach": "dummy, tail, carry = 0. While either list or carry remains: sum = digits + carry; append sum % 10; carry = sum / 10; advance. Return dummy.next."
+  }
+]

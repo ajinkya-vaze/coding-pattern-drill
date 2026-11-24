@@ -1,0 +1,2172 @@
+{
+  "families": [
+    {
+      "id": "dfs",
+      "name": "Depth-first search",
+      "aliases": [
+        "dfs",
+        "depth first search",
+        "recursion",
+        "recursive dfs"
+      ],
+      "members": [
+        "tree-dfs",
+        "graph-traversal",
+        "backtracking"
+      ],
+      "accept": [
+        "tree-dfs",
+        "graph-traversal"
+      ]
+    },
+    {
+      "id": "bfs",
+      "name": "Breadth-first search",
+      "aliases": [
+        "bfs",
+        "breadth first search",
+        "queue bfs"
+      ],
+      "members": [
+        "tree-bfs",
+        "graph-traversal",
+        "multi-source-bfs",
+        "topo-sort"
+      ],
+      "accept": [
+        "tree-bfs",
+        "graph-traversal"
+      ]
+    },
+    {
+      "id": "dp",
+      "name": "Dynamic programming",
+      "aliases": [
+        "dp",
+        "dynamic programming",
+        "memoization",
+        "memoisation",
+        "tabulation"
+      ],
+      "members": [
+        "dp-1d",
+        "dp-2d",
+        "knapsack",
+        "state-dp",
+        "kadane"
+      ],
+      "accept": []
+    },
+    {
+      "id": "pointers",
+      "name": "Pointers",
+      "aliases": [
+        "pointer",
+        "pointer technique"
+      ],
+      "members": [
+        "two-pointers",
+        "fast-slow",
+        "sliding-window"
+      ],
+      "accept": []
+    },
+    {
+      "id": "graph",
+      "name": "Graph algorithm",
+      "aliases": [
+        "graph",
+        "graph algorithm",
+        "graph search"
+      ],
+      "members": [
+        "graph-traversal",
+        "multi-source-bfs",
+        "topo-sort",
+        "union-find",
+        "shortest-path"
+      ],
+      "accept": []
+    },
+    {
+      "id": "sorting",
+      "name": "Sorting",
+      "aliases": [
+        "sort",
+        "sorting",
+        "sort first"
+      ],
+      "members": [
+        "intervals",
+        "greedy",
+        "two-pointers"
+      ],
+      "accept": []
+    }
+  ],
+  "patterns": [
+    {
+      "id": "hashing",
+      "order": 1,
+      "group": "Arrays & strings",
+      "name": "Hash map / set",
+      "aliases": [
+        "hash map",
+        "hashmap",
+        "hash set",
+        "hashset",
+        "hash table",
+        "dictionary",
+        "map",
+        "set",
+        "frequency map",
+        "counting",
+        "complement lookup"
+      ],
+      "triggers": [
+        "\"have I seen this before?\" / complement lookup (target − x)",
+        "count occurrences, group by a key (anagrams, same signature)",
+        "need O(1) membership to remove a nested loop"
+      ],
+      "template": "One pass: for each x, check map for what x needs, then record x.",
+      "javaDs": "HashMap<K, V>, HashSet<T>; int[26] when the key is a lowercase letter",
+      "invariant": "After processing index i, the map holds exactly the information about elements 0..i that a later element could need.",
+      "lesson": {
+        "summary": "Trade memory for time: store what you have seen so each new element is answered with an O(1) lookup instead of a scan. Most 'nested loop' brute forces collapse into one pass once you ask 'what would I need to have seen already?'. Grouping problems use a canonical key (sorted string, char-count signature) as the map key.",
+        "javaSkeleton": "Map<Integer, Integer> seen = new HashMap<>(); // value -> index\nfor (int i = 0; i < nums.length; i++) {\n    int need = target - nums[i];\n    Integer j = seen.get(need);\n    if (j != null) return new int[] { j, i };\n    seen.put(nums[i], i);   // record AFTER the check: no self-pairing\n}\n\n// grouping: key -> bucket\nMap<String, List<String>> groups = new HashMap<>();\ngroups.computeIfAbsent(key, k -> new ArrayList<>()).add(word);\n\n// counting\ncount.merge(x, 1, Integer::sum);",
+        "complexity": "O(n) time on average (hash ops are O(1) amortised), O(n) extra space for the map.",
+        "pitfalls": [
+          "Inserting before checking lets an element pair with itself.",
+          "Using a mutable array (char[]) as a map key: arrays use identity hashCode. Convert to String or use List.",
+          "Forgetting that worst-case hashing is O(n) per op (rarely matters in interviews, but say 'amortised O(1)')."
+        ],
+        "vs": [
+          {
+            "pattern": "two-pointers",
+            "difference": "Two pointers needs sorted input and gives O(1) space; hashing works unsorted at O(n) space. If the input is already sorted, interviewers expect two pointers."
+          },
+          {
+            "pattern": "prefix-sum",
+            "difference": "When the thing you look up is a running sum (subarray sums), it is prefix sum + hash map, not plain hashing."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Hash table",
+          "url": "https://www.techinterviewhandbook.org/algorithms/hash-table/",
+          "kind": "article"
+        },
+        {
+          "title": "Java HashMap API (merge, computeIfAbsent, getOrDefault)",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "two-pointers",
+      "order": 2,
+      "group": "Arrays & strings",
+      "name": "Two pointers",
+      "aliases": [
+        "two pointer",
+        "left right pointer",
+        "opposite pointer",
+        "converging pointer",
+        "read write pointer",
+        "in place pointer"
+      ],
+      "triggers": [
+        "array is sorted (or can be sorted) and you need a pair / triplet / closest sum",
+        "palindrome check, reverse in place",
+        "in-place compaction: remove duplicates / move zeros / merge from the back"
+      ],
+      "template": "lo = 0, hi = n−1; compare; move the pointer that can only improve the answer.",
+      "javaDs": "int indices on the array itself (no extra structure); Arrays.sort first if needed",
+      "invariant": "Every pair outside [lo, hi] has already been ruled out, so moving a pointer never skips a possible answer.",
+      "lesson": {
+        "summary": "Two indices walk the array so each step permanently discards candidates. Converging pointers (lo/hi) need an ordering so you know which side to move; same-direction read/write pointers compact an array in place. Sorting first (O(n log n)) is usually fine and turns O(n²) pair search into O(n).",
+        "javaSkeleton": "Arrays.sort(nums);\nint lo = 0, hi = nums.length - 1;\nwhile (lo < hi) {\n    int sum = nums[lo] + nums[hi];\n    if (sum == target) return true;\n    if (sum < target) lo++;   // need bigger\n    else hi--;                // need smaller\n}\n\n// read/write compaction\nint write = 0;\nfor (int read = 0; read < nums.length; read++) {\n    if (keep(nums[read])) nums[write++] = nums[read];\n}",
+        "complexity": "O(n) per scan (O(n log n) if you sort first; O(n²) for 3Sum = sort + n scans). O(1) extra space.",
+        "pitfalls": [
+          "Skipping duplicates in 3Sum: skip equal values for the fixed index AND after finding a match.",
+          "Using two pointers on unsorted data where the move direction is meaningless.",
+          "Off-by-one: lo < hi (pairs) vs lo <= hi (single element checks)."
+        ],
+        "vs": [
+          {
+            "pattern": "hashing",
+            "difference": "Hashing handles unsorted input in O(n) space; two pointers wants order and uses O(1) space."
+          },
+          {
+            "pattern": "sliding-window",
+            "difference": "Sliding window pointers both move forward to maintain a contiguous window with a property; converging pointers come from both ends."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "USACO Guide: Two pointers",
+          "url": "https://usaco.guide/silver/two-pointers",
+          "kind": "article"
+        },
+        {
+          "title": "Tech Interview Handbook: Array (two-pointer techniques)",
+          "url": "https://www.techinterviewhandbook.org/algorithms/array/",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "fast-slow",
+      "order": 3,
+      "group": "Linked lists",
+      "name": "Fast & slow pointers",
+      "aliases": [
+        "fast slow pointer",
+        "fast and slow pointer",
+        "floyd",
+        "floyd cycle detection",
+        "tortoise hare",
+        "tortoise and hare",
+        "cycle detection",
+        "runner technique"
+      ],
+      "triggers": [
+        "linked list (or function x → f(x)) and a \"cycle\"",
+        "find the middle / nth from the end in one pass",
+        "O(1) extra space and a sequence that must eventually repeat"
+      ],
+      "template": "slow = slow.next; fast = fast.next.next; meeting ⇒ cycle; reset one to head to find the entry.",
+      "javaDs": "two ListNode references (or two ints when following index → value links)",
+      "invariant": "Each step fast gains one node on slow, so inside a cycle the gap shrinks by one per step and they must meet.",
+      "lesson": {
+        "summary": "Two pointers at different speeds on a sequence defined by 'next'. If there is a cycle they meet; resetting one pointer to the start and moving both one step at a time makes them meet at the cycle entry (Floyd). Speeds 1 and 2 also find the middle in one pass. Works on arrays whose values point to indices (Find the Duplicate Number).",
+        "javaSkeleton": "ListNode slow = head, fast = head;\nwhile (fast != null && fast.next != null) {\n    slow = slow.next;\n    fast = fast.next.next;\n    if (slow == fast) {               // cycle found\n        ListNode p = head;\n        while (p != slow) { p = p.next; slow = slow.next; }\n        return p;                      // cycle entry\n    }\n}\nreturn null;",
+        "complexity": "O(n) time, O(1) space.",
+        "pitfalls": [
+          "Null checks: test fast != null && fast.next != null before fast.next.next.",
+          "Using a HashSet works but is O(n) space; interviewers asking 'O(1) space' want Floyd.",
+          "For the middle of an even list, decide whether you want the first or second middle."
+        ],
+        "vs": [
+          {
+            "pattern": "hashing",
+            "difference": "A visited set also detects cycles but costs O(n) space."
+          },
+          {
+            "pattern": "cyclic-sort",
+            "difference": "Cyclic sort rearranges/marks values in range 1..n by mutating the array; Floyd finds a duplicate without modifying it."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Wikipedia: Cycle detection (Floyd's tortoise and hare)",
+          "url": "https://en.wikipedia.org/wiki/Cycle_detection",
+          "kind": "reference"
+        },
+        {
+          "title": "Tech Interview Handbook: Linked list",
+          "url": "https://www.techinterviewhandbook.org/algorithms/linked-list/",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "linked-list",
+      "order": 4,
+      "group": "Linked lists",
+      "name": "Linked-list manipulation (dummy head / reversal)",
+      "aliases": [
+        "linked list",
+        "linked list reversal",
+        "reverse linked list",
+        "in place reversal",
+        "dummy head",
+        "dummy node",
+        "pointer rewiring"
+      ],
+      "triggers": [
+        "reverse a list, a sub-list, or every k nodes",
+        "build a new list while walking others (merge, add numbers digit by digit)",
+        "O(1) extra space on a linked list"
+      ],
+      "template": "dummy → head; prev/curr/next rewiring; return dummy.next.",
+      "javaDs": "ListNode references: dummy, prev, curr, next (tail when building)",
+      "invariant": "Everything before curr is already in its final order and reachable from prev (or dummy); curr onwards is untouched.",
+      "lesson": {
+        "summary": "Most linked-list questions are careful pointer rewiring. A dummy node removes head special cases. Reversal is the three-pointer dance prev/curr/next. Building a result list (Add Two Numbers, merge) walks inputs with a tail pointer and a carry or comparison.",
+        "javaSkeleton": "ListNode prev = null, curr = head;\nwhile (curr != null) {\n    ListNode next = curr.next;\n    curr.next = prev;\n    prev = curr;\n    curr = next;\n}\nreturn prev;   // new head\n\n// building with a dummy\nListNode dummy = new ListNode(0), tail = dummy;\nwhile (...) { tail.next = new ListNode(v); tail = tail.next; }\nreturn dummy.next;",
+        "complexity": "O(n) time, O(1) extra space (O(n) only for the output list you build).",
+        "pitfalls": [
+          "Losing the rest of the list: save curr.next before rewiring.",
+          "Forgetting the final carry in Add Two Numbers.",
+          "Reversing in k-groups: only reverse a group if k nodes remain; reconnect the group's tail to the next group."
+        ],
+        "vs": [
+          {
+            "pattern": "fast-slow",
+            "difference": "Fast/slow finds positions (middle, cycle); manipulation changes links. Reorder List uses both."
+          },
+          {
+            "pattern": "stack",
+            "difference": "A stack can reverse values in O(n) space; in-place rewiring does it in O(1)."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Linked list",
+          "url": "https://www.techinterviewhandbook.org/algorithms/linked-list/",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: Linked list",
+          "url": "https://en.wikipedia.org/wiki/Linked_list",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "sliding-window",
+      "order": 5,
+      "group": "Arrays & strings",
+      "name": "Sliding window",
+      "aliases": [
+        "sliding window",
+        "window",
+        "variable window",
+        "fixed window",
+        "expand shrink window",
+        "caterpillar"
+      ],
+      "triggers": [
+        "longest / shortest / count of CONTIGUOUS subarray or substring",
+        "\"at most k\" distinct / replacements / zeros",
+        "window validity is monotonic: growing can only break it, shrinking can only fix it"
+      ],
+      "template": "for right: add s[right]; while invalid: remove s[left++]; update best.",
+      "javaDs": "int[128] / int[26] counts or HashMap<Character,Integer>; two int indices",
+      "invariant": "After the shrink loop, [left, right] is the longest valid window ending at right.",
+      "lesson": {
+        "summary": "A window [left, right] slides over a contiguous range. Grow right every step; shrink left only while the window breaks the rule. Each index enters and leaves once, so it is O(n). It only works when the rule is monotonic: if a window is invalid, every larger window containing it is invalid too. Negative numbers usually break that for sum targets.",
+        "javaSkeleton": "int[] count = new int[128];\nint left = 0, best = 0;\nfor (int right = 0; right < s.length(); right++) {\n    count[s.charAt(right)]++;\n    while (windowInvalid(count)) {\n        count[s.charAt(left)]--;\n        left++;\n    }\n    best = Math.max(best, right - left + 1);\n}\nreturn best;",
+        "complexity": "O(n) time: each element is added and removed at most once. O(k) or O(alphabet) space for the counts.",
+        "pitfalls": [
+          "Applying it to sums with negative numbers: shrinking no longer reliably fixes the window (use prefix sum).",
+          "Updating the answer before the window is valid again.",
+          "Minimum-window problems update the best INSIDE the shrink loop; maximum-window problems update after it."
+        ],
+        "vs": [
+          {
+            "pattern": "prefix-sum",
+            "difference": "Exact-sum or with negatives → prefix sum + hash map. Sliding window needs the monotonic 'grow breaks / shrink fixes' property."
+          },
+          {
+            "pattern": "two-pointers",
+            "difference": "Both pointers move forward and the window's contents matter; converging pointers work from both ends on sorted data."
+          },
+          {
+            "pattern": "monotonic-deque",
+            "difference": "If you need the max/min inside each window, add a monotonic deque on top of the window."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "USACO Guide: Sliding window",
+          "url": "https://usaco.guide/gold/sliding-window",
+          "kind": "article"
+        },
+        {
+          "title": "Tech Interview Handbook: String (sliding window section)",
+          "url": "https://www.techinterviewhandbook.org/algorithms/string/",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "monotonic-deque",
+      "order": 6,
+      "group": "Arrays & strings",
+      "name": "Monotonic deque",
+      "parent": "sliding-window",
+      "aliases": [
+        "monotonic deque",
+        "monotonic queue",
+        "mono deque",
+        "deque window max",
+        "sliding window maximum deque"
+      ],
+      "triggers": [
+        "max / min of every window of size k",
+        "need the best element in a window that slides, in O(1) per step",
+        "DP where dp[i] depends on the max/min of the last k values"
+      ],
+      "template": "Deque of indices with decreasing values: pop back while smaller, pop front if out of window, front is the max.",
+      "javaDs": "ArrayDeque<Integer> holding indices (pollFirst / pollLast / peekFirst / peekLast)",
+      "invariant": "Deque indices are inside the window and their values are strictly decreasing front to back, so the front is the window max.",
+      "lesson": {
+        "summary": "Keep only the elements that could still become the window's max (or min). A new element evicts every smaller element behind it because they can never win again; the front leaves when it slides out of range. Every index is pushed and popped once.",
+        "javaSkeleton": "Deque<Integer> dq = new ArrayDeque<>();   // indices, values decreasing\nfor (int i = 0; i < nums.length; i++) {\n    while (!dq.isEmpty() && nums[dq.peekLast()] <= nums[i]) dq.pollLast();\n    dq.offerLast(i);\n    if (dq.peekFirst() <= i - k) dq.pollFirst();     // out of window\n    if (i >= k - 1) result[i - k + 1] = nums[dq.peekFirst()];\n}",
+        "complexity": "O(n) time (each index enters and leaves once), O(k) space.",
+        "pitfalls": [
+          "Storing values instead of indices: you can't tell when the front leaves the window.",
+          "Using a heap gives O(n log k) and needs lazy deletion; the deque is the expected O(n).",
+          "Getting < vs <= wrong when popping changes which duplicate survives."
+        ],
+        "vs": [
+          {
+            "pattern": "heap-topk",
+            "difference": "A heap also tracks the max but removing stale elements is awkward; O(n log k) vs O(n)."
+          },
+          {
+            "pattern": "monotonic-stack",
+            "difference": "Monotonic stack only pops from one end (next greater element); the deque also expires items from the front as the window slides."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "cp-algorithms: Minimum stack / minimum queue",
+          "url": "https://cp-algorithms.com/data_structures/stack_queue_modification.html",
+          "kind": "article"
+        },
+        {
+          "title": "Java ArrayDeque API",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ArrayDeque.html",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "prefix-sum",
+      "order": 7,
+      "group": "Arrays & strings",
+      "name": "Prefix sum (+ hash map)",
+      "aliases": [
+        "prefix sum",
+        "prefix sums",
+        "running sum",
+        "cumulative sum",
+        "prefix sum hash map",
+        "prefix product",
+        "prefix max",
+        "prefix maximum",
+        "prefix suffix array",
+        "left right max array",
+        "prefix and suffix"
+      ],
+      "triggers": [
+        "count subarrays whose sum EQUALS k (especially with negatives)",
+        "sum of any range, many queries",
+        "subarray sum divisible by k / multiple of k (prefix mod)"
+      ],
+      "template": "sum(i..j) = P[j+1] − P[i]; store prefix → count in a map, look up P − k.",
+      "javaDs": "HashMap<Integer, Integer> prefix → count (seed {0: 1}); long[] prefix array for range queries",
+      "invariant": "Before processing index i, the map holds the counts of every prefix sum ending before i.",
+      "lesson": {
+        "summary": "A subarray sum is a difference of two prefix sums. To count subarrays summing to k, walk once keeping a running sum S and ask 'how many earlier prefixes equal S − k?'. Seed the map with 0 → 1 for subarrays starting at index 0. It works with negatives, which is exactly where sliding window fails. Prefix products (left/right passes) solve Product Except Self.",
+        "javaSkeleton": "Map<Integer, Integer> seen = new HashMap<>();\nseen.put(0, 1);              // empty prefix\nint sum = 0, count = 0;\nfor (int x : nums) {\n    sum += x;\n    count += seen.getOrDefault(sum - k, 0);\n    seen.merge(sum, 1, Integer::sum);\n}\nreturn count;",
+        "complexity": "O(n) time, O(n) space for the map.",
+        "pitfalls": [
+          "Forgetting the {0: 1} seed misses subarrays that start at index 0.",
+          "Updating the map before the lookup counts the empty subarray when k = 0.",
+          "For 'multiple of k', store sum % k and normalise negatives ((s % k) + k) % k."
+        ],
+        "vs": [
+          {
+            "pattern": "sliding-window",
+            "difference": "Sliding window needs non-negative numbers (monotonic window). Exact target with negatives → prefix sum."
+          },
+          {
+            "pattern": "kadane",
+            "difference": "Kadane finds the max sum; prefix sum + map counts or locates sums equal to a target."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "USACO Guide: Prefix sums",
+          "url": "https://usaco.guide/silver/prefix-sums",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: Prefix sum",
+          "url": "https://en.wikipedia.org/wiki/Prefix_sum",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "kadane",
+      "order": 8,
+      "group": "Arrays & strings",
+      "name": "Kadane / running best",
+      "aliases": [
+        "kadane",
+        "kadanes",
+        "kadane algorithm",
+        "max subarray",
+        "running minimum",
+        "running max",
+        "one pass best so far"
+      ],
+      "triggers": [
+        "maximum (or minimum) sum / product of a contiguous subarray",
+        "best single buy-then-sell: max of (price − lowest price so far)",
+        "each position decides: extend the previous run or start fresh"
+      ],
+      "template": "cur = max(x, cur + x); best = max(best, cur).",
+      "javaDs": "two scalars (cur, best); track curMin too for products",
+      "invariant": "cur is the best sum of a subarray ending exactly at index i; best is the best seen anywhere so far.",
+      "lesson": {
+        "summary": "A tiny DP: the best subarray ending at i either extends the best one ending at i−1 or starts at i. Keep only that running value and the global best. Variants: track min as well as max for products (a negative flips them); track the minimum price so far for one-transaction stock profit.",
+        "javaSkeleton": "int cur = nums[0], best = nums[0];\nfor (int i = 1; i < nums.length; i++) {\n    cur = Math.max(nums[i], cur + nums[i]);\n    best = Math.max(best, cur);\n}\nreturn best;\n\n// stock: one transaction\nint minPrice = Integer.MAX_VALUE, profit = 0;\nfor (int p : prices) {\n    minPrice = Math.min(minPrice, p);\n    profit = Math.max(profit, p - minPrice);\n}",
+        "complexity": "O(n) time, O(1) space.",
+        "pitfalls": [
+          "Initialising best to 0 fails when every number is negative.",
+          "For max product, swap max and min when the current value is negative.",
+          "Buying after selling: always update minPrice from earlier days only."
+        ],
+        "vs": [
+          {
+            "pattern": "prefix-sum",
+            "difference": "Prefix sum answers 'equals k' questions; Kadane answers 'maximum'."
+          },
+          {
+            "pattern": "sliding-window",
+            "difference": "No size or validity constraint to shrink against, so there is no left pointer: just extend-or-restart."
+          },
+          {
+            "pattern": "dp-1d",
+            "difference": "Kadane is 1D DP with the array collapsed to one variable."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Wikipedia: Maximum subarray problem (Kadane's algorithm)",
+          "url": "https://en.wikipedia.org/wiki/Maximum_subarray_problem",
+          "kind": "reference"
+        },
+        {
+          "title": "cp-algorithms: Subarray with the maximum sum",
+          "url": "https://cp-algorithms.com/others/maximum_average_segment.html",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "binary-search",
+      "order": 9,
+      "group": "Searching",
+      "name": "Binary search",
+      "aliases": [
+        "binary search",
+        "bisect",
+        "lower bound",
+        "upper bound",
+        "log n search",
+        "modified binary search",
+        "rotated array search"
+      ],
+      "triggers": [
+        "sorted (or rotated sorted) array and O(log n) required",
+        "first / last position, insert position, floor / ceiling",
+        "lookup by timestamp or version (largest key ≤ t)"
+      ],
+      "template": "lo/hi; mid = lo + (hi − lo) / 2; keep the half that can still contain the answer.",
+      "javaDs": "int indices on the array; TreeMap.floorKey / ceilingKey; Collections.binarySearch",
+      "invariant": "If the answer exists it is always inside [lo, hi]; every iteration shrinks that range.",
+      "lesson": {
+        "summary": "Halve the search space using order. Write it as 'find the first index where a condition becomes true' (lower bound) and most variants fall out. Rotated arrays: one half is always sorted, check whether the target lies in it. In Java, TreeMap gives you floorKey/ceilingKey/higherKey/lowerKey in O(log n) when data arrives over time.",
+        "javaSkeleton": "// first index with nums[i] >= target (lower bound)\nint lo = 0, hi = nums.length;          // hi is exclusive\nwhile (lo < hi) {\n    int mid = lo + (hi - lo) / 2;\n    if (nums[mid] >= target) hi = mid;\n    else lo = mid + 1;\n}\nreturn lo;\n\n// timestamped values\nTreeMap<Integer, String> history = new TreeMap<>();\nMap.Entry<Integer, String> e = history.floorEntry(t);  // largest key <= t",
+        "complexity": "O(log n) per search, O(1) space (TreeMap ops O(log n)).",
+        "pitfalls": [
+          "(lo + hi) / 2 can overflow; use lo + (hi − lo) / 2.",
+          "Mixing inclusive and exclusive hi leads to infinite loops; pick one style and keep it.",
+          "Rotated array with duplicates degrades to O(n) worst case."
+        ],
+        "vs": [
+          {
+            "pattern": "bs-answer",
+            "difference": "Classic binary search looks for an index in data; search-on-answer binary searches a numeric answer range with a feasibility check."
+          },
+          {
+            "pattern": "two-pointers",
+            "difference": "Two pointers scans sorted data linearly for pairs; binary search jumps to one target in log time."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "USACO Guide: Binary search",
+          "url": "https://usaco.guide/silver/binary-search",
+          "kind": "article"
+        },
+        {
+          "title": "cp-algorithms: Binary search",
+          "url": "https://cp-algorithms.com/num_methods/binary_search.html",
+          "kind": "article"
+        },
+        {
+          "title": "Java TreeMap API (floorKey, ceilingKey, higherKey, lowerKey)",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeMap.html",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "bs-answer",
+      "order": 10,
+      "group": "Searching",
+      "name": "Binary search on the answer",
+      "parent": "binary-search",
+      "aliases": [
+        "binary search on answer",
+        "binary search the answer",
+        "search on answer",
+        "parametric search",
+        "binary search on result",
+        "minimize maximum",
+        "binary search feasibility"
+      ],
+      "triggers": [
+        "minimise the maximum / maximise the minimum",
+        "smallest speed / capacity / days such that something is possible",
+        "a yes/no check that is monotonic in the answer"
+      ],
+      "template": "lo..hi = answer range; if feasible(mid) hi = mid else lo = mid + 1.",
+      "javaDs": "two longs for the answer range + a greedy feasible(x) helper; no extra structure",
+      "invariant": "feasible is false for every value below lo and true at hi, so lo == hi is the smallest feasible answer.",
+      "lesson": {
+        "summary": "When the answer is a number and 'can we do it with x?' is easy to check and monotonic (if x works, x+1 works), binary search over x. Each check is usually a greedy O(n) pass. The data does not need to be sorted: the answer space is.",
+        "javaSkeleton": "long lo = 1, hi = maxPossible;\nwhile (lo < hi) {\n    long mid = lo + (hi - lo) / 2;\n    if (feasible(mid)) hi = mid;   // mid works: try smaller\n    else lo = mid + 1;\n}\nreturn lo;\n\nboolean feasible(long speed) {\n    long hours = 0;\n    for (int p : piles) hours += (p + speed - 1) / speed;  // ceil\n    return hours <= h;\n}",
+        "complexity": "O(n · log(range)) time, O(1) space.",
+        "pitfalls": [
+          "Wrong bounds: lo must be a valid minimum (often 1 or max(element)), hi a value that surely works (sum or max).",
+          "Integer overflow in the check; use long.",
+          "Non-monotonic feasibility means binary search is invalid; prove monotonicity first."
+        ],
+        "vs": [
+          {
+            "pattern": "binary-search",
+            "difference": "Searching an index in sorted data vs searching a numeric answer with a check."
+          },
+          {
+            "pattern": "greedy",
+            "difference": "The feasibility check is usually greedy, but greedy alone can't pick the optimal parameter."
+          },
+          {
+            "pattern": "dp-1d",
+            "difference": "'Split array into k parts minimising the largest sum' has a DP, but binary search on the answer is simpler and faster."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "USACO Guide: Binary search (searching on the answer)",
+          "url": "https://usaco.guide/silver/binary-search",
+          "kind": "article"
+        },
+        {
+          "title": "cp-algorithms: Binary search (search on arbitrary predicate)",
+          "url": "https://cp-algorithms.com/num_methods/binary_search.html",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "stack",
+      "order": 11,
+      "group": "Stacks",
+      "name": "Stack (matching / parsing)",
+      "aliases": [
+        "stack",
+        "parentheses stack",
+        "bracket matching",
+        "matching stack",
+        "expression stack",
+        "parsing stack",
+        "call stack simulation"
+      ],
+      "triggers": [
+        "brackets / parentheses: valid, balanced, minimum removals",
+        "nested structure: decode k[...], evaluate expressions, simplify paths",
+        "most recent unmatched item matters first (LIFO)"
+      ],
+      "template": "push openers (or state); on a closer pop and match/combine.",
+      "javaDs": "ArrayDeque<Character> / ArrayDeque<Integer> used as a stack (push / pop / peek)",
+      "invariant": "The stack holds exactly the still-open items, innermost on top.",
+      "lesson": {
+        "summary": "LIFO matches nesting: the most recently opened thing must close first. Push openers or partial state; when a closer arrives, pop and check or combine. For decoding/evaluation push the current context (count, built string, running result, sign) when entering a nested level and restore it when leaving.",
+        "javaSkeleton": "Deque<Character> stack = new ArrayDeque<>();\nfor (char c : s.toCharArray()) {\n    if (c == '(' || c == '[' || c == '{') stack.push(c);\n    else {\n        if (stack.isEmpty() || stack.pop() != matching(c)) return false;\n    }\n}\nreturn stack.isEmpty();",
+        "complexity": "O(n) time, O(n) space in the worst case (all openers).",
+        "pitfalls": [
+          "Popping an empty stack: check isEmpty first.",
+          "Forgetting to check the stack is empty at the end.",
+          "Using java.util.Stack (synchronised, legacy); prefer ArrayDeque."
+        ],
+        "vs": [
+          {
+            "pattern": "monotonic-stack",
+            "difference": "A monotonic stack keeps values sorted to answer next-greater/smaller; a matching stack mirrors nesting."
+          },
+          {
+            "pattern": "two-pointers",
+            "difference": "For a single bracket type, a counter (balance) replaces the stack; with several types you need the stack."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Stack",
+          "url": "https://www.techinterviewhandbook.org/algorithms/stack/",
+          "kind": "article"
+        },
+        {
+          "title": "Java ArrayDeque API (push, pop, peek)",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ArrayDeque.html",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "monotonic-stack",
+      "order": 12,
+      "group": "Stacks",
+      "name": "Monotonic stack",
+      "parent": "stack",
+      "aliases": [
+        "monotonic stack",
+        "mono stack",
+        "monotone stack",
+        "increasing stack",
+        "decreasing stack",
+        "next greater element",
+        "next smaller element"
+      ],
+      "triggers": [
+        "next greater / next smaller / previous smaller element",
+        "days until a warmer temperature, stock span",
+        "largest rectangle / how far each bar can extend"
+      ],
+      "template": "for i: while stack top is worse than a[i], pop and resolve it with i; push i.",
+      "javaDs": "ArrayDeque<Integer> of indices (values monotonic from bottom to top)",
+      "invariant": "Indices on the stack have not found their next greater element yet, and their values are decreasing from bottom to top.",
+      "lesson": {
+        "summary": "Keep a stack of indices whose answer is still unknown, ordered so the top is the easiest to resolve. When a new element beats the top, it IS the top's answer: pop and record. Each index is pushed and popped once, so O(n). Largest Rectangle uses the same idea: when a bar is popped, the new top is its left boundary and the current index its right boundary.",
+        "javaSkeleton": "int[] answer = new int[n];\nDeque<Integer> stack = new ArrayDeque<>();   // indices\nfor (int i = 0; i < n; i++) {\n    while (!stack.isEmpty() && temps[stack.peek()] < temps[i]) {\n        int j = stack.pop();\n        answer[j] = i - j;     // i is j's next warmer day\n    }\n    stack.push(i);\n}\nreturn answer;",
+        "complexity": "O(n) time (amortised: each index pushed/popped once), O(n) space.",
+        "pitfalls": [
+          "Pushing values instead of indices loses the distance information.",
+          "Strict vs non-strict comparison changes how duplicates are handled.",
+          "Largest Rectangle: add a sentinel height 0 at the end to flush the stack."
+        ],
+        "vs": [
+          {
+            "pattern": "stack",
+            "difference": "Matching stacks mirror nesting; monotonic stacks maintain sorted order to resolve 'next greater' queries."
+          },
+          {
+            "pattern": "monotonic-deque",
+            "difference": "Deque version also drops from the front when items leave a fixed-size window."
+          },
+          {
+            "pattern": "two-pointers",
+            "difference": "Trapping Rain Water has both a two-pointer and a monotonic-stack solution; two pointers is O(1) space."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Wikipedia: All nearest smaller values",
+          "url": "https://en.wikipedia.org/wiki/All_nearest_smaller_values",
+          "kind": "reference"
+        },
+        {
+          "title": "techinterview.org: Monotonic stack and queue patterns",
+          "url": "https://www.techinterview.org/post/3233474175/coding-interview-monotonic-stack-queue-patterns-next-greater-element-sliding-window-maximum-histogram-temperature/",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "heap-topk",
+      "order": 13,
+      "group": "Heaps",
+      "name": "Heap / top-k",
+      "aliases": [
+        "heap",
+        "priority queue",
+        "priorityqueue",
+        "min heap",
+        "max heap",
+        "top k",
+        "kth largest",
+        "kth smallest",
+        "bounded heap"
+      ],
+      "triggers": [
+        "k largest / smallest / closest / most frequent",
+        "kth element, repeatedly take the best remaining",
+        "schedule by earliest finish / highest priority"
+      ],
+      "template": "Keep a min-heap of size k; push each item, pop when size > k; the heap holds the top k.",
+      "javaDs": "PriorityQueue<T> with a Comparator (min-heap by default; Comparator.reverseOrder() or comparingInt for max)",
+      "invariant": "The heap always holds the k best items seen so far; its root is the worst of them (the current kth).",
+      "lesson": {
+        "summary": "A heap gives O(log n) insert and O(1) peek at the min (or max). For top-k, keep a heap of size k ordered so the weakest of the kept items is at the root: anything worse than the root is discarded. That is O(n log k), better than sorting when k ≪ n. Quickselect is the O(n) average alternative; bucket sort works when keys are small integers like frequencies.",
+        "javaSkeleton": "PriorityQueue<int[]> heap = new PriorityQueue<>(\n        Comparator.comparingInt(e -> e[1]));      // min-heap by count\nfor (Map.Entry<Integer, Integer> e : count.entrySet()) {\n    heap.offer(new int[] { e.getKey(), e.getValue() });\n    if (heap.size() > k) heap.poll();              // drop the weakest\n}\n// heap now holds the k most frequent",
+        "complexity": "O(n log k) time, O(k) heap space (plus O(n) for any counting map).",
+        "pitfalls": [
+          "Using a max-heap of all n items is O(n log n); the size-k min-heap is the expected answer.",
+          "Comparator subtraction (a - b) can overflow; use Integer.compare or Comparator.comparingInt.",
+          "PriorityQueue iteration order is NOT sorted; poll repeatedly if order matters."
+        ],
+        "vs": [
+          {
+            "pattern": "partition",
+            "difference": "Quickselect is O(n) average but O(n²) worst and mutates the array; heap is O(n log k) and streams."
+          },
+          {
+            "pattern": "two-heaps",
+            "difference": "Two heaps track the middle (median); one heap tracks an extreme."
+          },
+          {
+            "pattern": "k-way-merge",
+            "difference": "K-way merge also uses a heap, but holds one current head per sorted list."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Heap",
+          "url": "https://www.techinterviewhandbook.org/algorithms/heap/",
+          "kind": "article"
+        },
+        {
+          "title": "Java PriorityQueue API",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "two-heaps",
+      "order": 14,
+      "group": "Heaps",
+      "name": "Two heaps",
+      "parent": "heap-topk",
+      "aliases": [
+        "two heap",
+        "two priority queue",
+        "max heap min heap",
+        "dual heap",
+        "median heap",
+        "running median"
+      ],
+      "triggers": [
+        "running median of a stream",
+        "split items into a lower and upper half and keep them balanced",
+        "pick the best item among those currently affordable/available (IPO, scheduling)"
+      ],
+      "template": "max-heap for the low half, min-heap for the high half; rebalance so sizes differ by ≤ 1.",
+      "javaDs": "PriorityQueue<Integer> low = new PriorityQueue<>(Comparator.reverseOrder()); PriorityQueue<Integer> high = new PriorityQueue<>();",
+      "invariant": "Every element in low ≤ every element in high, and low.size() is equal to or one more than high.size().",
+      "lesson": {
+        "summary": "Keep the smaller half in a max-heap and the larger half in a min-heap. The median is the top of low (odd count) or the average of both tops. A second use: one heap holds items not yet unlocked (sorted by requirement), the other holds unlocked items (sorted by value), and you move items across as your capacity grows.",
+        "javaSkeleton": "PriorityQueue<Integer> low = new PriorityQueue<>(Comparator.reverseOrder());\nPriorityQueue<Integer> high = new PriorityQueue<>();\n\nvoid add(int x) {\n    low.offer(x);\n    high.offer(low.poll());              // keep order: max(low) <= min(high)\n    if (high.size() > low.size()) low.offer(high.poll());\n}\n\ndouble median() {\n    return low.size() > high.size() ? low.peek()\n                                    : (low.peek() + (long) high.peek()) / 2.0;\n}",
+        "complexity": "O(log n) per insert, O(1) per median, O(n) space.",
+        "pitfalls": [
+          "Forgetting to route each insert through both heaps breaks the ordering invariant.",
+          "Integer overflow when averaging the two tops.",
+          "Sliding-window median also needs deletion: use lazy deletion or a TreeMap/TreeSet multiset."
+        ],
+        "vs": [
+          {
+            "pattern": "heap-topk",
+            "difference": "One heap answers 'k-th / extreme'; the median sits between two halves."
+          },
+          {
+            "pattern": "binary-search",
+            "difference": "Inserting into a sorted list keeps a median too, but insertion is O(n)."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Heap (two heaps technique)",
+          "url": "https://www.techinterviewhandbook.org/algorithms/heap/",
+          "kind": "article"
+        },
+        {
+          "title": "Java PriorityQueue API",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "k-way-merge",
+      "order": 15,
+      "group": "Heaps",
+      "name": "K-way merge",
+      "aliases": [
+        "k way merge",
+        "kway merge",
+        "merge k sorted",
+        "heap of heads",
+        "multiway merge"
+      ],
+      "triggers": [
+        "merge k sorted lists / arrays / streams",
+        "smallest range or k smallest pairs across several sorted lists",
+        "next item overall = smallest current head among k sources"
+      ],
+      "template": "Heap of the current head of each list; poll the smallest, push that list's next.",
+      "javaDs": "PriorityQueue<ListNode> (or int[] {value, listIdx, elemIdx}) ordered by value",
+      "invariant": "The heap holds exactly one unconsumed head per non-empty list, so its root is the smallest remaining element overall.",
+      "lesson": {
+        "summary": "Each sorted list's next element is a candidate; the global next is the smallest candidate. A heap of size k gives that in O(log k). Pairs problems treat each row of a sorted matrix (or each index of the first array) as a list.",
+        "javaSkeleton": "PriorityQueue<ListNode> heap = new PriorityQueue<>(Comparator.comparingInt(n -> n.val));\nfor (ListNode head : lists) if (head != null) heap.offer(head);\nListNode dummy = new ListNode(0), tail = dummy;\nwhile (!heap.isEmpty()) {\n    ListNode node = heap.poll();\n    tail.next = node;\n    tail = node;\n    if (node.next != null) heap.offer(node.next);\n}\nreturn dummy.next;",
+        "complexity": "O(N log k) time for N total elements, O(k) heap space.",
+        "pitfalls": [
+          "Adding null heads to the heap.",
+          "Merging lists pairwise one after another is O(N·k); divide-and-conquer pairing is O(N log k) too.",
+          "For arrays, store indices in the heap entry, not just values."
+        ],
+        "vs": [
+          {
+            "pattern": "heap-topk",
+            "difference": "Top-k keeps the best k items from one collection; k-way merge keeps one frontier item per source."
+          },
+          {
+            "pattern": "two-pointers",
+            "difference": "Merging TWO sorted lists is plain two pointers; the heap is needed when k grows."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Wikipedia: K-way merge algorithm",
+          "url": "https://en.wikipedia.org/wiki/K-way_merge_algorithm",
+          "kind": "reference"
+        },
+        {
+          "title": "Tech Interview Handbook: Heap",
+          "url": "https://www.techinterviewhandbook.org/algorithms/heap/",
+          "kind": "article"
+        }
+      ],
+      "parent": "heap-topk"
+    },
+    {
+      "id": "intervals",
+      "order": 16,
+      "group": "Intervals & greedy",
+      "name": "Intervals (sort + sweep)",
+      "aliases": [
+        "interval",
+        "merge interval",
+        "interval merge",
+        "sweep line",
+        "line sweep",
+        "meeting room",
+        "interval scheduling",
+        "sort by start"
+      ],
+      "triggers": [
+        "list of [start, end] ranges: overlap, merge, insert, free time",
+        "how many rooms / resources at the same time",
+        "events that begin and end (+1 at start, −1 at end)"
+      ],
+      "template": "Sort by start; compare each start with the last kept end; merge or emit.",
+      "javaDs": "int[][] sorted with Arrays.sort(a, Comparator.comparingInt(x -> x[0])); List<int[]> result; PriorityQueue<Integer> of end times for rooms",
+      "invariant": "After processing interval i, the result list is the merged form of intervals 0..i and its last entry is the only one that can still grow.",
+      "lesson": {
+        "summary": "Sorting by start time means an interval can only overlap the most recent merged one. For 'how many at once', either sweep sorted start and end times separately, or keep a min-heap of end times (rooms in use) and free the earliest-ending room when it ends before the next start.",
+        "javaSkeleton": "Arrays.sort(intervals, Comparator.comparingInt(a -> a[0]));\nList<int[]> merged = new ArrayList<>();\nfor (int[] cur : intervals) {\n    if (merged.isEmpty() || merged.get(merged.size() - 1)[1] < cur[0]) {\n        merged.add(cur);\n    } else {\n        int[] last = merged.get(merged.size() - 1);\n        last[1] = Math.max(last[1], cur[1]);\n    }\n}\nreturn merged.toArray(new int[0][]);",
+        "complexity": "O(n log n) for the sort, O(n) sweep; O(n) output space.",
+        "pitfalls": [
+          "Touching intervals ([1,2],[2,3]): decide whether they overlap from the problem statement.",
+          "Forgetting Math.max when merging: a later interval can be fully contained.",
+          "Comparator with a[0] - b[0] can overflow for large values."
+        ],
+        "vs": [
+          {
+            "pattern": "greedy",
+            "difference": "Removing the fewest intervals to avoid overlap is greedy by END time, not merge-by-start."
+          },
+          {
+            "pattern": "heap-topk",
+            "difference": "Meeting Rooms II adds a min-heap of end times to the sort."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Interval",
+          "url": "https://www.techinterviewhandbook.org/algorithms/interval/",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: Interval scheduling",
+          "url": "https://en.wikipedia.org/wiki/Interval_scheduling",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "greedy",
+      "order": 17,
+      "group": "Intervals & greedy",
+      "name": "Greedy",
+      "aliases": [
+        "greedy",
+        "greedy choice",
+        "locally optimal",
+        "exchange argument",
+        "earliest end first",
+        "farthest reach"
+      ],
+      "triggers": [
+        "minimum number of jumps / removals / arrows, maximum non-overlapping",
+        "a local choice that is provably never worse (exchange argument)",
+        "can you reach the end / complete the circuit"
+      ],
+      "template": "Sort or scan by the right key; take the locally best option; never revisit.",
+      "javaDs": "usually scalars (farthest reach, tank) and a sort; sometimes a PriorityQueue or int[26] counts",
+      "invariant": "After each step, the choices made so far can be extended to an optimal solution (no regret).",
+      "lesson": {
+        "summary": "Make the best local decision and never undo it. It is only correct when you can argue that swapping any optimal solution's choice for yours does not make it worse. Typical keys: earliest end time, farthest reach so far, highest frequency first. If you can't justify it, it is probably DP.",
+        "javaSkeleton": "// Jump Game: can we reach the last index?\nint farthest = 0;\nfor (int i = 0; i < nums.length; i++) {\n    if (i > farthest) return false;       // stuck before i\n    farthest = Math.max(farthest, i + nums[i]);\n}\nreturn true;",
+        "complexity": "Usually O(n) or O(n log n) with a sort, O(1) extra space.",
+        "pitfalls": [
+          "Greedy without a proof: Coin Change with arbitrary coins is NOT greedy.",
+          "Sorting by start instead of end for interval-selection problems.",
+          "Task Scheduler: the formula (maxCount − 1)·(n + 1) + ties must be maxed with the task count."
+        ],
+        "vs": [
+          {
+            "pattern": "dp-1d",
+            "difference": "DP explores all choices; greedy commits to one. Use DP when a local choice can be wrong."
+          },
+          {
+            "pattern": "intervals",
+            "difference": "Merging is a sweep by start; choosing a max set of non-overlapping intervals is greedy by end."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "USACO Guide: Greedy algorithms with sorting",
+          "url": "https://usaco.guide/silver/greedy-sorting",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: Greedy algorithm",
+          "url": "https://en.wikipedia.org/wiki/Greedy_algorithm",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "tree-dfs",
+      "order": 18,
+      "group": "Trees",
+      "name": "Tree DFS (recursion)",
+      "aliases": [
+        "tree dfs",
+        "tree recursion",
+        "recursive tree",
+        "postorder",
+        "preorder",
+        "inorder",
+        "inorder traversal",
+        "dfs on tree",
+        "divide and conquer tree"
+      ],
+      "triggers": [
+        "binary tree: depth, diameter, path sum, validate, lowest common ancestor",
+        "answer for a node combines answers from its children",
+        "BST property (inorder is sorted, bounds per subtree)"
+      ],
+      "template": "solve(node): base case null; left = solve(node.left); right = solve(node.right); combine.",
+      "javaDs": "recursion (implicit call stack); TreeNode references; optionally a field for a global best",
+      "invariant": "solve(node) returns the correct answer for the subtree rooted at node, assuming the recursive calls do.",
+      "lesson": {
+        "summary": "Decide what each call returns for its subtree, then combine children. Two flavours: pass information down (bounds for BST validation, running path sum) or bubble information up (height, best path through a child). When the global answer differs from what a parent needs (diameter, max path sum), return one thing and update a field for the other.",
+        "javaSkeleton": "int best = Integer.MIN_VALUE;\n\nint gain(TreeNode node) {           // best downward path starting at node\n    if (node == null) return 0;\n    int left = Math.max(0, gain(node.left));\n    int right = Math.max(0, gain(node.right));\n    best = Math.max(best, node.val + left + right);   // path through node\n    return node.val + Math.max(left, right);          // what a parent can use\n}",
+        "complexity": "O(n) time (each node once), O(h) space for the recursion stack (O(n) worst case for a skewed tree).",
+        "pitfalls": [
+          "Validate BST: checking only node vs its children is wrong; pass (min, max) bounds down using long or null.",
+          "Mixing up 'returned to parent' and 'global answer' values.",
+          "Deep skewed trees can overflow the Java stack; mention an iterative version."
+        ],
+        "vs": [
+          {
+            "pattern": "tree-bfs",
+            "difference": "BFS when the answer is per level or the shallowest node; DFS when it composes from subtrees."
+          },
+          {
+            "pattern": "backtracking",
+            "difference": "Backtracking is DFS over choices with undo; tree DFS walks an existing tree."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Tree",
+          "url": "https://www.techinterviewhandbook.org/algorithms/tree/",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: Tree traversal (pre-, in-, post-order DFS)",
+          "url": "https://en.wikipedia.org/wiki/Tree_traversal",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "tree-bfs",
+      "order": 19,
+      "group": "Trees",
+      "name": "Tree BFS (level order)",
+      "aliases": [
+        "tree bfs",
+        "level order",
+        "level order traversal",
+        "level by level",
+        "bfs on tree",
+        "queue level order"
+      ],
+      "triggers": [
+        "level-order output, zigzag, right/left side view",
+        "minimum depth, nodes at distance k",
+        "column / vertical order (BFS with column index)"
+      ],
+      "template": "queue; while not empty: size = queue.size(); process exactly size nodes; enqueue children.",
+      "javaDs": "ArrayDeque<TreeNode> as a queue (offer / poll); TreeMap<Integer, List<Integer>> for column order",
+      "invariant": "At the start of each outer loop, the queue holds exactly the nodes of the current level, left to right.",
+      "lesson": {
+        "summary": "A queue visits nodes in order of depth. Snapshot queue.size() at the start of each level to know where the level ends. For vertical order, carry a column index with each node (root 0, left −1, right +1) and bucket by column; BFS keeps top-to-bottom order within a column.",
+        "javaSkeleton": "List<List<Integer>> levels = new ArrayList<>();\nDeque<TreeNode> queue = new ArrayDeque<>();\nif (root != null) queue.offer(root);\nwhile (!queue.isEmpty()) {\n    int size = queue.size();\n    List<Integer> level = new ArrayList<>();\n    for (int i = 0; i < size; i++) {\n        TreeNode node = queue.poll();\n        level.add(node.val);\n        if (node.left != null) queue.offer(node.left);\n        if (node.right != null) queue.offer(node.right);\n    }\n    levels.add(level);\n}",
+        "complexity": "O(n) time, O(w) space where w is the widest level (up to n/2).",
+        "pitfalls": [
+          "Reading queue.size() inside the loop condition instead of snapshotting it.",
+          "ArrayDeque rejects nulls: check children before offer.",
+          "Vertical order: DFS breaks the top-to-bottom order unless you also track row."
+        ],
+        "vs": [
+          {
+            "pattern": "tree-dfs",
+            "difference": "DFS composes subtree answers; BFS is natural when the question is about levels or the nearest node."
+          },
+          {
+            "pattern": "graph-traversal",
+            "difference": "Same queue BFS, but trees need no visited set."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Tree",
+          "url": "https://www.techinterviewhandbook.org/algorithms/tree/",
+          "kind": "article"
+        },
+        {
+          "title": "cp-algorithms: Breadth-first search",
+          "url": "https://cp-algorithms.com/graph/breadth-first-search.html",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "graph-traversal",
+      "order": 20,
+      "group": "Graphs",
+      "name": "Graph / grid traversal (DFS-BFS)",
+      "aliases": [
+        "graph traversal",
+        "graph dfs",
+        "graph bfs",
+        "grid dfs",
+        "grid bfs",
+        "flood fill",
+        "connected components",
+        "island counting",
+        "bfs shortest path",
+        "visited set"
+      ],
+      "triggers": [
+        "grid of cells: islands, regions, reachable cells",
+        "clone / copy a graph, explore all reachable nodes",
+        "shortest path in an UNWEIGHTED graph (word ladder, min moves)"
+      ],
+      "template": "for each unvisited start: DFS/BFS marking visited; BFS layers give unweighted distances.",
+      "javaDs": "boolean[][] visited (or mutate the grid); ArrayDeque<int[]> queue; Map<Node,Node> for cloning; adjacency List<List<Integer>>",
+      "invariant": "A node is marked visited when first discovered, so it is expanded at most once (and, in BFS, at its shortest distance).",
+      "lesson": {
+        "summary": "Model cells or states as nodes and moves as edges, then DFS or BFS with a visited set. Counting components = start a traversal from every unvisited node. Shortest number of steps in an unweighted graph = BFS by layers. For word-style graphs, generate neighbours on the fly (change one letter) instead of building edges.",
+        "javaSkeleton": "int[][] dirs = { {1,0}, {-1,0}, {0,1}, {0,-1} };\nint islands = 0;\nfor (int r = 0; r < rows; r++)\n    for (int c = 0; c < cols; c++)\n        if (grid[r][c] == '1') { islands++; sink(grid, r, c); }\n\nvoid sink(char[][] g, int r, int c) {\n    if (r < 0 || c < 0 || r >= g.length || c >= g[0].length || g[r][c] != '1') return;\n    g[r][c] = '0';                        // mark visited\n    for (int[] d : dirs) sink(g, r + d[0], c + d[1]);\n}",
+        "complexity": "O(V + E) time; for a grid O(rows · cols). O(V) space for visited and the stack/queue.",
+        "pitfalls": [
+          "Marking visited when dequeued instead of when enqueued causes duplicate work in BFS.",
+          "Recursive DFS on a 10⁶-cell grid can overflow the stack; switch to BFS or an explicit stack.",
+          "Clone Graph: map original → copy BEFORE recursing to handle cycles."
+        ],
+        "vs": [
+          {
+            "pattern": "union-find",
+            "difference": "Union-Find wins when edges arrive over time or you merge groups repeatedly."
+          },
+          {
+            "pattern": "shortest-path",
+            "difference": "Weighted edges need Dijkstra; BFS is only correct when every edge costs the same."
+          },
+          {
+            "pattern": "multi-source-bfs",
+            "difference": "If many cells start spreading at once (rotting, distance to nearest), seed the queue with all of them."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "USACO Guide: Flood fill",
+          "url": "https://usaco.guide/silver/flood-fill",
+          "kind": "article"
+        },
+        {
+          "title": "Tech Interview Handbook: Graph",
+          "url": "https://www.techinterviewhandbook.org/algorithms/graph/",
+          "kind": "article"
+        },
+        {
+          "title": "cp-algorithms: Depth-first search",
+          "url": "https://cp-algorithms.com/graph/depth-first-search.html",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "multi-source-bfs",
+      "order": 21,
+      "group": "Graphs",
+      "name": "Multi-source BFS",
+      "parent": "graph-traversal",
+      "aliases": [
+        "multi source bfs",
+        "multisource bfs",
+        "multi start bfs",
+        "bfs from all sources",
+        "simultaneous bfs"
+      ],
+      "triggers": [
+        "something spreads from many cells at once (rot, fire, infection) and you want the time",
+        "distance from every cell to its NEAREST source (gate, 0, land)",
+        "\"minimum minutes until all\" on a grid"
+      ],
+      "template": "Enqueue every source at distance 0, then one ordinary BFS; layer count = time.",
+      "javaDs": "ArrayDeque<int[]> seeded with all sources; int[][] dist or in-place grid updates",
+      "invariant": "Cells leave the queue in non-decreasing distance from the nearest source.",
+      "lesson": {
+        "summary": "Instead of one BFS per source (O(k·V)), pretend there is a super-source connected to every real source and run a single BFS. All sources start in the queue at time 0; each layer is one tick. Count fresh cells first so you can report −1 if some are never reached.",
+        "javaSkeleton": "Deque<int[]> queue = new ArrayDeque<>();\nint fresh = 0;\nfor (int r = 0; r < R; r++)\n    for (int c = 0; c < C; c++) {\n        if (grid[r][c] == 2) queue.offer(new int[] { r, c });\n        else if (grid[r][c] == 1) fresh++;\n    }\nint minutes = 0;\nwhile (!queue.isEmpty() && fresh > 0) {\n    for (int i = queue.size(); i > 0; i--) {\n        int[] cell = queue.poll();\n        for (int[] d : dirs) { /* rot fresh neighbour, fresh--, offer */ }\n    }\n    minutes++;\n}\nreturn fresh == 0 ? minutes : -1;",
+        "complexity": "O(rows · cols) time and space.",
+        "pitfalls": [
+          "Running a separate BFS from each source: correct but O(k · grid).",
+          "Counting a minute after the last layer even when nothing changed.",
+          "Forgetting the 'unreachable → −1' case."
+        ],
+        "vs": [
+          {
+            "pattern": "graph-traversal",
+            "difference": "Single-source BFS/DFS vs all sources in the queue at time 0."
+          },
+          {
+            "pattern": "dp-2d",
+            "difference": "Distance-to-nearest can also be two DP sweeps, but multi-source BFS is the direct answer."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "cp-algorithms: Breadth-first search",
+          "url": "https://cp-algorithms.com/graph/breadth-first-search.html",
+          "kind": "article"
+        },
+        {
+          "title": "USACO Guide: Graph traversal",
+          "url": "https://usaco.guide/silver/graph-traversal",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "topo-sort",
+      "order": 22,
+      "group": "Graphs",
+      "name": "Topological sort",
+      "aliases": [
+        "topological sort",
+        "topo sort",
+        "toposort",
+        "kahn",
+        "kahns algorithm",
+        "dependency order",
+        "in degree",
+        "dag ordering",
+        "course schedule"
+      ],
+      "triggers": [
+        "prerequisites / dependencies / build order",
+        "can everything finish? (cycle detection in a directed graph)",
+        "derive an order from pairwise 'a before b' facts (alien dictionary)"
+      ],
+      "template": "Kahn: in-degree count; queue all 0-in-degree nodes; pop, append, decrement neighbours.",
+      "javaDs": "List<List<Integer>> adjacency; int[] inDegree; ArrayDeque<Integer> queue",
+      "invariant": "Every node in the output appears after all of its prerequisites; a node enters the queue only when all its prerequisites are output.",
+      "lesson": {
+        "summary": "An order exists only if the dependency graph has no cycle. Kahn's algorithm repeatedly takes nodes with no remaining prerequisites. If fewer than n nodes come out, there is a cycle. DFS post-order (reversed) also works and uses three colours to detect cycles.",
+        "javaSkeleton": "List<List<Integer>> graph = new ArrayList<>();\nfor (int i = 0; i < n; i++) graph.add(new ArrayList<>());\nint[] indeg = new int[n];\nfor (int[] p : prereqs) { graph.get(p[1]).add(p[0]); indeg[p[0]]++; }\n\nDeque<Integer> queue = new ArrayDeque<>();\nfor (int i = 0; i < n; i++) if (indeg[i] == 0) queue.offer(i);\nList<Integer> order = new ArrayList<>();\nwhile (!queue.isEmpty()) {\n    int u = queue.poll();\n    order.add(u);\n    for (int v : graph.get(u)) if (--indeg[v] == 0) queue.offer(v);\n}\nreturn order.size() == n ? order : List.of();   // empty ⇒ cycle",
+        "complexity": "O(V + E) time and space.",
+        "pitfalls": [
+          "Edge direction: [a, b] usually means b → a (b is a prerequisite of a).",
+          "Alien Dictionary: a longer word before its own prefix is invalid input.",
+          "Using an undirected visited set for cycle detection in a directed graph (needs in-progress state)."
+        ],
+        "vs": [
+          {
+            "pattern": "graph-traversal",
+            "difference": "Plain DFS/BFS explores; topological sort orders by dependencies and detects directed cycles."
+          },
+          {
+            "pattern": "union-find",
+            "difference": "Union-Find detects cycles in UNDIRECTED graphs only."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "cp-algorithms: Topological sorting",
+          "url": "https://cp-algorithms.com/graph/topological-sort.html",
+          "kind": "article"
+        },
+        {
+          "title": "USACO Guide: Topological sort",
+          "url": "https://usaco.guide/gold/toposort",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: Topological sorting (Kahn's algorithm)",
+          "url": "https://en.wikipedia.org/wiki/Topological_sorting",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "union-find",
+      "order": 23,
+      "group": "Graphs",
+      "name": "Union-Find (DSU)",
+      "aliases": [
+        "union find",
+        "unionfind",
+        "disjoint set",
+        "disjoint set union",
+        "dsu",
+        "connected components union"
+      ],
+      "triggers": [
+        "edges or equivalences arrive over time; are x and y connected?",
+        "count or merge groups (accounts with shared emails, provinces)",
+        "first edge that creates a cycle in an undirected graph"
+      ],
+      "template": "parent[]; find with path compression; union by rank/size; count components.",
+      "javaDs": "int[] parent, int[] rank (or size); HashMap<String,String> when keys are not 0..n−1",
+      "invariant": "Two elements are in the same set iff find(x) == find(y); each set has exactly one root.",
+      "lesson": {
+        "summary": "Each set is a tree pointing to a root. find follows parents (and compresses the path); union links two roots. With path compression and union by rank both operations are effectively O(1) (inverse Ackermann). Ideal when connectivity changes incrementally, or when you need to know the edge that closes a cycle.",
+        "javaSkeleton": "int[] parent = new int[n], rank = new int[n];\nfor (int i = 0; i < n; i++) parent[i] = i;\n\nint find(int x) {\n    if (parent[x] != x) parent[x] = find(parent[x]);   // path compression\n    return parent[x];\n}\n\nboolean union(int a, int b) {\n    int ra = find(a), rb = find(b);\n    if (ra == rb) return false;                         // already connected ⇒ cycle\n    if (rank[ra] < rank[rb]) { int t = ra; ra = rb; rb = t; }\n    parent[rb] = ra;\n    if (rank[ra] == rank[rb]) rank[ra]++;\n    return true;\n}",
+        "complexity": "O(α(n)) ≈ O(1) amortised per operation; O(n) space.",
+        "pitfalls": [
+          "Comparing parent[x] instead of find(x) for connectivity.",
+          "Forgetting to decrement the component count only when union actually merges.",
+          "Union-Find cannot answer directed reachability or shortest paths."
+        ],
+        "vs": [
+          {
+            "pattern": "graph-traversal",
+            "difference": "A one-off BFS answers static connectivity; DSU shines when edges keep arriving or groups keep merging."
+          },
+          {
+            "pattern": "topo-sort",
+            "difference": "Directed cycle detection needs topological sort/DFS colours; DSU handles undirected."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "cp-algorithms: Disjoint Set Union",
+          "url": "https://cp-algorithms.com/data_structures/disjoint_set_union.html",
+          "kind": "article"
+        },
+        {
+          "title": "USACO Guide: Disjoint set union",
+          "url": "https://usaco.guide/gold/dsu",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "shortest-path",
+      "order": 24,
+      "group": "Graphs",
+      "name": "Weighted shortest path (Dijkstra / Bellman-Ford)",
+      "aliases": [
+        "dijkstra",
+        "dijkstras",
+        "dijkstra algorithm",
+        "shortest path",
+        "weighted shortest path",
+        "bellman ford",
+        "bellman-ford",
+        "min heap bfs"
+      ],
+      "triggers": [
+        "shortest / cheapest path with WEIGHTED edges (times, prices)",
+        "time for a signal to reach every node",
+        "path limited to at most k edges/stops (Bellman-Ford rounds)"
+      ],
+      "template": "Min-heap of (dist, node); pop the closest; skip stale; relax neighbours.",
+      "javaDs": "PriorityQueue<int[]> by distance; int[] dist filled with Integer.MAX_VALUE; adjacency List<List<int[]>>",
+      "invariant": "When a node is popped with a distance equal to dist[node], that distance is final (non-negative weights).",
+      "lesson": {
+        "summary": "Dijkstra is BFS where the queue is ordered by distance so far. With non-negative weights, the first time you pop a node its distance is optimal. If the path may use at most k edges, run Bellman-Ford for k+1 rounds (copying the dist array each round) or Dijkstra over (node, stops) states.",
+        "javaSkeleton": "int[] dist = new int[n];\nArrays.fill(dist, Integer.MAX_VALUE);\ndist[src] = 0;\nPriorityQueue<int[]> pq = new PriorityQueue<>(Comparator.comparingInt(a -> a[0]));\npq.offer(new int[] { 0, src });\nwhile (!pq.isEmpty()) {\n    int[] top = pq.poll();\n    int d = top[0], u = top[1];\n    if (d > dist[u]) continue;                 // stale entry\n    for (int[] e : graph.get(u)) {             // e = {v, w}\n        if (d + e[1] < dist[e[0]]) {\n            dist[e[0]] = d + e[1];\n            pq.offer(new int[] { dist[e[0]], e[0] });\n        }\n    }\n}",
+        "complexity": "Dijkstra O(E log V) time, O(V + E) space. Bellman-Ford O(k · E).",
+        "pitfalls": [
+          "Negative edge weights break Dijkstra.",
+          "Not skipping stale heap entries (d > dist[u]) wastes time.",
+          "Cheapest Flights with k stops: plain Dijkstra on cost alone is wrong; the stop limit needs Bellman-Ford rounds or (node, stops) state."
+        ],
+        "vs": [
+          {
+            "pattern": "graph-traversal",
+            "difference": "BFS gives shortest paths only when all edges cost the same."
+          },
+          {
+            "pattern": "dp-2d",
+            "difference": "Bellman-Ford with a stop limit is DP over (stops, node)."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "cp-algorithms: Dijkstra",
+          "url": "https://cp-algorithms.com/graph/dijkstra.html",
+          "kind": "article"
+        },
+        {
+          "title": "cp-algorithms: Bellman-Ford",
+          "url": "https://cp-algorithms.com/graph/bellman_ford.html",
+          "kind": "article"
+        },
+        {
+          "title": "USACO Guide: Shortest paths with non-negative edge weights",
+          "url": "https://usaco.guide/gold/shortest-paths",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "backtracking",
+      "order": 25,
+      "group": "Backtracking & DP",
+      "name": "Backtracking",
+      "aliases": [
+        "backtracking",
+        "backtrack",
+        "brute force recursion",
+        "choose explore unchoose",
+        "generate all",
+        "exhaustive search",
+        "permutations",
+        "subsets",
+        "combinations"
+      ],
+      "triggers": [
+        "return ALL subsets / permutations / combinations / valid arrangements",
+        "place items under constraints (N-Queens, Sudoku, word in a grid)",
+        "small n (≤ 15–20) and the output itself is exponential"
+      ],
+      "template": "choose → recurse → un-choose; prune as early as possible.",
+      "javaDs": "List<Integer> path (add / remove last), List<List<Integer>> result, boolean[] used; recursion",
+      "invariant": "path always holds a valid partial solution; after a recursive call returns, path is restored exactly.",
+      "lesson": {
+        "summary": "Depth-first search over decisions. At each level pick an option, recurse, then undo it. Subsets: include/skip each element (or loop from start). Permutations: track used[]. Combinations with reuse: recurse with the same start index. Sort first to skip duplicates and to prune when the remaining sum goes negative.",
+        "javaSkeleton": "void backtrack(int start, List<Integer> path) {\n    result.add(new ArrayList<>(path));           // copy!\n    for (int i = start; i < nums.length; i++) {\n        if (i > start && nums[i] == nums[i - 1]) continue;   // skip dup\n        path.add(nums[i]);\n        backtrack(i + 1, path);                   // i (not i+1) if reuse allowed\n        path.remove(path.size() - 1);             // un-choose\n    }\n}",
+        "complexity": "Exponential: subsets O(n · 2ⁿ), permutations O(n · n!). Space O(n) recursion depth plus output.",
+        "pitfalls": [
+          "Adding path itself instead of a copy to the result.",
+          "Forgetting to undo state (visited cells in Word Search).",
+          "Using backtracking when only a COUNT or best value is needed: that is usually DP."
+        ],
+        "vs": [
+          {
+            "pattern": "dp-1d",
+            "difference": "DP when overlapping subproblems and you need a count/optimum; backtracking when you must list every solution."
+          },
+          {
+            "pattern": "graph-traversal",
+            "difference": "Word Search un-marks cells on the way back (paths), flood fill never un-marks (regions)."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Recursion",
+          "url": "https://www.techinterviewhandbook.org/algorithms/recursion/",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: Backtracking",
+          "url": "https://en.wikipedia.org/wiki/Backtracking",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "dp-1d",
+      "order": 26,
+      "group": "Backtracking & DP",
+      "name": "1D DP",
+      "aliases": [
+        "1d dp",
+        "one dimensional dp",
+        "linear dp",
+        "dp array",
+        "fibonacci dp",
+        "bottom up dp",
+        "top down dp"
+      ],
+      "triggers": [
+        "number of ways to reach / decode / climb",
+        "min or max cost over a sequence of choices (rob, coins, jumps)",
+        "can the prefix s[0..i] be built / split (word break)"
+      ],
+      "template": "dp[i] = best/count over a few earlier states; base cases first; iterate in dependency order.",
+      "javaDs": "int[] / long[] / boolean[] dp of size n+1 (often reducible to 2 variables); HashSet<String> for dictionaries",
+      "invariant": "dp[i] is the final answer for the subproblem ending at i (or of size i) once computed, and only depends on smaller indices.",
+      "lesson": {
+        "summary": "Define the state in one sentence ('dp[i] = number of ways to reach step i'), write the recurrence from the last decision, fix base cases, choose iteration order. Overlapping subproblems make it polynomial. If dp[i] only uses the last two values, keep two variables. LIS has an O(n log n) patience-sorting variant with binary search.",
+        "javaSkeleton": "// Coin Change: fewest coins to make amount\nint[] dp = new int[amount + 1];\nArrays.fill(dp, amount + 1);         // 'infinity'\ndp[0] = 0;\nfor (int a = 1; a <= amount; a++)\n    for (int coin : coins)\n        if (coin <= a) dp[a] = Math.min(dp[a], dp[a - coin] + 1);\nreturn dp[amount] > amount ? -1 : dp[amount];",
+        "complexity": "O(n · choices) time; O(n) space, often reducible to O(1).",
+        "pitfalls": [
+          "Defining the state vaguely; write it as a sentence before coding.",
+          "Using Integer.MAX_VALUE as infinity and then adding 1 (overflow).",
+          "Greedy for Coin Change fails for coins like [1, 3, 4] with amount 6."
+        ],
+        "vs": [
+          {
+            "pattern": "greedy",
+            "difference": "Greedy commits to one choice; DP tries them all via subproblems."
+          },
+          {
+            "pattern": "backtracking",
+            "difference": "Backtracking lists solutions; DP counts or optimises them without enumerating."
+          },
+          {
+            "pattern": "knapsack",
+            "difference": "Knapsack is DP over (items, capacity), usually with a 1D array iterated carefully."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "cp-algorithms: Introduction to dynamic programming",
+          "url": "https://cp-algorithms.com/dynamic_programming/intro-to-dp.html",
+          "kind": "article"
+        },
+        {
+          "title": "Tech Interview Handbook: Dynamic programming",
+          "url": "https://www.techinterviewhandbook.org/algorithms/dynamic-programming/",
+          "kind": "article"
+        },
+        {
+          "title": "USACO Guide: Introduction to DP",
+          "url": "https://usaco.guide/gold/intro-dp",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "dp-2d",
+      "order": 27,
+      "group": "Backtracking & DP",
+      "name": "2D DP (two sequences / grid)",
+      "aliases": [
+        "2d dp",
+        "two dimensional dp",
+        "grid dp",
+        "string dp",
+        "lcs dp",
+        "edit distance dp",
+        "dp table",
+        "dp matrix"
+      ],
+      "triggers": [
+        "two strings/sequences compared: common subsequence, edit distance, interleaving",
+        "paths in a grid moving right/down",
+        "dp over (i, j) where i indexes one input and j another"
+      ],
+      "template": "dp[i][j] from dp[i−1][j], dp[i][j−1], dp[i−1][j−1]; row 0 / column 0 are base cases.",
+      "javaDs": "int[m+1][n+1] table (often reducible to two rows)",
+      "invariant": "dp[i][j] is the answer for prefixes a[0..i) and b[0..j), computed only from smaller prefixes.",
+      "lesson": {
+        "summary": "When the state needs two indices, fill a table. Size it (m+1)·(n+1) so the empty prefix is row/column 0. LCS: match → diagonal + 1, else max(up, left). Edit distance: match → diagonal, else 1 + min(insert, delete, replace). Grids: from up and left. Space can drop to O(n) with a rolling row.",
+        "javaSkeleton": "int[][] dp = new int[m + 1][n + 1];\nfor (int i = 1; i <= m; i++) {\n    for (int j = 1; j <= n; j++) {\n        if (a.charAt(i - 1) == b.charAt(j - 1)) dp[i][j] = dp[i - 1][j - 1] + 1;\n        else dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);\n    }\n}\nreturn dp[m][n];",
+        "complexity": "O(m · n) time and space (O(min(m, n)) space with rolling rows).",
+        "pitfalls": [
+          "Off-by-one between dp indices and string indices (dp[i] ↔ char i−1).",
+          "Forgetting base row/column initialisation (edit distance: dp[i][0] = i).",
+          "Overwriting the diagonal value too early when compressing to one row."
+        ],
+        "vs": [
+          {
+            "pattern": "dp-1d",
+            "difference": "One index suffices for one sequence; two inputs or a grid need two."
+          },
+          {
+            "pattern": "expand-center",
+            "difference": "Longest palindromic substring has an O(n²) DP but expand-around-centre is simpler with O(1) space."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "USACO Guide: Paths on grids",
+          "url": "https://usaco.guide/gold/paths-grids",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: Longest common subsequence",
+          "url": "https://en.wikipedia.org/wiki/Longest_common_subsequence",
+          "kind": "reference"
+        },
+        {
+          "title": "Wikipedia: Levenshtein (edit) distance",
+          "url": "https://en.wikipedia.org/wiki/Levenshtein_distance",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "knapsack",
+      "order": 28,
+      "group": "Backtracking & DP",
+      "name": "Knapsack DP",
+      "aliases": [
+        "knapsack",
+        "0 1 knapsack",
+        "01 knapsack",
+        "subset sum",
+        "subset sum dp",
+        "partition dp",
+        "unbounded knapsack",
+        "bounded knapsack"
+      ],
+      "triggers": [
+        "can a subset reach exactly a target sum / half of the total",
+        "assign + or − to each number to hit a target",
+        "split into two groups minimising the difference"
+      ],
+      "template": "dp[s] = reachable; for each item, for s from target down to item: dp[s] |= dp[s − item].",
+      "javaDs": "boolean[] or int[] dp of size target+1 (iterate capacity DOWNWARD for 0/1 items); java.util.BitSet as a speed-up",
+      "invariant": "After processing the first i items, dp[s] is true iff some subset of those i items sums to s.",
+      "lesson": {
+        "summary": "Each item is used once (0/1) or many times (unbounded). Reduce the question to 'which sums are reachable?'. Iterating the capacity downward in a 1D array makes each item count once; upward allows reuse. Partition = subset sum to total/2. Last Stone Weight II = closest reachable sum to total/2. Target Sum = subset sum to (total + target)/2.",
+        "javaSkeleton": "int total = Arrays.stream(nums).sum();\nif (total % 2 != 0) return false;\nint target = total / 2;\nboolean[] dp = new boolean[target + 1];\ndp[0] = true;\nfor (int x : nums)\n    for (int s = target; s >= x; s--)       // downward: each item once\n        dp[s] = dp[s] || dp[s - x];\nreturn dp[target];",
+        "complexity": "O(n · target) time, O(target) space (pseudo-polynomial).",
+        "pitfalls": [
+          "Iterating capacity upward in 0/1 knapsack reuses items.",
+          "Missing the reduction (e.g. Target Sum → subset sum) and trying backtracking at 2ⁿ.",
+          "Odd totals can't split evenly: check early."
+        ],
+        "vs": [
+          {
+            "pattern": "backtracking",
+            "difference": "Trying every subset is O(2ⁿ); knapsack DP is O(n · target)."
+          },
+          {
+            "pattern": "greedy",
+            "difference": "Taking the largest first does not guarantee hitting an exact sum."
+          },
+          {
+            "pattern": "dp-1d",
+            "difference": "Coin Change is unbounded knapsack: same idea, capacity iterated upward."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "cp-algorithms: Knapsack problem",
+          "url": "https://cp-algorithms.com/dynamic_programming/knapsack.html",
+          "kind": "article"
+        },
+        {
+          "title": "USACO Guide: Knapsack DP",
+          "url": "https://usaco.guide/gold/knapsack",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "state-dp",
+      "order": 29,
+      "group": "Backtracking & DP",
+      "name": "State-machine DP",
+      "aliases": [
+        "state machine dp",
+        "state machine",
+        "dp with states",
+        "hold sold rest",
+        "stock dp",
+        "finite state dp"
+      ],
+      "triggers": [
+        "buy/sell stock with cooldown, fee, or at most k transactions",
+        "each day you are in one of a few states (holding, not holding, cooling down)",
+        "rules forbid certain transitions between consecutive steps"
+      ],
+      "template": "Variables per state; each step compute new states from old ones via allowed transitions.",
+      "javaDs": "a few int/long variables per state (or int[k][2] for k transactions)",
+      "invariant": "After day i, each state variable holds the best profit achievable ending day i in that state.",
+      "lesson": {
+        "summary": "Name the states and draw transitions: hold ← hold or (rest − price); sold ← hold + price; rest ← rest or sold. Each day update all states from yesterday's values (keep copies). Transaction limits add a dimension (k). Fees subtract on sell; cooldown forces sold → rest.",
+        "javaSkeleton": "int hold = Integer.MIN_VALUE / 2, sold = 0, rest = 0;\nfor (int p : prices) {\n    int prevSold = sold;\n    sold = hold + p;                     // sell today\n    hold = Math.max(hold, rest - p);     // keep holding or buy after rest\n    rest = Math.max(rest, prevSold);     // cooldown passes\n}\nreturn Math.max(sold, rest);",
+        "complexity": "O(n · states) time, O(states) space.",
+        "pitfalls": [
+          "Updating a state with today's (already updated) value of another state; save the old ones first.",
+          "Initialising 'hold' to 0 lets you sell without buying.",
+          "Applying the fee twice (on both buy and sell)."
+        ],
+        "vs": [
+          {
+            "pattern": "kadane",
+            "difference": "One transaction is just running min; multiple transactions with rules need explicit states."
+          },
+          {
+            "pattern": "greedy",
+            "difference": "Unlimited transactions with no fee/cooldown is greedy (sum of rises); constraints make it state DP."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Dynamic programming",
+          "url": "https://www.techinterviewhandbook.org/algorithms/dynamic-programming/",
+          "kind": "article"
+        },
+        {
+          "title": "cp-algorithms: Introduction to dynamic programming",
+          "url": "https://cp-algorithms.com/dynamic_programming/intro-to-dp.html",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "trie",
+      "order": 30,
+      "group": "Specialised",
+      "name": "Trie (prefix tree)",
+      "aliases": [
+        "trie",
+        "prefix tree",
+        "radix tree",
+        "digital tree",
+        "prefix trie"
+      ],
+      "triggers": [
+        "startsWith / autocomplete / prefix queries",
+        "search many words at once (in a grid or text)",
+        "wildcard '.' matching over a dictionary"
+      ],
+      "template": "Node { children[26]; isWord }; insert/search walk one char per level.",
+      "javaDs": "class TrieNode { TrieNode[] children = new TrieNode[26]; String word; } (or Map<Character, TrieNode>)",
+      "invariant": "The path from the root to a node spells exactly the prefix that node represents; isWord marks complete words.",
+      "lesson": {
+        "summary": "Share common prefixes: each level is one character. Insert, search and startsWith are O(word length), independent of dictionary size. Word Search II builds a trie of the words and runs one DFS on the grid, pruning when the current path is not a prefix. Store the full word at its end node to avoid rebuilding strings.",
+        "javaSkeleton": "class TrieNode {\n    TrieNode[] next = new TrieNode[26];\n    boolean isWord;\n}\n\nvoid insert(String w) {\n    TrieNode node = root;\n    for (char c : w.toCharArray()) {\n        int i = c - 'a';\n        if (node.next[i] == null) node.next[i] = new TrieNode();\n        node = node.next[i];\n    }\n    node.isWord = true;\n}",
+        "complexity": "O(L) per insert/search; O(total characters · alphabet) space.",
+        "pitfalls": [
+          "Running one grid DFS per word (Word Search II) instead of one DFS with a trie.",
+          "Not clearing a found word in Word Search II leads to duplicate results.",
+          "Choosing a HashMap per node when the alphabet is just 26 lowercase letters (slower)."
+        ],
+        "vs": [
+          {
+            "pattern": "hashing",
+            "difference": "A HashSet answers exact lookups; only a trie answers prefix queries efficiently."
+          },
+          {
+            "pattern": "backtracking",
+            "difference": "Word Search (one word) is backtracking; Word Search II adds a trie to prune many words at once."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Trie",
+          "url": "https://www.techinterviewhandbook.org/algorithms/trie/",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: Trie",
+          "url": "https://en.wikipedia.org/wiki/Trie",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "design",
+      "order": 31,
+      "group": "Specialised",
+      "name": "Design (combine data structures)",
+      "aliases": [
+        "design",
+        "data structure design",
+        "class design",
+        "hash map plus linked list",
+        "lru",
+        "hashmap and doubly linked list",
+        "linkedhashmap",
+        "design a class"
+      ],
+      "triggers": [
+        "\"Design a class\" with several O(1) or O(log n) operations",
+        "cache with eviction (LRU / LFU)",
+        "counter over a time window, random element in O(1), snapshots"
+      ],
+      "template": "List each operation's required cost, then pick one structure per need and keep them in sync.",
+      "javaDs": "HashMap + doubly linked list (or LinkedHashMap); ArrayList + HashMap index; ArrayDeque / circular array; TreeMap per key",
+      "invariant": "All internal structures describe the same set of items after every public method returns.",
+      "lesson": {
+        "summary": "No single structure does everything, so combine them. LRU: HashMap for O(1) lookup + doubly linked list for O(1) recency order (LinkedHashMap with accessOrder=true does both). Insert/Delete/GetRandom O(1): ArrayList for random index + HashMap value→index; delete by swapping with the last element. Hit counter: queue of timestamps, or a 300-slot circular array. Snapshot Array: per index a TreeMap snapId→value, read with floorEntry.",
+        "javaSkeleton": "class LRUCache extends LinkedHashMap<Integer, Integer> {\n    private final int capacity;\n    LRUCache(int capacity) {\n        super(capacity, 0.75f, true);        // accessOrder = true\n        this.capacity = capacity;\n    }\n    public int get(int key) { return getOrDefault(key, -1); }\n    public void put(int key, int value) { super.put(key, value); }\n    @Override\n    protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {\n        return size() > capacity;\n    }\n}",
+        "complexity": "Usually O(1) (hash-based) or O(log n) (tree-based) per operation; O(n) space.",
+        "pitfalls": [
+          "Interviewers may ask you to build the doubly linked list yourself rather than extend LinkedHashMap; know both.",
+          "GetRandom: removing from the middle of an ArrayList is O(n): swap with the last element first.",
+          "Forgetting to update the second structure on every mutation."
+        ],
+        "vs": [
+          {
+            "pattern": "hashing",
+            "difference": "A map alone has no order or eviction; design problems need a second structure."
+          },
+          {
+            "pattern": "binary-search",
+            "difference": "Time-based lookups (latest value at or before t) are binary search / TreeMap floor queries inside a design."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Java LinkedHashMap API (accessOrder, removeEldestEntry)",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedHashMap.html",
+          "kind": "reference"
+        },
+        {
+          "title": "Wikipedia: Cache replacement policies (LRU)",
+          "url": "https://en.wikipedia.org/wiki/Cache_replacement_policies",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "cyclic-sort",
+      "order": 32,
+      "group": "Specialised",
+      "name": "Cyclic sort / index marking",
+      "aliases": [
+        "cyclic sort",
+        "index marking",
+        "in place hashing",
+        "place at index",
+        "sign marking",
+        "negative marking"
+      ],
+      "triggers": [
+        "values are in the range 1..n (or 0..n) for an array of length n",
+        "find missing / duplicate / first missing positive",
+        "O(n) time AND O(1) extra space, array may be modified"
+      ],
+      "template": "while nums[i] in range and nums[nums[i]−1] != nums[i]: swap it home; then scan for i+1 != nums[i].",
+      "javaDs": "the input int[] itself (swaps or sign flips); no extra structure",
+      "invariant": "After placement, every value v in 1..n that exists in the array sits at index v−1.",
+      "lesson": {
+        "summary": "When values map to indices, the array can be its own hash table. Either swap each value to its home index (cyclic sort) or flip the sign at index v−1 to mark 'seen'. A final scan finds the first index whose value is wrong: that is the missing number. Each swap places one value permanently, so it is O(n).",
+        "javaSkeleton": "for (int i = 0; i < n; i++) {\n    while (nums[i] > 0 && nums[i] <= n && nums[nums[i] - 1] != nums[i]) {\n        int j = nums[i] - 1;\n        int t = nums[i]; nums[i] = nums[j]; nums[j] = t;\n    }\n}\nfor (int i = 0; i < n; i++) if (nums[i] != i + 1) return i + 1;\nreturn n + 1;",
+        "complexity": "O(n) time (each swap fixes one value), O(1) extra space.",
+        "pitfalls": [
+          "Infinite loop on duplicates: check nums[target] != nums[i], not target != i.",
+          "Ignoring out-of-range values (≤ 0 or > n).",
+          "Using a HashSet works but violates the O(1) space requirement."
+        ],
+        "vs": [
+          {
+            "pattern": "hashing",
+            "difference": "A HashSet is O(n) space; index marking reuses the input."
+          },
+          {
+            "pattern": "fast-slow",
+            "difference": "When the array must NOT be modified (Find the Duplicate Number), use Floyd on index links."
+          },
+          {
+            "pattern": "bit",
+            "difference": "Single missing number can also be XOR of indices and values."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Array (in-place index tricks)",
+          "url": "https://www.techinterviewhandbook.org/algorithms/array/",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: Cycle sort",
+          "url": "https://en.wikipedia.org/wiki/Cycle_sort",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "bit",
+      "order": 33,
+      "group": "Specialised",
+      "name": "Bit manipulation",
+      "aliases": [
+        "bit manipulation",
+        "bitwise",
+        "xor",
+        "xor trick",
+        "bit mask",
+        "bitmask",
+        "bit tricks",
+        "bits"
+      ],
+      "triggers": [
+        "every element appears twice except one (XOR cancels pairs)",
+        "count set bits, powers of two, single-bit checks",
+        "O(1) space with integers where arithmetic tricks fit"
+      ],
+      "template": "x ^ x = 0, x ^ 0 = x; x & (x − 1) clears the lowest set bit; x >> 1 drops the last bit.",
+      "javaDs": "int / long and operators ^ & | ~ << >> >>>; Integer.bitCount",
+      "invariant": "The running XOR equals the XOR of all elements seen so far, so paired values have cancelled out.",
+      "lesson": {
+        "summary": "XOR is its own inverse and order does not matter, so XOR of everything leaves the unpaired value. x & (x − 1) removes the lowest 1 bit (counting bits, power-of-two test). bits[i] = bits[i >> 1] + (i & 1) builds bit counts with DP.",
+        "javaSkeleton": "int single = 0;\nfor (int x : nums) single ^= x;      // pairs cancel\nreturn single;\n\n// counting bits 0..n\nint[] bits = new int[n + 1];\nfor (int i = 1; i <= n; i++) bits[i] = bits[i >> 1] + (i & 1);",
+        "complexity": "O(n) time, O(1) extra space (O(n) for the output in Counting Bits).",
+        "pitfalls": [
+          "Using >> instead of >>> for unsigned shifts on negative numbers in Java.",
+          "Operator precedence: (x & 1) == 0 needs the parentheses.",
+          "Reaching for a HashMap and missing the O(1)-space follow-up."
+        ],
+        "vs": [
+          {
+            "pattern": "hashing",
+            "difference": "A count map finds the single element too, but uses O(n) space."
+          },
+          {
+            "pattern": "dp-1d",
+            "difference": "Counting Bits is DP whose recurrence happens to be a bit shift."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Binary",
+          "url": "https://www.techinterviewhandbook.org/algorithms/binary/",
+          "kind": "article"
+        },
+        {
+          "title": "cp-algorithms: Bit manipulation",
+          "url": "https://cp-algorithms.com/algebra/bit-manipulation.html",
+          "kind": "article"
+        }
+      ]
+    },
+    {
+      "id": "matrix",
+      "order": 34,
+      "group": "Specialised",
+      "name": "Matrix traversal (in place)",
+      "aliases": [
+        "matrix",
+        "matrix traversal",
+        "matrix manipulation",
+        "spiral traversal",
+        "rotate matrix",
+        "layer by layer",
+        "in place matrix"
+      ],
+      "triggers": [
+        "rotate / transpose / spiral order of a 2D matrix",
+        "set rows/columns to zero in place",
+        "simulate movement with boundaries that shrink"
+      ],
+      "template": "Boundaries top/bottom/left/right shrinking per layer, or transpose + reverse rows.",
+      "javaDs": "int[][] with four boundary ints; no extra matrix (O(1) space requirement)",
+      "invariant": "Everything outside the current boundaries has already been processed exactly once.",
+      "lesson": {
+        "summary": "Index bookkeeping, not algorithms. Rotate 90° clockwise = transpose then reverse each row. Spiral = walk right, down, left, up while shrinking four boundaries. Set Matrix Zeroes in O(1) space = use the first row and column as marker storage plus two flags for themselves.",
+        "javaSkeleton": "// rotate 90° clockwise in place\nfor (int i = 0; i < n; i++)\n    for (int j = i + 1; j < n; j++) {\n        int t = m[i][j]; m[i][j] = m[j][i]; m[j][i] = t;   // transpose\n    }\nfor (int[] row : m)\n    for (int l = 0, r = n - 1; l < r; l++, r--) {\n        int t = row[l]; row[l] = row[r]; row[r] = t;        // reverse row\n    }",
+        "complexity": "O(m · n) time, O(1) extra space.",
+        "pitfalls": [
+          "Spiral on non-square matrices: re-check boundaries before the left and up passes.",
+          "Set Matrix Zeroes: marking the first row/column before reading them destroys information.",
+          "Transposing over the full matrix (j from 0) swaps everything twice."
+        ],
+        "vs": [
+          {
+            "pattern": "graph-traversal",
+            "difference": "Grid problems about regions/reachability are graphs; matrix problems here are fixed index transformations."
+          },
+          {
+            "pattern": "dp-2d",
+            "difference": "Grid path counting fills a table; rotation/spiral just moves values."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Tech Interview Handbook: Matrix",
+          "url": "https://www.techinterviewhandbook.org/algorithms/matrix/",
+          "kind": "article"
+        },
+        {
+          "title": "Wikipedia: In-place matrix transposition",
+          "url": "https://en.wikipedia.org/wiki/In-place_matrix_transposition",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "partition",
+      "order": 35,
+      "group": "Specialised",
+      "name": "Partition / quickselect (Dutch flag)",
+      "aliases": [
+        "partition",
+        "partitioning",
+        "quickselect",
+        "quick select",
+        "dutch national flag",
+        "dutch flag",
+        "three way partition",
+        "hoare partition",
+        "lomuto partition"
+      ],
+      "triggers": [
+        "sort 0s, 1s and 2s (three categories) in one pass, in place",
+        "kth largest/smallest in O(n) average",
+        "rearrange around a pivot (smaller left, larger right)"
+      ],
+      "template": "low/mid/high pointers; swap by category. Quickselect: partition, recurse into one side.",
+      "javaDs": "the int[] itself with index pointers; java.util.Random for the pivot",
+      "invariant": "[0, low) holds 0s, [low, mid) 1s, (high, end] 2s, and [mid, high] is still unknown.",
+      "lesson": {
+        "summary": "Partitioning moves elements into regions defined by a pivot or category in one pass. Dutch national flag uses three pointers. Quickselect partitions once, then continues only into the side containing the kth position, giving O(n) average (O(n²) worst; randomise the pivot).",
+        "javaSkeleton": "int low = 0, mid = 0, high = nums.length - 1;\nwhile (mid <= high) {\n    if (nums[mid] == 0) swap(nums, low++, mid++);\n    else if (nums[mid] == 1) mid++;\n    else swap(nums, mid, high--);     // don't advance mid: new value unchecked\n}",
+        "complexity": "Dutch flag O(n) time, O(1) space. Quickselect O(n) average, O(n²) worst, O(1) extra space.",
+        "pitfalls": [
+          "Advancing mid after swapping with high skips an unchecked value.",
+          "Quickselect without a random pivot hits O(n²) on sorted input.",
+          "Counting sort (two passes) is fine but interviewers often ask for one pass."
+        ],
+        "vs": [
+          {
+            "pattern": "heap-topk",
+            "difference": "Heap is O(n log k) and works on streams; quickselect is O(n) average on an in-memory array."
+          },
+          {
+            "pattern": "two-pointers",
+            "difference": "Two categories need two pointers; three categories need the third (mid)."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Wikipedia: Dutch national flag problem",
+          "url": "https://en.wikipedia.org/wiki/Dutch_national_flag_problem",
+          "kind": "reference"
+        },
+        {
+          "title": "Wikipedia: Quickselect",
+          "url": "https://en.wikipedia.org/wiki/Quickselect",
+          "kind": "reference"
+        }
+      ]
+    },
+    {
+      "id": "expand-center",
+      "order": 36,
+      "group": "Specialised",
+      "name": "Expand around centre",
+      "aliases": [
+        "expand around center",
+        "expand around centre",
+        "center expansion",
+        "centre expansion",
+        "palindrome expansion",
+        "manacher"
+      ],
+      "triggers": [
+        "longest palindromic substring",
+        "count palindromic substrings",
+        "palindromes need checking from the middle outward"
+      ],
+      "template": "For each of 2n−1 centres (char or gap), expand while s[l] == s[r].",
+      "javaDs": "two int indices per centre; no extra structure",
+      "invariant": "While expanding, s[l..r] is a palindrome centred on the current centre.",
+      "lesson": {
+        "summary": "Every palindrome has a centre: a character (odd length) or a gap between two characters (even length). Try all 2n−1 centres and expand outward while the ends match. O(n²) time but O(1) space and far simpler than the DP table. Manacher's algorithm is O(n) but rarely expected.",
+        "javaSkeleton": "int start = 0, len = 0;\nfor (int c = 0; c < s.length(); c++) {\n    for (int[] lr : new int[][] { {c, c}, {c, c + 1} }) {   // odd, even\n        int l = lr[0], r = lr[1];\n        while (l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) { l--; r++; }\n        if (r - l - 1 > len) { len = r - l - 1; start = l + 1; }\n    }\n}\nreturn s.substring(start, start + len);",
+        "complexity": "O(n²) time, O(1) extra space.",
+        "pitfalls": [
+          "Forgetting even-length centres.",
+          "Off-by-one when computing the palindrome after the loop overshoots by one on each side.",
+          "Checking every substring for palindrome-ness is O(n³)."
+        ],
+        "vs": [
+          {
+            "pattern": "dp-2d",
+            "difference": "dp[i][j] = is s[i..j] a palindrome works too, but needs O(n²) space."
+          },
+          {
+            "pattern": "two-pointers",
+            "difference": "Validating ONE palindrome uses converging pointers from the ends; finding palindromes expands from centres."
+          }
+        ]
+      },
+      "resources": [
+        {
+          "title": "Wikipedia: Longest palindromic substring",
+          "url": "https://en.wikipedia.org/wiki/Longest_palindromic_substring",
+          "kind": "reference"
+        },
+        {
+          "title": "cp-algorithms: Manacher's algorithm (and the trivial O(n²) method)",
+          "url": "https://cp-algorithms.com/string/manacher.html",
+          "kind": "article"
+        }
+      ]
+    }
+  ]
+}

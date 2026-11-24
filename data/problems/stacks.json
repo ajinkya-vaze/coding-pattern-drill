@@ -1,0 +1,92 @@
+[
+  {
+    "id": "valid-parentheses", "title": "Valid Parentheses", "slug": "valid-parentheses", "difficulty": "Easy",
+    "companies": ["Meta", "Google", "Microsoft"],
+    "statement": "Given a string of the characters ( ) [ ] { }, decide whether every opening bracket is closed by the same type of bracket in the correct nesting order.",
+    "pattern": "stack", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Matching from both ends fails for '()[]': brackets close the most recent opener, not the opposite end." },
+      { "p": "hashing", "why": "Counting each bracket type ignores order: '([)]' has equal counts but is invalid." },
+      { "p": "monotonic-stack", "why": "Nothing is kept in sorted order; the stack mirrors nesting." }
+    ],
+    "trigger": { "answer": "correct nesting order", "wrong": ["a string of the characters", "the same type of bracket", "every opening bracket"], "why": "Nesting ⇒ the most recently opened must close first ⇒ LIFO stack." },
+    "ds": { "answer": "ArrayDeque<Character> used as a stack", "wrong": ["int counter per bracket type", "HashSet<Character> of open brackets", "java.util.Stack<Character> with synchronised methods"], "why": "ArrayDeque push/pop/peek; avoid the legacy Stack class." },
+    "invariant": { "answer": "The stack holds exactly the currently unclosed openers, innermost on top.", "wrong": ["The stack is always empty after a closing bracket.", "The stack holds closing brackets waiting for openers.", "The stack size equals the string length at every step."], "why": "A closer must match the top; at the end the stack must be empty." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(1)"], "why": "One pass." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(3) (one counter per type)"], "why": "All openers in the worst case." },
+    "whyNot": { "wrong": ["Two pointers can't read characters.", "Two pointers need the string sorted.", "Two pointers only work on even-length strings."] },
+    "approach": "Push openers; on a closer, the stack must be non-empty and its top must be the matching opener (pop). Valid iff the stack ends empty."
+  },
+  {
+    "id": "decode-string", "title": "Decode String", "slug": "decode-string", "difficulty": "Medium",
+    "companies": ["Bloomberg"],
+    "statement": "Decode an encoded string where k[text] means text repeated k times, and brackets can be nested, e.g. 3[a2[c]] → accaccacc.",
+    "pattern": "stack", "alternates": [],
+    "nearMiss": [
+      { "p": "sliding-window", "why": "The repeated text isn't a window with a property; it's a nested structure." },
+      { "p": "backtracking", "why": "There are no choices to explore; the decoding is deterministic." },
+      { "p": "dp-1d", "why": "No overlapping subproblems over prefixes; the difficulty is nesting, not optimisation." }
+    ],
+    "trigger": { "answer": "brackets can be nested", "wrong": ["repeated k times", "Decode an encoded string", "e.g. 3[a2[c]]"], "why": "Nested brackets ⇒ save the outer context when you enter '[' and restore it at ']' ⇒ stack (or recursion)." },
+    "ds": { "answer": "Two stacks: ArrayDeque<Integer> counts and ArrayDeque<StringBuilder> partial strings", "wrong": ["HashMap<Integer, String> depth → text", "One StringBuilder only", "PriorityQueue<String> of fragments"], "why": "Each '[' pushes (count, string so far); each ']' pops and appends the repeated current string." },
+    "invariant": { "answer": "The stacks hold, for every open '[', the repeat count and the text built before it; current holds the text inside the innermost open bracket.", "wrong": ["The stacks are empty whenever a letter is read.", "current always holds the final decoded string.", "Counts are popped when a digit is read."], "why": "That is exactly the context needed to resume after ']'." },
+    "time": { "answer": "O(output length)", "wrong": ["O(n)", "O(n²) in the input length only", "O(n log n)"], "why": "Every output character is written (and copied a bounded number of times per level)." },
+    "space": { "answer": "O(output length)", "wrong": ["O(1)", "O(nesting depth) only", "O(26)"], "why": "The partial strings on the stack plus the result." },
+    "whyNot": { "wrong": ["Sliding window can't handle digits.", "Sliding window needs the string sorted.", "Sliding window only works with one bracket pair."] },
+    "approach": "Scan: digits build k; '[' pushes k and current, then resets both; ']' pops prev and k and sets current = prev + current × k; letters append to current."
+  },
+  {
+    "id": "minimum-remove-to-make-valid-parentheses", "title": "Minimum Remove to Make Valid Parentheses", "slug": "minimum-remove-to-make-valid-parentheses", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a string of lowercase letters and '(' and ')', remove the minimum number of parentheses so that the result is valid, and return any valid result.",
+    "pattern": "stack", "alternates": [],
+    "nearMiss": [
+      { "p": "backtracking", "why": "Trying all removal subsets is exponential; one pass with a stack finds exactly which to drop." },
+      { "p": "greedy", "why": "Dropping unmatched ')' greedily is right, but unmatched '(' are only known at the end; the stack remembers their positions." },
+      { "p": "dp-2d", "why": "No interval optimisation is needed; matching is decided in one scan." }
+    ],
+    "trigger": { "answer": "remove the minimum number of parentheses", "wrong": ["lowercase letters", "return any valid result", "Given a string"], "why": "Matching parentheses ⇒ stack of unmatched '(' indices; any ')' with an empty stack and any leftover '(' must go." },
+    "ds": { "answer": "ArrayDeque<Integer> of indices of unmatched '(' plus a boolean[] (or Set) of indices to delete", "wrong": ["int balance counter only", "HashMap<Character, Integer> of counts", "PriorityQueue<Integer> of positions"], "why": "A single counter can't tell you WHICH '(' were unmatched." },
+    "invariant": { "answer": "The stack holds indices of '(' not yet matched; every ')' seen with an empty stack is marked for removal.", "wrong": ["The stack holds indices of ')' characters.", "The balance counter never goes negative.", "Letters are pushed onto the stack too."], "why": "After the scan, leftover stack indices plus marked ')' are exactly the minimum removals." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(2ⁿ)", "O(n log n)"], "why": "Two linear passes." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(2ⁿ)"], "why": "Stack, marks and the output builder." },
+    "whyNot": { "wrong": ["Backtracking can't delete characters.", "Backtracking only works on strings without letters.", "Backtracking always returns the empty string."] },
+    "approach": "Scan: push index of '('; on ')' pop if possible, else mark it. Mark all indices left on the stack. Build the string skipping marked indices."
+  },
+  {
+    "id": "daily-temperatures", "title": "Daily Temperatures", "slug": "daily-temperatures", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given daily temperatures, return for each day how many days you have to wait until a warmer temperature. Use 0 if there is no future warmer day.",
+    "pattern": "monotonic-stack", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Scanning forward from each day is O(n²); the stack resolves all waiting days in one pass." },
+      { "p": "heap-topk", "why": "A heap orders by temperature but loses the 'first warmer day after me' relation to position." },
+      { "p": "monotonic-deque", "why": "There is no fixed window to expire from the front; elements wait until resolved." }
+    ],
+    "trigger": { "answer": "until a warmer temperature", "wrong": ["how many days you have to wait", "Use 0 if there is no future warmer day", "Given daily temperatures"], "why": "'Next greater element' for every position ⇒ monotonic stack of unresolved indices." },
+    "ds": { "answer": "ArrayDeque<Integer> of indices with decreasing temperatures", "wrong": ["PriorityQueue<int[]> of (temp, index)", "TreeMap<Integer, Integer> temp → index", "int[] next-warmer table filled by two loops"], "why": "Indices give distances; decreasing values keep unresolved days on top." },
+    "invariant": { "answer": "Indices on the stack haven't found a warmer day yet, and their temperatures decrease from bottom to top.", "wrong": ["The stack is always sorted increasing from bottom to top.", "The stack holds every index seen so far.", "The top of the stack is always the warmest day."], "why": "A warmer day pops every cooler day it resolves." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n · 100)"], "why": "Each index pushed and popped once." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(100)"], "why": "The stack in a strictly decreasing run." },
+    "whyNot": { "wrong": ["Two pointers can't compare temperatures.", "Two pointers need the temperatures sorted.", "Two pointers would use O(n²) memory."] },
+    "approach": "For each i: while the stack top is cooler than temps[i], pop j and set answer[j] = i − j; push i."
+  },
+  {
+    "id": "largest-rectangle-in-histogram", "title": "Largest Rectangle in Histogram", "slug": "largest-rectangle-in-histogram", "difficulty": "Hard",
+    "companies": [],
+    "statement": "Given bar heights of a histogram (each bar width 1), return the area of the largest rectangle that fits entirely inside the histogram.",
+    "pattern": "monotonic-stack", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Shrinking from both ends (like Container With Most Water) fails: the rectangle's height is the minimum over the whole span, not just the ends." },
+      { "p": "dp-1d", "why": "No simple recurrence; what you need per bar is the nearest smaller bar on each side." },
+      { "p": "sliding-window", "why": "There's no validity rule that monotonically breaks as the window grows." }
+    ],
+    "trigger": { "answer": "largest rectangle that fits entirely inside", "wrong": ["each bar width 1", "Given bar heights", "return the area"], "why": "For each bar, the widest rectangle at its height spans to the nearest SMALLER bar on each side ⇒ monotonic stack." },
+    "ds": { "answer": "ArrayDeque<Integer> of indices with increasing heights, plus a sentinel 0 at the end", "wrong": ["PriorityQueue<Integer> of heights", "int[][] min-height table for every span", "TreeSet<Integer> of heights"], "why": "When a bar is popped, the new top is its left boundary and the current index its right boundary." },
+    "invariant": { "answer": "Heights on the stack increase from bottom to top; a bar is popped exactly when its right boundary (first smaller bar) is found.", "wrong": ["Heights on the stack decrease from bottom to top.", "The stack always holds the tallest bar seen.", "Each bar's rectangle ends at the last index."], "why": "At pop time both boundaries are known, so area = height × (i − newTop − 1)." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n · maxHeight)"], "why": "Each index pushed and popped once." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(maxHeight)"], "why": "The stack." },
+    "whyNot": { "wrong": ["Two pointers can't compute areas.", "Two pointers need the heights sorted.", "Two pointers only work on even numbers of bars."] },
+    "approach": "Append height 0. For each i: while heights[top] > heights[i], pop h; width = stack empty ? i : i − newTop − 1; best = max(best, h × width). Push i."
+  }
+]
