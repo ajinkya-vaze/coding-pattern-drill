@@ -87,6 +87,111 @@
     "time": { "answer": "O(max(m, n))", "wrong": ["O(m · n)", "O((m + n) log(m + n))", "O(1)"], "why": "One pass over the longer list (plus a final carry)." },
     "space": { "answer": "O(1) extra (the output list is not counted)", "wrong": ["O(m · n)", "O(m + n) for two stacks", "O(log n)"], "why": "Only the carry and pointers besides the output." },
     "whyNot": { "wrong": ["Stacks can't store digits.", "A stack would make the sum overflow.", "Stacks only work when both lists are the same length."] },
-    "approach": "dummy, tail, carry = 0. While either list or carry remains: sum = digits + carry; append sum % 10; carry = sum / 10; advance. Return dummy.next."
+    "approach": "dummy, tail, carry = 0. While either list or carry remains: sum = digits + carry; append sum % 10; carry = sum / 10; advance. Return dummy.next.",
+    "twists": [
+      {
+        "change": "Digits are stored most significant first, and you may not reverse the input lists.",
+        "statement": "Two non-empty linked lists store non-negative integers with the most significant digit first. Return their sum as a linked list in the same order, without reversing the input lists.",
+        "pattern": "stack", "alternates": [], "trigger": "without reversing the input lists",
+        "ds": "Two ArrayDeque<Integer> stacks of digits, building the result by prepending nodes",
+        "nearMiss": [
+          { "p": "linked-list", "why": "The usual trick is to reverse both lists first, which the problem now forbids." },
+          { "p": "two-pointers", "why": "Aligning the lists from the front doesn't let you carry from the back." },
+          { "p": "monotonic-stack", "why": "The stacks only reverse the digit order; nothing is kept sorted." }
+        ],
+        "why": "You need the digits back-to-front without changing the lists ⇒ push them onto stacks, then pop and add with carry.",
+        "approach": "Push each list's digits. While stacks or carry: sum = pop1 + pop2 + carry; node = new ListNode(sum % 10); node.next = head; head = node."
+      }
+    ]
+  },
+  {
+    "id": "linked-list-cycle", "title": "Linked List Cycle", "slug": "linked-list-cycle", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Given the head of a singly linked list, return true if following next pointers ever revisits a node. Solve it with O(1) extra memory.",
+    "pattern": "fast-slow", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "A HashSet of visited nodes detects the revisit, but it costs O(n) memory and the problem asks for O(1)." },
+      { "p": "linked-list", "why": "Reversing the list to see whether you return to head is clever but destroys the input and still needs care; two pointers just read it." },
+      { "p": "two-pointers", "why": "Converging pointers need a far end; a cyclic list has none." }
+    ],
+    "trigger": { "answer": "revisits a node", "wrong": ["singly linked list", "return true", "Given the head"], "why": "Cycle in a next-linked structure + O(1) memory ⇒ Floyd's tortoise and hare." },
+    "ds": { "answer": "Two ListNode references: slow (1 step) and fast (2 steps)", "wrong": ["HashSet<ListNode> of visited nodes", "HashMap<ListNode, Integer> node → index", "ArrayDeque<ListNode> as a stack"], "why": "Pointers only." },
+    "invariant": { "answer": "Once both are inside a cycle, the gap between fast and slow shrinks by one node per step, so they must meet; if fast reaches null there is no cycle.", "wrong": ["slow and fast are always one node apart.", "fast always moves to the node slow just left.", "They meet exactly at the cycle's first node."], "why": "Meeting point is somewhere in the cycle; finding the entry is Linked List Cycle II." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(c²) for cycle length c"], "why": "Fast catches slow within one lap of the cycle." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(c)"], "why": "Two references." },
+    "whyNot": { "wrong": ["A HashSet can't store ListNode objects.", "Hashing needs the values to be distinct.", "A HashSet would miss cycles of length 1."] },
+    "approach": "slow = fast = head. While fast != null && fast.next != null: slow = slow.next; fast = fast.next.next; if slow == fast return true. Return false."
+  },
+  {
+    "id": "happy-number", "title": "Happy Number", "slug": "happy-number", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Repeatedly replace a positive integer with the sum of the squares of its digits. It is happy if this reaches 1; otherwise the sequence loops endlessly without reaching 1. Decide whether n is happy.",
+    "pattern": "fast-slow", "alternates": ["hashing"],
+    "nearMiss": [
+      { "p": "dp-1d", "why": "There are no overlapping subproblems to tabulate: it is one deterministic sequence that either hits 1 or cycles." },
+      { "p": "bit", "why": "The digit operation is decimal; bit tricks don't model it." },
+      { "p": "graph-traversal", "why": "There is only one outgoing edge per number, so it is a single path, not a search: detecting the loop is all that's needed." }
+    ],
+    "trigger": { "answer": "loops endlessly", "wrong": ["sum of the squares of its digits", "a positive integer", "reaches 1"], "why": "A deterministic 'next' function that may cycle ⇒ Floyd's cycle detection (or a seen set)." },
+    "ds": { "answer": "Two ints: slow = next(n), fast = next(next(n))", "wrong": ["int[] dp over all values up to n", "ArrayDeque<Integer> queue of numbers", "boolean[] of size n"], "why": "next(x) = sum of squared digits." },
+    "invariant": { "answer": "Every value maps to exactly one next value, so the sequence either reaches 1 (a fixed point) or enters a cycle, where fast must catch slow.", "wrong": ["The sequence strictly decreases until it reaches 1.", "slow and fast never share a value unless it is 1.", "Every number eventually reaches 1."], "why": "Values above 243 shrink fast, so the cycle (if any) is small." },
+    "time": { "answer": "O(log n)", "wrong": ["O(n)", "O(n log n)", "O(√n)"], "why": "Each step costs O(digits); after a few steps values are bounded by 243." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n) always", "O(243²)"], "why": "Two ints (a HashSet version is O(log n))." },
+    "whyNot": { "wrong": ["DP can't work with digits.", "DP would need n to be even.", "DP is too slow for numbers over 100."] },
+    "approach": "slow = next(n), fast = next(next(n)); while fast != 1 && slow != fast, step them. Return fast == 1."
+  },
+  {
+    "id": "merge-two-sorted-lists", "title": "Merge Two Sorted Lists", "slug": "merge-two-sorted-lists", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Given the heads of two sorted linked lists, splice their nodes together into one sorted list and return its head.",
+    "pattern": "linked-list", "alternates": [],
+    "nearMiss": [
+      { "p": "k-way-merge", "why": "With exactly two lists, comparing the two heads is O(1); a heap only pays off for many lists." },
+      { "p": "two-pointers", "why": "There are two cursors, but the real work is relinking nodes behind a dummy head, which is the linked-list pattern." },
+      { "p": "partition", "why": "Nothing is split around a pivot; two sorted runs are interleaved." }
+    ],
+    "trigger": { "answer": "splice their nodes together", "wrong": ["two sorted linked lists", "return its head", "one sorted list"], "why": "Building a list by relinking existing nodes ⇒ dummy head + tail pointer." },
+    "ds": { "answer": "ListNode dummy, tail, and the two current heads", "wrong": ["PriorityQueue<ListNode> of both lists", "ArrayList<Integer> of all values, then sort", "ArrayDeque<ListNode> as a stack"], "why": "A dummy head removes the 'first node' special case." },
+    "invariant": { "answer": "dummy.next..tail is a sorted list of the smallest nodes taken so far, and every remaining node is ≥ tail.", "wrong": ["tail always belongs to the first list.", "Both lists are emptied at the same time.", "The merged list is built from new nodes."], "why": "Take the smaller head each step; attach the leftover at the end." },
+    "time": { "answer": "O(m + n)", "wrong": ["O((m + n) log(m + n))", "O(m · n)", "O(log(m + n))"], "why": "Each node is attached once." },
+    "space": { "answer": "O(1)", "wrong": ["O(m + n)", "O(log(m + n))", "O(m)"], "why": "Relinking only (the recursive version uses O(m + n) stack)." },
+    "whyNot": { "wrong": ["A heap can't store ListNode objects.", "k-way merge requires lists of equal length.", "A heap returns the largest node first."] },
+    "approach": "dummy, tail = dummy. While both non-null: attach the smaller head to tail and advance it. tail.next = whichever remains. Return dummy.next."
+  },
+  {
+    "id": "remove-nth-node-from-end-of-list", "title": "Remove Nth Node From End of List", "slug": "remove-nth-node-from-end-of-list", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given the head of a singly linked list, delete the n-th node counted from the end and return the head. Do it in one pass.",
+    "pattern": "linked-list", "alternates": [],
+    "nearMiss": [
+      { "p": "fast-slow", "why": "Two pointers do walk the list, but at the SAME speed with a fixed gap of n; there is no speed difference to exploit." },
+      { "p": "stack", "why": "Pushing all nodes and popping n works, but takes O(n) space." },
+      { "p": "two-pointers", "why": "Converging from both ends isn't possible on a singly linked list." }
+    ],
+    "trigger": { "answer": "counted from the end", "wrong": ["delete the n-th node", "singly linked list", "in one pass"], "why": "Position from the end in one pass ⇒ lead pointer n + 1 ahead of a trailing pointer, both starting at a dummy head (so deleting the head is not special)." },
+    "ds": { "answer": "ListNode dummy plus two references: lead and trail", "wrong": ["ArrayDeque<ListNode> as a stack", "ArrayList<ListNode> of all nodes", "HashMap<Integer, ListNode> index → node"], "why": "The dummy makes removing the real head the same as any other node." },
+    "invariant": { "answer": "lead is always n + 1 nodes ahead of trail, so when lead reaches null, trail.next is the node to delete.", "wrong": ["lead moves two steps for every step of trail.", "trail always points at the node to delete.", "The gap shrinks by one each step."], "why": "trail.next = trail.next.next removes it." },
+    "time": { "answer": "O(L) for list length L", "wrong": ["O(L²)", "O(L log L)", "O(n²)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(L)", "O(n)", "O(log L)"], "why": "Three references." },
+    "whyNot": { "wrong": ["Fast and slow pointers only work on cyclic lists.", "Fast/slow would delete the middle node.", "Fast/slow needs the list length first."] },
+    "approach": "dummy.next = head; lead = trail = dummy. Move lead n + 1 steps. Move both until lead == null. trail.next = trail.next.next. Return dummy.next."
+  },
+  {
+    "id": "reorder-list", "title": "Reorder List", "slug": "reorder-list", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Rearrange a singly linked list L0 → L1 → … → Ln into L0 → Ln → L1 → Ln−1 → L2 → … by relinking nodes in place (values must not be modified).",
+    "pattern": "linked-list", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Alternating first/last needs access from the back, which a singly linked list lacks until you reverse its second half." },
+      { "p": "stack", "why": "Pushing all nodes onto a stack to pop from the end works, but uses O(n) space." },
+      { "p": "fast-slow", "why": "Fast/slow is only step 1 (find the middle); the core of the problem is reversing and interleaving links." }
+    ],
+    "trigger": { "answer": "relinking nodes in place", "wrong": ["L0 → Ln → L1", "values must not be modified", "a singly linked list"], "why": "In-place relinking that needs the tail end ⇒ find middle, reverse second half, merge alternately." },
+    "ds": { "answer": "ListNode references: slow/fast to find the middle, prev/curr/next to reverse, two cursors to merge", "wrong": ["ArrayDeque<ListNode> as a deque of all nodes", "ArrayList<ListNode> indexed by position", "HashMap<Integer, ListNode>"], "why": "O(1) extra space throughout." },
+    "invariant": { "answer": "After cutting at the middle and reversing the second half, both halves are in the order needed, and the merge takes one node from each in turn.", "wrong": ["The second half is always longer than the first.", "Values are swapped pairwise.", "The middle node moves to the end."], "why": "The first half has the same length as the second, or one more." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n / 2) per node"], "why": "Three linear passes." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(n / 2)"], "why": "References only." },
+    "whyNot": { "wrong": ["Two pointers can't be used with ListNode objects.", "Two pointers would sort the list.", "Two pointers needs the list to be sorted."] },
+    "approach": "Find the middle with slow/fast; cut. Reverse the second half. Merge: a.next = b, b.next = a's old next, advance both."
   }
 ]

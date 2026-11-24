@@ -28,10 +28,20 @@ problem climbs its own ladder:
 | L1 Recognise | Pattern, from 4 options (the wrong ones are near-miss patterns) | Unlocks L2 |
 | L2 Probe | Trigger phrase → Java DS → invariant → time → space → "why not the nearest alternative?" | All 6 right unlocks L3 |
 | L3 Recall | Type the pattern, with no options. Optional hints: highlight the trigger, show the DS, show 4 options | A clean pass marks the problem Mastered |
+| L4 Twist | Same problem with one constraint changed so the pattern changes (e.g. Two Sum on sorted input → two pointers). Same screen and hints as L3 | A clean pass climbs a review box |
 
 Mastered problems come back for review after 1, 3, 7, 16 and 35 days. A miss drops the problem
 back to L2. A pattern counts as **Mastered** once at least 2 of its problems are mastered on
 different days.
+
+**L4 twists.** For a Mastered problem that has twists, reviews alternate: L3 (the problem
+itself), then L4 (its next twist), then L3 again, cycling through its twists. A missed twist
+keeps the problem Mastered but resets its review box, so the same twist comes back the next day.
+In the 4-option hint, one of the options is always the original pattern: that's the trap.
+
+**Timer (optional).** Turn on the 60-second timer under Sync → Play settings (off by default).
+It runs at L3 and L4. Running out doesn't fail the answer: it is still graded, logged as a slow
+attempt and counted on the Progress screen.
 
 **Dig deeper** on any question opens the pattern's lesson and the problem's approach. Opening it
 before you answer at L1/L3 counts as using a hint.
@@ -65,7 +75,7 @@ progress. "Report this question" notes travel inside the code too.
 - **Company tags** mean the problem appeared in that company's top 20 by frequency, over a
   six-month window, in the community-maintained
   [leetcode-company-wise-problems](https://github.com/liquidslr/leetcode-company-wise-problems)
-  snapshot (Oct 2025). Problems without tags come from standard lists (NeetCode 150 / Grind 75)
+  snapshot (Oct 2026). Problems without tags come from standard lists (NeetCode 150 / Grind 75)
   to cover every pattern. Treat the tags as a rough signal, not ground truth.
 
 ### Adding a problem
@@ -77,6 +87,11 @@ wrong option can be `{ "t": "...", "why": "..." }` so it explains itself when pi
   "why not?" question.
 - `alternates` lists other valid patterns. These are accepted at L3 and never shown as wrong
   options.
+- `twists` (optional) lists L4 variants. Each twist needs `change` (one line saying what
+  changed), a full `statement`, `pattern` (it must differ from the problem's own pattern, which
+  can't be an `alternates` entry either), `trigger` (word for word in the twist statement), `ds`,
+  `why`, `approach` and exactly 3 `nearMiss` entries. One of those must be the original
+  pattern.
 
 Then run the checks below.
 

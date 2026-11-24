@@ -15,7 +15,22 @@
     "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(log n)"], "why": "One pass with O(1) average map operations." },
     "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(n²)"], "why": "The map can hold up to n entries." },
     "whyNot": { "wrong": ["Two pointers only works on arrays of positive numbers.", "Two pointers can find triplets but not pairs.", "Two pointers needs more memory than a hash map."] },
-    "approach": "Walk once; for each value look up target − value in a map of value → index seen so far. If present return both indices, otherwise store the current value."
+    "approach": "Walk once; for each value look up target − value in a map of value → index seen so far. If present return both indices, otherwise store the current value.",
+    "twists": [
+      {
+        "change": "The array is sorted, and you may only use O(1) extra space.",
+        "statement": "Given an integer array sorted in ascending order and a target, return the indices of the two numbers that add up to target, using O(1) extra space.",
+        "pattern": "two-pointers", "alternates": ["binary-search"], "trigger": "sorted in ascending order",
+        "ds": "Two int indices lo and hi",
+        "nearMiss": [
+          { "p": "hashing", "why": "The complement map still works, but it's O(n) space and ignores the sorted order you were given." },
+          { "p": "sliding-window", "why": "The two numbers needn't be adjacent; there's no window." },
+          { "p": "prefix-sum", "why": "It's a sum of exactly two elements, not of a range." }
+        ],
+        "why": "Sorted order tells you which end to move: sum too small ⇒ lo++, too big ⇒ hi−−.",
+        "approach": "lo = 0, hi = n − 1; move the pointer that fixes the sum until it equals target."
+      }
+    ]
   },
   {
     "id": "group-anagrams", "title": "Group Anagrams", "slug": "group-anagrams", "difficulty": "Medium",
@@ -105,7 +120,22 @@
     "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n · maxHeight)"], "why": "Each bar is settled once." },
     "space": { "answer": "O(1)", "wrong": ["O(n)", "O(maxHeight)", "O(log n)"], "why": "Four scalars. (The prefix-max version uses O(n); the stack version O(n).)" },
     "whyNot": { "wrong": ["Sliding windows can't be used on arrays of heights.", "The window would need to be sorted first.", "A sliding window here would be O(n²)."] },
-    "approach": "lo, hi from both ends with leftMax, rightMax. Move the side with the smaller max: water += thatMax − height there. Equivalent: precompute leftMax[] and rightMax[] and sum min(...) − height."
+    "approach": "lo, hi from both ends with leftMax, rightMax. Move the side with the smaller max: water += thatMax − height there. Equivalent: precompute leftMax[] and rightMax[] and sum min(...) − height.",
+    "twists": [
+      {
+        "change": "The heights form a 2-D grid instead of a line.",
+        "statement": "Given an m × n grid of block heights, compute how much rain water the whole 2-D elevation map can hold after raining.",
+        "pattern": "shortest-path", "alternates": ["heap-topk"], "trigger": "m × n grid of block heights",
+        "ds": "PriorityQueue<int[]> of {height, r, c} seeded with the border, plus boolean[][] visited",
+        "nearMiss": [
+          { "p": "two-pointers", "why": "In 1-D the lower of two walls bounds the water; in 2-D water can escape in any direction, so you need the lowest point of the whole boundary." },
+          { "p": "dp-2d", "why": "Row and column max sweeps don't capture leaks around corners." },
+          { "p": "graph-traversal", "why": "Plain BFS has no priority; you must always grow from the lowest boundary cell." }
+        ],
+        "why": "Water level is set by the lowest wall around a basin ⇒ grow inwards from the border with a min-heap (Dijkstra-like on max height).",
+        "approach": "Push all border cells. Poll the lowest; for each unvisited neighbour: water += max(0, h − nh); push (max(h, nh), neighbour)."
+      }
+    ]
   },
   {
     "id": "move-zeroes", "title": "Move Zeroes", "slug": "move-zeroes", "difficulty": "Easy",
@@ -159,7 +189,22 @@
     "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n³)", "O(n log n)"], "why": "right moves n times and left only ever moves forward." },
     "space": { "answer": "O(min(n, alphabet))", "wrong": ["O(n²)", "O(n · alphabet)", "O(log n)"], "why": "One entry per distinct character, bounded by the alphabet (e.g. 128)." },
     "whyNot": { "wrong": ["Two pointers can't be used on strings.", "Two pointers needs a target sum.", "Two pointers would use O(n) extra space."] },
-    "approach": "Expand right; if s[right] was last seen at index ≥ left, move left to lastSeen + 1. Update lastSeen and best = max(best, right − left + 1)."
+    "approach": "Expand right; if s[right] was last seen at index ≥ left, move left to lastSeen + 1. Update lastSeen and best = max(best, right − left + 1).",
+    "twists": [
+      {
+        "change": "The characters no longer need to be contiguous.",
+        "statement": "Given a string, return the length of the longest subsequence (characters in order, not necessarily adjacent) in which no character repeats.",
+        "pattern": "hashing", "alternates": [], "trigger": "not necessarily adjacent",
+        "ds": "HashSet<Character> (or boolean[128]) of distinct characters",
+        "nearMiss": [
+          { "p": "sliding-window", "why": "A window only covers contiguous substrings; a subsequence can skip any repeats, so no window is needed." },
+          { "p": "dp-1d", "why": "No choices interact: take one copy of every distinct character." },
+          { "p": "backtracking", "why": "Enumerating subsequences is exponential for a question with a counting answer." }
+        ],
+        "why": "If you can skip characters, keep the first copy of each distinct one: the answer is the number of distinct characters.",
+        "approach": "Add every character to a set; return its size."
+      }
+    ]
   },
   {
     "id": "minimum-window-substring", "title": "Minimum Window Substring", "slug": "minimum-window-substring", "difficulty": "Hard",
@@ -231,7 +276,22 @@
     "time": { "answer": "O(n)", "wrong": ["O(n log k)", "O(n · k)", "O(k log n)"], "why": "Every index is pushed and popped at most once." },
     "space": { "answer": "O(k)", "wrong": ["O(n log k)", "O(n²)", "O(1)"], "why": "The deque never holds more than one window's worth of indices (output not counted)." },
     "whyNot": { "wrong": ["A heap can't store indices.", "A heap would return the minimum, not the maximum.", "Heaps don't allow duplicate values."] },
-    "approach": "For each i: pop back while nums[back] ≤ nums[i]; push i; pop front if it is ≤ i − k; once i ≥ k − 1 record nums[front]."
+    "approach": "For each i: pop back while nums[back] ≤ nums[i]; push i; pop front if it is ≤ i − k; once i ≥ k − 1 record nums[front].",
+    "twists": [
+      {
+        "change": "Report each window's sum instead of its maximum.",
+        "statement": "Given an integer array and a window size k, return the sum of every contiguous window of size k.",
+        "pattern": "sliding-window", "alternates": ["prefix-sum"], "trigger": "the sum of every contiguous window",
+        "ds": "One running long sum",
+        "nearMiss": [
+          { "p": "monotonic-deque", "why": "The deque exists to find a window's max/min; a sum is updated by adding the new value and subtracting the old." },
+          { "p": "heap-topk", "why": "No ordering is needed for sums." },
+          { "p": "two-pointers", "why": "The window is a fixed size; there's nothing to converge on." }
+        ],
+        "why": "Sums are invertible: add the entering element and subtract the leaving one.",
+        "approach": "sum += a[i]; if i ≥ k sum −= a[i − k]; if i ≥ k − 1 output sum."
+      }
+    ]
   },
   {
     "id": "shortest-subarray-with-sum-at-least-k", "title": "Shortest Subarray with Sum at Least K", "slug": "shortest-subarray-with-sum-at-least-k", "difficulty": "Hard",
@@ -267,7 +327,22 @@
     "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n · k)"], "why": "One pass with O(1) map operations." },
     "space": { "answer": "O(n)", "wrong": ["O(1)", "O(k)", "O(n²)"], "why": "Up to n distinct prefix sums." },
     "whyNot": { "wrong": ["Sliding window can't count subarrays, only find the longest.", "Sliding window requires k to be positive.", "Sliding window only works on strings."] },
-    "approach": "sum = 0, map {0: 1}. For each x: sum += x; count += map[sum − k]; map[sum]++."
+    "approach": "sum = 0, map {0: 1}. For each x: sum += x; count += map[sum − k]; map[sum]++.",
+    "twists": [
+      {
+        "change": "All values are positive, and you want the shortest subarray reaching the target.",
+        "statement": "Given an array of positive integers and a target, return the minimal length of a contiguous subarray whose sum is at least target, or 0 if none exists.",
+        "pattern": "sliding-window", "alternates": [], "trigger": "array of positive integers",
+        "ds": "Two int indices and a running int sum",
+        "nearMiss": [
+          { "p": "prefix-sum", "why": "Prefix sums + a map count exact sums when negatives exist; with positives only, the window sum grows and shrinks monotonically, so no map is needed." },
+          { "p": "monotonic-deque", "why": "A deque over prefix sums is needed when values can be negative (Shortest Subarray with Sum at Least K); positives make a plain window enough." },
+          { "p": "binary-search", "why": "Binary-searching prefix sums per end works in O(n log n), but the window is O(n)." }
+        ],
+        "why": "Positive values make 'sum ≥ target' monotonic in the window size: expand right, then shrink left while it still holds.",
+        "approach": "For r: sum += a[r]; while sum ≥ target: best = min(best, r − l + 1); sum −= a[l++]. Return best or 0."
+      }
+    ]
   },
   {
     "id": "product-of-array-except-self", "title": "Product of Array Except Self", "slug": "product-of-array-except-self", "difficulty": "Medium",
@@ -321,7 +396,22 @@
     "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n³)"], "why": "One pass." },
     "space": { "answer": "O(1)", "wrong": ["O(n)", "O(n²)", "O(log n)"], "why": "Two variables." },
     "whyNot": { "wrong": ["Sliding window only finds the longest subarray, never the largest sum.", "Sliding window needs the window size to be given.", "A window would need the array sorted first."] },
-    "approach": "cur = max(x, cur + x); best = max(best, cur)."
+    "approach": "cur = max(x, cur + x); best = max(best, cur).",
+    "twists": [
+      {
+        "change": "The subarray may be at most k elements long.",
+        "statement": "Given an integer array (values may be negative) and an integer k, return the largest sum of a non-empty contiguous subarray whose length is at most k.",
+        "pattern": "monotonic-deque", "alternates": [], "trigger": "whose length is at most k",
+        "ds": "long[] prefix sums and ArrayDeque<Integer> of indices with increasing prefix values",
+        "nearMiss": [
+          { "p": "kadane", "why": "Kadane's reset rule has no notion of length; it can't drop elements that fall more than k back." },
+          { "p": "sliding-window", "why": "With negative values there's no rule for when to shrink: a bigger window can be better or worse." },
+          { "p": "prefix-sum", "why": "Prefix sums turn it into P[j] − min(P[i]) over j − k ≤ i < j, but that sliding minimum is what the deque provides." }
+        ],
+        "why": "Best sum ending at j = P[j] − (minimum prefix in the last k positions) ⇒ sliding-window minimum ⇒ monotonic deque.",
+        "approach": "Deque holds indices with increasing P. For j: drop front if < j − k; best = max(best, P[j] − P[front]); pop back while P[back] ≥ P[j]; push j."
+      }
+    ]
   },
   {
     "id": "best-time-to-buy-and-sell-stock", "title": "Best Time to Buy and Sell Stock", "slug": "best-time-to-buy-and-sell-stock", "difficulty": "Easy",
@@ -339,7 +429,22 @@
     "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(log n)"], "why": "One pass." },
     "space": { "answer": "O(1)", "wrong": ["O(n)", "O(n²)", "O(log n)"], "why": "Two variables." },
     "whyNot": { "wrong": ["A heap can't hold duplicate prices.", "A heap only works when k is given.", "A heap gives the max profit only on sorted prices."] },
-    "approach": "Track the minimum price so far; profit = max(profit, price − minPrice)."
+    "approach": "Track the minimum price so far; profit = max(profit, price − minPrice).",
+    "twists": [
+      {
+        "change": "You may now make up to two transactions.",
+        "statement": "Given daily stock prices, return the maximum profit with at most two buy-then-sell transactions (sell before buying again).",
+        "pattern": "state-dp", "alternates": [], "trigger": "at most two buy-then-sell transactions",
+        "ds": "Four ints: buy1, sell1, buy2, sell2",
+        "nearMiss": [
+          { "p": "kadane", "why": "Running min price handles one transaction; two need separate states that chain the first sale into the second purchase." },
+          { "p": "greedy", "why": "Summing every rise allows unlimited transactions, which can exceed the limit of two." },
+          { "p": "two-pointers", "why": "No single pair of days answers it." }
+        ],
+        "why": "A fixed number of steps ⇒ one state per step, updated daily.",
+        "approach": "buy1 = max(buy1, −p); sell1 = max(sell1, buy1 + p); buy2 = max(buy2, sell1 − p); sell2 = max(sell2, buy2 + p)."
+      }
+    ]
   },
   {
     "id": "maximum-product-subarray", "title": "Maximum Product Subarray", "slug": "maximum-product-subarray", "difficulty": "Medium",
@@ -358,5 +463,368 @@
     "space": { "answer": "O(1)", "wrong": ["O(n)", "O(n²)", "O(log n)"], "why": "Three variables." },
     "whyNot": { "wrong": ["Sliding windows can't multiply.", "A window needs a fixed size k.", "Sliding window needs the array sorted."] },
     "approach": "For each x: if x < 0 swap curMax and curMin; curMax = max(x, curMax · x); curMin = min(x, curMin · x); best = max(best, curMax)."
+  },
+  {
+    "id": "valid-anagram", "title": "Valid Anagram", "slug": "valid-anagram", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Given two strings s and t of lowercase English letters, return true if t uses exactly the same letters as s with the same multiplicities (an anagram), otherwise false.",
+    "pattern": "hashing", "alternates": [],
+    "nearMiss": [
+      { "p": "sliding-window", "why": "There is no window to slide: the whole of t is compared with the whole of s, once." },
+      { "p": "two-pointers", "why": "Sorting both strings and walking them together works, but costs O(n log n); counting is O(n)." },
+      { "p": "bit", "why": "XOR of all characters of s and t is 0 for \"aa\" vs \"bb\" too, so it can't prove equal multiplicities." }
+    ],
+    "trigger": { "answer": "the same letters as s with the same multiplicities", "wrong": ["two strings s and t", "lowercase English letters", "return true"], "why": "'Same items, same counts, order ignored' is a frequency-table comparison." },
+    "ds": { "answer": "int[26] counts (increment for s, decrement for t)", "wrong": ["HashSet<Character> of letters", "char[] sorted copies of both strings", "ArrayDeque<Character> as a stack"], "why": "Lowercase letters only ⇒ a fixed 26-slot array beats a HashMap." },
+    "invariant": { "answer": "After processing both strings, count[c] = (occurrences in s) − (occurrences in t); all zero ⇔ anagram.", "wrong": ["count[c] is never negative while scanning.", "The two strings agree at every index.", "A HashSet of s's letters equals a HashSet of t's letters ⇒ anagram."], "why": "Sets lose multiplicity (\"aab\" vs \"abb\"); a signed count keeps it." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(26 · n²)"], "why": "One pass over each string, then 26 checks." },
+    "space": { "answer": "O(1) (26 counters)", "wrong": ["O(n)", "O(n log n)", "O(26 · n)"], "why": "The alphabet size is fixed." },
+    "whyNot": { "wrong": ["A sliding window can't handle two strings at once.", "Sliding windows need a sorted input.", "A sliding window would be O(n²) here."] },
+    "approach": "If lengths differ return false. count[s[i] − 'a']++, count[t[i] − 'a']−−; return true iff every count is 0. (Unicode follow-up: HashMap<Character, Integer>.)",
+    "twists": [
+      {
+        "change": "Find every anagram of a pattern inside a longer string.",
+        "statement": "Given strings s and p, return every start index in s where a substring of length |p| is an anagram of p.",
+        "pattern": "sliding-window", "alternates": [], "trigger": "every start index in s",
+        "ds": "Two int[26] counts updated as a fixed window slides",
+        "nearMiss": [
+          { "p": "hashing", "why": "Counting each substring from scratch is O(|s| · |p|); the window updates one letter in and one out." },
+          { "p": "two-pointers", "why": "Converging ends don't define a fixed-length substring." },
+          { "p": "backtracking", "why": "Generating permutations of p is factorial." }
+        ],
+        "why": "Fixed-length contiguous substrings compared by letter counts ⇒ fixed-size sliding window.",
+        "approach": "Count p. Slide a window of |p| over s, adding s[r] and removing s[r − |p|]; record r − |p| + 1 when counts match."
+      }
+    ]
+  },
+  {
+    "id": "majority-element", "title": "Majority Element", "slug": "majority-element", "difficulty": "Easy",
+    "companies": ["Google"],
+    "statement": "Given an integer array of length n, return the value that occurs more than n / 2 times. Such a value is guaranteed to exist.",
+    "pattern": "hashing", "alternates": ["bit", "partition"],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "A heap over the counts finds the most frequent value, but the > n/2 guarantee means one count pass (or one vote pass) already answers it: no ordering needed." },
+      { "p": "sliding-window", "why": "Occurrences are scattered across the array, not in one contiguous run." },
+      { "p": "kadane", "why": "There is no best contiguous subarray to maximise. (Boyer–Moore voting does keep a running counter, but it is a cancellation argument, not a max-subarray recurrence.)" }
+    ],
+    "trigger": { "answer": "occurs more than n / 2 times", "wrong": ["an integer array of length n", "guaranteed to exist", "return the value"], "why": "Counting occurrences per value is the direct O(n) solution; the > n/2 guarantee also enables Boyer–Moore voting in O(1) space." },
+    "ds": { "answer": "HashMap<Integer, Integer> value → count", "wrong": ["PriorityQueue<int[]> of (count, value)", "TreeMap<Integer, Integer> sorted by value", "ArrayDeque<Integer> of candidates"], "why": "Counts per value; return as soon as a count passes n / 2." },
+    "invariant": { "answer": "count.get(v) is the number of times v has appeared so far; the first value to exceed n / 2 is the answer.", "wrong": ["The majority value is always at index 0 or n − 1.", "Counts only ever increase for the current maximum.", "The map never holds more than two keys."], "why": "With voting instead: pairing off different values never removes all copies of the majority, so the surviving candidate is it." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(n log k)"], "why": "One pass. (Sorting and taking nums[n/2] is O(n log n).)" },
+    "space": { "answer": "O(n) for the map (O(1) with Boyer–Moore voting)", "wrong": ["O(1) with the map", "O(log n)", "O(n²)"], "why": "Up to n/2 distinct keys in the map; voting keeps two scalars." },
+    "whyNot": { "wrong": ["A heap can't store duplicate values.", "Heaps only work on sorted arrays.", "A heap would give the least frequent value."] },
+    "approach": "Count with a HashMap and return the value whose count exceeds n / 2. O(1)-space follow-up: Boyer–Moore: candidate/count; count == 0 ⇒ take the current value; same ⇒ +1, different ⇒ −1."
+  },
+  {
+    "id": "valid-sudoku", "title": "Valid Sudoku", "slug": "valid-sudoku", "difficulty": "Medium",
+    "companies": [],
+    "statement": "A partially filled 9 × 9 board holds digits 1–9 or '.'. Decide whether the filled cells break any rule: no digit may repeat within a row, within a column, or within any of the nine 3 × 3 boxes. The board does not have to be solvable.",
+    "pattern": "hashing", "alternates": [],
+    "nearMiss": [
+      { "p": "backtracking", "why": "Backtracking would SOLVE the puzzle; here we only check the given digits, and solvability is explicitly not required." },
+      { "p": "matrix", "why": "There is no in-place traversal trick (rotation, spiral, markers); the work is duplicate detection per group." },
+      { "p": "bit", "why": "A 9-bit mask per row/column/box is a valid speed-up of the same idea, but it is still 'have I seen this digit in this group?': a set." }
+    ],
+    "trigger": { "answer": "no digit may repeat within a row, within a column, or within any of the nine 3 × 3 boxes", "wrong": ["The board does not have to be solvable", "partially filled 9 × 9 board", "digits 1–9 or '.'"], "why": "'No repeats within each group' is seen-before detection: one set per group." },
+    "ds": { "answer": "boolean[9][9] (or HashSet<Integer>) per row, per column and per box", "wrong": ["int[][] dp over cells", "ArrayDeque<int[]> of empty cells", "HashMap<Integer, List<int[]>> digit → positions, checked pairwise"], "why": "27 small sets; box index = (r / 3) * 3 + c / 3." },
+    "invariant": { "answer": "After scanning a cell, each set holds exactly the digits already seen in that cell's row, column and box; a repeat is found the moment it is added twice.", "wrong": ["Every row contains each digit exactly once.", "Empty cells are filled before checking.", "Boxes only need checking if rows and columns pass."], "why": "Each filled cell is checked against its three groups in O(1)." },
+    "time": { "answer": "O(81), i.e. O(1) for a fixed board", "wrong": ["O(9!)", "O(81²)", "O(9^81)"], "why": "Each cell is visited once." },
+    "space": { "answer": "O(81), i.e. O(1)", "wrong": ["O(9!)", "O(81²)", "O(n) for an unbounded stack"], "why": "27 groups of 9 flags." },
+    "whyNot": { "wrong": ["Backtracking can't handle '.' cells.", "Backtracking would need the board sorted first.", "Backtracking only works on 1-D arrays."] },
+    "approach": "For each filled cell (r, c, d): box = (r / 3) * 3 + c / 3; if row[r][d], col[c][d] or box[box][d] is already set, return false; otherwise set all three."
+  },
+  {
+    "id": "two-sum-ii-input-array-is-sorted", "title": "Two Sum II - Input Array Is Sorted", "slug": "two-sum-ii-input-array-is-sorted", "difficulty": "Medium",
+    "companies": [],
+    "statement": "An integer array is sorted in non-decreasing order. Return the 1-based indices of the two numbers that add up to target (exactly one solution exists), using only constant extra space.",
+    "pattern": "two-pointers", "alternates": ["binary-search"],
+    "nearMiss": [
+      { "p": "hashing", "why": "A HashMap complement lookup works but uses O(n) space, which the problem forbids." },
+      { "p": "sliding-window", "why": "The two numbers needn't be adjacent or contiguous; we want a pair, not a window." },
+      { "p": "prefix-sum", "why": "There is no range sum here: the target is the sum of exactly two elements." }
+    ],
+    "trigger": { "answer": "sorted in non-decreasing order", "wrong": ["1-based indices", "exactly one solution exists", "add up to target"], "why": "Sorted + pair sum + O(1) space ⇒ converge from both ends." },
+    "ds": { "answer": "Two int indices lo and hi on the array", "wrong": ["HashMap<Integer, Integer> value → index", "TreeSet<Integer> of seen values", "int[] prefix sums"], "why": "Sorted order lets the sum steer which pointer moves." },
+    "invariant": { "answer": "If a solution exists, its indices lie within [lo, hi]: a sum too small means nums[lo] can't pair with anything left, so lo++ (and symmetrically hi−−).", "wrong": ["nums[lo] + nums[hi] increases every step.", "lo and hi always point at equal values.", "Both pointers move every iteration."], "why": "Each move discards a value that can't be part of any answer." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(log n)"], "why": "Each step moves one pointer inward." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(n²)"], "why": "Two indices." },
+    "whyNot": { "wrong": ["A HashMap can't return 1-based indices.", "Hashing fails when the array is sorted.", "A HashMap lookup is O(n) per query."] },
+    "approach": "lo = 0, hi = n − 1. sum < target ⇒ lo++; sum > target ⇒ hi−−; equal ⇒ return {lo + 1, hi + 1}.",
+    "twists": [
+      {
+        "change": "The array is no longer sorted, and you must return original indices.",
+        "statement": "Given an unsorted integer array and a target, return the indices of the two numbers that add up to target (exactly one solution exists).",
+        "pattern": "hashing", "alternates": [], "trigger": "an unsorted integer array",
+        "ds": "HashMap<Integer, Integer> value → index",
+        "nearMiss": [
+          { "p": "two-pointers", "why": "Sorting first would scramble the original indices (you'd have to carry them along), and costs O(n log n)." },
+          { "p": "binary-search", "why": "It also needs sorted input." },
+          { "p": "sliding-window", "why": "The pair needn't be adjacent." }
+        ],
+        "why": "Unsorted + pair sum ⇒ for each value, check whether its complement was seen.",
+        "approach": "For i: if map has target − a[i] return {map.get(...), i}; map.put(a[i], i)."
+      }
+    ]
+  },
+  {
+    "id": "valid-palindrome", "title": "Valid Palindrome", "slug": "valid-palindrome", "difficulty": "Easy",
+    "companies": ["Meta"],
+    "statement": "Given a string, decide whether it reads the same forwards and backwards once you ignore every non-alphanumeric character and treat upper and lower case as equal.",
+    "pattern": "two-pointers", "alternates": [],
+    "nearMiss": [
+      { "p": "expand-center", "why": "Expanding from a centre finds palindromic SUBSTRINGS; here the whole string is checked, so start from the ends." },
+      { "p": "stack", "why": "Pushing half the characters and popping to compare works, but needs O(n) space and knowing the cleaned length first." },
+      { "p": "hashing", "why": "Character counts can't see order: \"ab\" and \"ba\" have the same counts but only one order is a palindrome check." }
+    ],
+    "trigger": { "answer": "reads the same forwards and backwards", "wrong": ["ignore every non-alphanumeric character", "upper and lower case as equal", "Given a string"], "why": "Whole-string palindrome check ⇒ two pointers from both ends, skipping junk in place." },
+    "ds": { "answer": "Two int indices; Character.isLetterOrDigit and Character.toLowerCase", "wrong": ["StringBuilder of the cleaned string, reversed and compared", "ArrayDeque<Character> as a stack", "int[128] character counts"], "why": "Skipping in place avoids building a cleaned copy (which would be O(n) space)." },
+    "invariant": { "answer": "Every alphanumeric pair outside [lo, hi] has already matched, case-insensitively.", "wrong": ["lo and hi always point at letters.", "The cleaned string has even length.", "Characters between lo and hi are already validated."], "why": "Mismatch anywhere ⇒ false; pointers crossing ⇒ true." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n / 2) per character"], "why": "Each index is visited once." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(26)"], "why": "Two indices, no cleaned copy." },
+    "whyNot": { "wrong": ["Expanding from the centre is O(n³).", "Expand-around-centre can't skip punctuation.", "Expand-around-centre only works for odd lengths."] },
+    "approach": "lo = 0, hi = n − 1. Advance lo / retreat hi past non-alphanumerics; compare lowercased chars; mismatch ⇒ false; move both inward.",
+    "twists": [
+      {
+        "change": "Find the longest palindromic piece instead of checking the whole string.",
+        "statement": "Given a string, return the longest contiguous substring that reads the same forwards and backwards.",
+        "pattern": "expand-center", "alternates": ["dp-2d"], "trigger": "longest contiguous substring",
+        "ds": "Two int indices per centre (2n − 1 centres)",
+        "nearMiss": [
+          { "p": "two-pointers", "why": "Ends-inward works to check one known string; here the palindrome's position is unknown, so grow outward from every centre." },
+          { "p": "sliding-window", "why": "Being a palindrome isn't monotonic in window size." },
+          { "p": "stack", "why": "Pushing and popping halves needs the centre in advance." }
+        ],
+        "why": "Every palindrome has a centre (a character or a gap) ⇒ expand from each.",
+        "approach": "For each centre expand while s[l] == s[r]; keep the longest."
+      }
+    ]
+  },
+  {
+    "id": "remove-duplicates-from-sorted-array", "title": "Remove Duplicates from Sorted Array", "slug": "remove-duplicates-from-sorted-array", "difficulty": "Easy",
+    "companies": ["Meta", "Google", "Microsoft", "Bloomberg"],
+    "statement": "An integer array is sorted in non-decreasing order. Remove the duplicates in place so each distinct value appears once at the front, keeping their order, and return how many distinct values there are. Use O(1) extra memory.",
+    "pattern": "two-pointers", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "A HashSet of seen values works for unsorted input, but costs O(n) memory; sorted order makes 'new value?' a comparison with the last kept one." },
+      { "p": "sliding-window", "why": "Nothing is measured over a window; one pointer reads, one writes." },
+      { "p": "cyclic-sort", "why": "Values are not bounded to 1..n, so there is no home index to swap into." }
+    ],
+    "trigger": { "answer": "Remove the duplicates in place", "wrong": ["return how many distinct values", "keeping their order", "each distinct value appears once"], "why": "In-place compaction ⇒ read pointer / write pointer (same direction)." },
+    "ds": { "answer": "Two int indices: read and write", "wrong": ["HashSet<Integer> of seen values", "ArrayList<Integer> of distinct values", "TreeSet<Integer> then copy back"], "why": "The array itself is the output buffer." },
+    "invariant": { "answer": "nums[0..write) holds the distinct values seen so far, in order, and nums[write − 1] is the largest of them.", "wrong": ["write and read are always equal.", "nums[write..read) is sorted descending.", "Every value after write is a duplicate of nums[0]."], "why": "Because input is sorted, a new value is exactly nums[read] != nums[write − 1]." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(k · n) for k distinct values"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(k)", "O(log n)"], "why": "Two indices." },
+    "whyNot": { "wrong": ["A HashSet can't store ints.", "Hashing would lose the sorted order of the values.", "A HashSet would be O(n²) on sorted input."] },
+    "approach": "write = 1; for read in 1..n−1: if nums[read] != nums[write − 1], nums[write++] = nums[read]. Return write.",
+    "twists": [
+      {
+        "change": "The array is unsorted; keep the first occurrence of each value, in order.",
+        "statement": "Given an unsorted integer array, keep only the first occurrence of each value, preserving their order, and return how many values remain at the front.",
+        "pattern": "hashing", "alternates": [], "trigger": "an unsorted integer array",
+        "ds": "HashSet<Integer> of seen values plus a write index",
+        "nearMiss": [
+          { "p": "two-pointers", "why": "Comparing with the last kept value only works when equal values are adjacent, i.e. sorted." },
+          { "p": "sliding-window", "why": "Duplicates can be far apart; no window captures them." },
+          { "p": "cyclic-sort", "why": "Values aren't bounded to 1..n, so there's no home index to mark." }
+        ],
+        "why": "Unsorted ⇒ 'have I seen this value?' needs a set.",
+        "approach": "For each x: if seen.add(x), a[write++] = x. Return write."
+      }
+    ]
+  },
+  {
+    "id": "merge-sorted-array", "title": "Merge Sorted Array", "slug": "merge-sorted-array", "difficulty": "Easy",
+    "companies": ["Google"],
+    "statement": "nums1 has length m + n: its first m values are sorted and the last n slots are empty padding. nums2 holds n sorted values. Merge nums2 into nums1 so that nums1 ends up fully sorted, writing in place.",
+    "pattern": "two-pointers", "alternates": [],
+    "nearMiss": [
+      { "p": "k-way-merge", "why": "With only two lists, a heap is overkill: comparing the two current tails is already O(1) per step." },
+      { "p": "intervals", "why": "These are single values, not ranges; there is nothing to overlap or sweep." },
+      { "p": "partition", "why": "Partitioning splits around a pivot; here both halves are already sorted and just need interleaving." }
+    ],
+    "trigger": { "answer": "the last n slots are empty padding", "wrong": ["Merge nums2 into nums1", "nums2 holds n sorted values", "fully sorted"], "why": "Free space at the END ⇒ merge from the back so nothing unread is overwritten." },
+    "ds": { "answer": "Three int indices: i = m − 1, j = n − 1, write = m + n − 1", "wrong": ["PriorityQueue<Integer> of all values", "int[] copy of nums1, merged forwards", "ArrayDeque<Integer> as a queue"], "why": "Writing from the back means no copy is needed." },
+    "invariant": { "answer": "nums1[write + 1..] holds the largest values seen so far in sorted order, and write ≥ i, so unread nums1 values are never overwritten.", "wrong": ["i and j always move together.", "nums1[0..i] is already in its final place at every step.", "write always equals i + j."], "why": "write = i + j + 1, so it never passes i." },
+    "time": { "answer": "O(m + n)", "wrong": ["O((m + n) log(m + n))", "O(m · n)", "O(n log m)"], "why": "Each value is placed once." },
+    "space": { "answer": "O(1)", "wrong": ["O(m + n)", "O(m)", "O(n)"], "why": "Three indices." },
+    "whyNot": { "wrong": ["A heap can't hold duplicate values.", "k-way merge needs at least three lists to be correct.", "A heap would produce a descending order."] },
+    "approach": "While j ≥ 0: if i ≥ 0 and nums1[i] > nums2[j], nums1[write−−] = nums1[i−−]; else nums1[write−−] = nums2[j−−].",
+    "twists": [
+      {
+        "change": "Merge k sorted arrays instead of two.",
+        "statement": "Given k sorted integer arrays, return one sorted array containing all their values.",
+        "pattern": "k-way-merge", "alternates": [], "trigger": "k sorted integer arrays",
+        "ds": "PriorityQueue<int[]> of {value, array, index}",
+        "nearMiss": [
+          { "p": "two-pointers", "why": "Two pointers merge two arrays; with k, comparing k heads each step is O(k) per element." },
+          { "p": "heap-topk", "why": "You aren't selecting the top k values; the heap holds one head per array while you stream everything out." },
+          { "p": "partition", "why": "Nothing is split around a pivot." }
+        ],
+        "why": "Smallest of k heads repeatedly ⇒ min-heap of size k.",
+        "approach": "Seed the heap with each array's first value; poll, append, push that array's next value."
+      }
+    ]
+  },
+  {
+    "id": "squares-of-a-sorted-array", "title": "Squares of a Sorted Array", "slug": "squares-of-a-sorted-array", "difficulty": "Easy",
+    "companies": ["Bloomberg"],
+    "statement": "Given an integer array sorted in non-decreasing order that may contain negative numbers, return the squares of its values, also in non-decreasing order, in O(n) time.",
+    "pattern": "two-pointers", "alternates": [],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "A heap would sort the squares in O(n log n); the input order already tells us where the biggest squares are." },
+      { "p": "binary-search", "why": "Binary-searching for the first non-negative then expanding outwards works, but the plain two-ends merge needs no search." },
+      { "p": "k-way-merge", "why": "It is a two-way merge of the negative and non-negative halves; a heap adds nothing for two lists." }
+    ],
+    "trigger": { "answer": "may contain negative numbers", "wrong": ["return the squares of its values", "sorted in non-decreasing order", "in O(n) time"], "why": "Negatives make the largest squares sit at BOTH ends ⇒ two pointers from the ends, filling the output from the back." },
+    "ds": { "answer": "Two int indices lo / hi plus a result int[] filled from the end", "wrong": ["PriorityQueue<Integer> of squares", "TreeMap<Integer, Integer> square → count", "ArrayDeque<Integer> as a stack of negatives"], "why": "The output array is written largest-first." },
+    "invariant": { "answer": "The largest remaining square is at lo or hi; result[write + 1..] already holds the largest squares in order.", "wrong": ["Squares between lo and hi are already sorted.", "lo always points at a negative number.", "The smallest square is always at index 0 of the input."], "why": "|x| is largest at the extremes of a sorted array." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(log n)"], "why": "One pass." },
+    "space": { "answer": "O(n) for the output (O(1) extra)", "wrong": ["O(log n)", "O(n²)", "O(1) including the output"], "why": "Only the result array." },
+    "whyNot": { "wrong": ["A heap can't hold negative numbers.", "Heaps need distinct values.", "A heap would return the squares in random order."] },
+    "approach": "lo = 0, hi = n − 1, write = n − 1. Put the larger of nums[lo]², nums[hi]² at result[write−−] and move that pointer inward."
+  },
+  {
+    "id": "permutation-in-string", "title": "Permutation in String", "slug": "permutation-in-string", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given strings s1 and s2 of lowercase letters, return true if some contiguous substring of s2 is a rearrangement of s1 (same letters, same counts).",
+    "pattern": "sliding-window", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "Counting is part of it, but recounting every substring from scratch is O(n · m); the window updates counts in O(1) per step." },
+      { "p": "backtracking", "why": "Generating all permutations of s1 is factorial; we only need to compare letter counts." },
+      { "p": "two-pointers", "why": "Converging pointers from both ends don't define a fixed-length substring to test." }
+    ],
+    "trigger": { "answer": "some contiguous substring of s2 is a rearrangement of s1", "wrong": ["strings s1 and s2", "lowercase letters", "return true"], "why": "Contiguous + fixed length |s1| + letter counts ⇒ fixed-size sliding window." },
+    "ds": { "answer": "Two int[26] counts (or one diff array + a 'matches' counter)", "wrong": ["HashSet<String> of all permutations of s1", "TreeMap<Character, Integer>", "ArrayDeque<Character> as a queue of the window"], "why": "Add the entering letter, remove the leaving one: O(1) per slide." },
+    "invariant": { "answer": "The window is always exactly |s1| long, and its count array equals s2's letters in that window.", "wrong": ["The window only grows.", "The window never contains a letter absent from s1.", "s1's counts change as the window moves."], "why": "Equal counts at any position ⇒ true." },
+    "time": { "answer": "O(|s1| + |s2|)", "wrong": ["O(|s1|! · |s2|)", "O(|s1| · |s2|)", "O(|s2| log |s2|)"], "why": "Each slide is O(1) with a matches counter (O(26) with array compare)." },
+    "space": { "answer": "O(1) (26 counters each)", "wrong": ["O(|s1|!)", "O(|s2|)", "O(|s1| · |s2|)"], "why": "Fixed alphabet." },
+    "whyNot": { "wrong": ["A HashMap can't count letters.", "Hashing would need s2 sorted first.", "Hashing only works when s1 and s2 are the same length."] },
+    "approach": "Count s1. Slide a window of length |s1| over s2, adding s2[r] and removing s2[r − |s1|]; return true when the counts match (track 'matches' among 26 letters for O(1))."
+  },
+  {
+    "id": "max-consecutive-ones-iii", "title": "Max Consecutive Ones III", "slug": "max-consecutive-ones-iii", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a binary array and an integer k, you may flip at most k zeros to ones. Return the length of the longest contiguous run of ones you can end up with.",
+    "pattern": "sliding-window", "alternates": [],
+    "nearMiss": [
+      { "p": "dp-1d", "why": "A DP over (index, flips used) is O(n · k); the window keeps 'zeros inside ≤ k' with one counter in O(n)." },
+      { "p": "greedy", "why": "Flipping zeros greedily from the left doesn't know which run to extend; the window tries every right end." },
+      { "p": "prefix-sum", "why": "Prefix counts of zeros plus binary search per end works in O(n log n), but the window is simpler and O(n)." }
+    ],
+    "trigger": { "answer": "flip at most k zeros", "wrong": ["binary array", "longest contiguous run of ones", "an integer k"], "why": "Longest contiguous run with 'at most k bad items' ⇒ variable sliding window with a budget." },
+    "ds": { "answer": "Two int indices and an int zeros-in-window counter", "wrong": ["int[][] dp[i][flips]", "PriorityQueue<Integer> of zero positions", "ArrayDeque<Integer> as a stack of runs"], "why": "The array itself plus a counter." },
+    "invariant": { "answer": "The window [l, r] contains at most k zeros; when a new zero breaks that, l advances until it holds again.", "wrong": ["The window contains no zeros.", "r − l + 1 never decreases.", "The window always starts at a zero."], "why": "Any window with ≤ k zeros can be made all ones." },
+    "time": { "answer": "O(n)", "wrong": ["O(n · k)", "O(n log n)", "O(n²)"], "why": "Each pointer moves forward at most n times." },
+    "space": { "answer": "O(1)", "wrong": ["O(n · k)", "O(k)", "O(n)"], "why": "Two indices and a counter." },
+    "whyNot": { "wrong": ["DP can't handle binary arrays.", "DP would give the shortest run instead.", "DP only works when k = 1."] },
+    "approach": "For r: if nums[r] == 0, zeros++. While zeros > k: if nums[l] == 0, zeros−−; l++. best = max(best, r − l + 1)."
+  },
+  {
+    "id": "maximum-coins-from-k-consecutive-bags", "title": "Maximum Coins From K Consecutive Bags", "slug": "maximum-coins-from-k-consecutive-bags", "difficulty": "Medium",
+    "companies": ["Amazon"],
+    "statement": "Bags sit at every integer position on a very long line. You are given non-overlapping segments [l, r, c]: every bag from l to r holds c coins; all other bags are empty. Choose k consecutive positions to collect from and return the most coins possible.",
+    "pattern": "sliding-window", "alternates": ["prefix-sum"],
+    "nearMiss": [
+      { "p": "intervals", "why": "Sorting the segments is the first step, but merging or counting overlaps isn't the question; a k-wide window slides over them." },
+      { "p": "dp-1d", "why": "There is no choice to make per segment: the window is one block of k positions, so there's nothing to combine." },
+      { "p": "greedy", "why": "Starting at the richest segment can lose: a slightly poorer area with a wider span of coins may win." }
+    ],
+    "trigger": { "answer": "Choose k consecutive positions", "wrong": ["non-overlapping segments", "a very long line", "all other bags are empty"], "why": "A fixed-width block over a line ⇒ sliding window. The best window always starts at some segment's l or ends at some segment's r, so slide over segments (twice: left-aligned and right-aligned)." },
+    "ds": { "answer": "Segments sorted by l (Arrays.sort with Comparator.comparingInt), two indices and a long running sum", "wrong": ["long[] of size max position", "PriorityQueue<int[]> by coins", "TreeMap<Integer, Integer> position → coins"], "why": "Positions go up to 10⁹, so you can't build an array per position." },
+    "invariant": { "answer": "With the window [segments[i].l, segments[i].l + k − 1], the running sum holds coins of all segments fully inside it; only the last one can be partially inside.", "wrong": ["The window always covers whole segments.", "The best window always starts at position 0.", "Segments inside the window are sorted by coins."], "why": "Add the partial overlap of segment j explicitly; then repeat with windows ending at each r (or mirror the coordinates)." },
+    "time": { "answer": "O(n log n)", "wrong": ["O(k · n)", "O(max position)", "O(n²)"], "why": "The sort dominates; each sweep is linear." },
+    "space": { "answer": "O(1) beyond the sort (O(n) if you mirror into a copy)", "wrong": ["O(max position)", "O(k)", "O(n²)"], "why": "A few indices and a long sum." },
+    "whyNot": { "wrong": ["Intervals problems can't have coin values.", "Merging intervals needs them to overlap, and these never touch.", "Interval sweeps only work for k = 1."] },
+    "approach": "Sort by l. Sweep i over segments as window starts (window = [l_i, l_i + k − 1]); advance j while segment j ends inside, adding full coins; add partial coins of segment j. Repeat on mirrored coordinates (windows ending at each r). Answer = max."
+  },
+  {
+    "id": "jump-game-vi", "title": "Jump Game VI", "slug": "jump-game-vi", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Start at index 0 of an integer array (values may be negative). From index i you may jump to any index in i + 1..i + k. Your score is the sum of values at every index you land on, including the first and last. Return the maximum score on reaching the last index.",
+    "pattern": "monotonic-deque", "alternates": [],
+    "nearMiss": [
+      { "p": "dp-1d", "why": "It IS a DP (best[i] = nums[i] + max of the previous k), but the plain DP is O(n · k); the deque gives that window max in O(1)." },
+      { "p": "heap-topk", "why": "A max-heap of (best, index) with lazy deletion works in O(n log n); the deque is O(n)." },
+      { "p": "greedy", "why": "Always jumping to the largest next value can walk into a run of very negative numbers." }
+    ],
+    "trigger": { "answer": "any index in i + 1..i + k", "wrong": ["values may be negative", "including the first and last", "maximum score"], "why": "DP whose transition is 'max over the last k states' ⇒ sliding-window maximum ⇒ monotonic deque." },
+    "ds": { "answer": "ArrayDeque<Integer> of indices with decreasing best[] values, plus int[] best", "wrong": ["PriorityQueue<int[]> without eviction", "int[][] dp[i][j] for each jump length", "TreeSet<Integer> of best values"], "why": "Front = argmax of the last k bests." },
+    "invariant": { "answer": "The deque holds indices from the last k positions, with best[] strictly decreasing front to back; the front is the best predecessor of i.", "wrong": ["The deque holds the k most recent indices in order.", "best[] is non-decreasing along the array.", "The front index is always i − 1."], "why": "Pop front when it falls out of range; pop back while best[back] ≤ best[i]." },
+    "time": { "answer": "O(n)", "wrong": ["O(n · k)", "O(n log k)", "O(n log n)"], "why": "Each index enters and leaves the deque once." },
+    "space": { "answer": "O(n) for best (O(k) for the deque)", "wrong": ["O(1)", "O(n · k)", "O(k²)"], "why": "best[] can be the input array itself." },
+    "whyNot": { "wrong": ["DP can't handle negative values.", "DP would need the array sorted.", "DP gives the minimum score, not the maximum."] },
+    "approach": "best[0] = nums[0]; deque = [0]. For i: drop front if < i − k; best[i] = nums[i] + best[front]; pop back while best[back] ≤ best[i]; push i. Return best[n − 1]."
+  },
+  {
+    "id": "longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit", "title": "Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit", "slug": "longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given an integer array and a limit, return the length of the longest contiguous subarray in which the difference between its maximum and its minimum is at most limit.",
+    "pattern": "monotonic-deque", "alternates": ["sliding-window"],
+    "nearMiss": [
+      { "p": "two-heaps", "why": "A max-heap and a min-heap give max/min, but evicting arbitrary old elements is O(n) (or lazy, O(n log n)); deques evict from the front in O(1)." },
+      { "p": "binary-search", "why": "Binary search on the length with a fixed-window check works in O(n log n) but isn't needed." },
+      { "p": "prefix-sum", "why": "Prefix sums give range sums, not range max/min." }
+    ],
+    "trigger": { "answer": "the difference between its maximum and its minimum", "wrong": ["longest contiguous subarray", "an integer array and a limit", "at most limit"], "why": "A window whose validity depends on its running MAX and MIN ⇒ two monotonic deques inside a sliding window." },
+    "ds": { "answer": "Two ArrayDeque<Integer>: one decreasing (max at front), one increasing (min at front)", "wrong": ["Two PriorityQueue<Integer> (max and min)", "TreeMap<Integer, Integer> value → count only", "int[] prefix maxima"], "why": "TreeMap of counts also works in O(n log n); deques make it O(n)." },
+    "invariant": { "answer": "maxDeque front is the window's max and minDeque front its min; when max − min > limit, l advances (dropping fronts whose index < l).", "wrong": ["Both deques always hold the same indices.", "The window never shrinks.", "The min is always at index l."], "why": "Each deque is monotonic, so its front is the extreme of the current window." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(n · limit)"], "why": "Every index is pushed and popped at most once per deque." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(limit)", "O(n²)"], "why": "Deques can hold the whole window." },
+    "whyNot": { "wrong": ["Heaps can't hold negative numbers.", "Two heaps only find medians.", "Heaps would return the window in sorted order, which is too slow."] },
+    "approach": "For r: push nums[r] into both deques (popping back while it breaks monotonicity). While front(max) − front(min) > limit: l++ and drop fronts with index < l. best = max(best, r − l + 1)."
+  },
+  {
+    "id": "contiguous-array", "title": "Contiguous Array", "slug": "contiguous-array", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a binary array, return the length of the longest contiguous subarray that contains an equal number of 0s and 1s.",
+    "pattern": "prefix-sum", "alternates": [],
+    "nearMiss": [
+      { "p": "sliding-window", "why": "Validity isn't monotonic: shrinking or growing a balanced window can break and then restore balance, so there's no rule for when to move l." },
+      { "p": "two-pointers", "why": "Moving from both ends can't tell which side to give up." },
+      { "p": "kadane", "why": "We want a ZERO balance of maximum length, not a maximum sum." }
+    ],
+    "trigger": { "answer": "an equal number of 0s and 1s", "wrong": ["binary array", "longest contiguous subarray", "return the length"], "why": "Treat 0 as −1: 'equal counts' = 'subarray sum 0' = two equal prefix sums. Store the first index of each prefix." },
+    "ds": { "answer": "HashMap<Integer, Integer> prefix balance → first index (seed {0: −1})", "wrong": ["int[] counts of 0s and 1s", "ArrayDeque<Integer> as a stack of indices", "HashMap<Integer, Integer> prefix → count"], "why": "Longest ⇒ remember the FIRST index each balance appeared, not how often." },
+    "invariant": { "answer": "first.get(b) is the earliest index where the running balance was b, so i − first.get(b) is the longest balanced subarray ending at i.", "wrong": ["The balance never goes negative.", "first.get(b) is the latest index with balance b.", "The balance equals the number of 1s."], "why": "Equal prefix balances ⇒ the part between them sums to 0." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n · 2)"], "why": "One pass with O(1) map operations." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(n²)"], "why": "Up to 2n + 1 distinct balances (an int[2n + 1] works too)." },
+    "whyNot": { "wrong": ["A sliding window can't count zeros.", "Sliding windows need positive numbers only, and 0 is not positive.", "A sliding window would find the shortest subarray."] },
+    "approach": "balance += (x == 1 ? 1 : −1). If first has balance, best = max(best, i − first.get(balance)); else first.put(balance, i). Seed first.put(0, −1)."
+  },
+  {
+    "id": "range-sum-query-2d-immutable", "title": "Range Sum Query 2D - Immutable", "slug": "range-sum-query-2d-immutable", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Build a class over a fixed integer matrix that answers many queries of the form 'sum of all cells in the rectangle from (r1, c1) to (r2, c2)', each in O(1) time.",
+    "pattern": "prefix-sum", "alternates": [],
+    "nearMiss": [
+      { "p": "dp-2d", "why": "Building the table uses a 2-D recurrence, but there is no optimisation: it's cumulative sums plus inclusion–exclusion per query." },
+      { "p": "matrix", "why": "No in-place traversal trick; the work is precomputation." },
+      { "p": "design", "why": "It is a class, but its whole content is one prefix table; there is nothing to combine." }
+    ],
+    "trigger": { "answer": "each in O(1) time", "wrong": ["a fixed integer matrix", "many queries", "sum of all cells in the rectangle"], "why": "Immutable data + many range-sum queries in O(1) ⇒ precompute prefix sums (here 2-D with inclusion–exclusion)." },
+    "ds": { "answer": "int[m + 1][n + 1] prefix table P", "wrong": ["Segment tree over each row", "HashMap<String, Integer> query → sum cache", "int[] row sums only"], "why": "One padded row and column remove edge cases." },
+    "invariant": { "answer": "P[i][j] is the sum of the rectangle (0, 0)..(i − 1, j − 1); a query is P[r2+1][c2+1] − P[r1][c2+1] − P[r2+1][c1] + P[r1][c1].", "wrong": ["P[i][j] is the sum of row i only.", "P[i][j] = matrix[i][j] + P[i − 1][j − 1].", "Each query needs one row scan."], "why": "The top-left corner is subtracted twice, so add it back once." },
+    "time": { "answer": "O(m · n) to build, O(1) per query", "wrong": ["O(m · n) per query", "O(log(m · n)) per query", "O(m) per query"], "why": "Four lookups per query." },
+    "space": { "answer": "O(m · n)", "wrong": ["O(1)", "O(m + n)", "O((m · n)²)"], "why": "The prefix table." },
+    "whyNot": { "wrong": ["DP can't handle rectangles.", "2-D DP would take O(m · n) per query by definition.", "DP needs the matrix sorted."] },
+    "approach": "P[i+1][j+1] = matrix[i][j] + P[i][j+1] + P[i+1][j] − P[i][j]. Answer queries with inclusion–exclusion."
+  },
+  {
+    "id": "maximum-sum-circular-subarray", "title": "Maximum Sum Circular Subarray", "slug": "maximum-sum-circular-subarray", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a circular integer array (the end wraps to the start), return the largest possible sum of a non-empty subarray. A subarray may wrap around but may not use any element twice.",
+    "pattern": "kadane", "alternates": [],
+    "nearMiss": [
+      { "p": "monotonic-deque", "why": "Doubling the array and using prefix sums with a deque works in O(n), but it is heavier than running Kadane twice." },
+      { "p": "prefix-sum", "why": "Prefix sums alone give range sums, not the best range without an extra structure." },
+      { "p": "sliding-window", "why": "With negative values, there's no rule for shrinking the window." }
+    ],
+    "trigger": { "answer": "may wrap around", "wrong": ["non-empty subarray", "may not use any element twice", "circular integer array"], "why": "A wrapping subarray = total − (a minimum non-wrapping subarray). So: max Kadane, min Kadane, answer = max(maxSub, total − minSub) unless all are negative." },
+    "ds": { "answer": "Scalars: curMax, bestMax, curMin, bestMin, total", "wrong": ["ArrayDeque<Integer> of prefix indices over a doubled array", "long[] prefix sums of length 2n", "PriorityQueue<Integer> of prefix sums"], "why": "Two Kadane passes in one loop." },
+    "invariant": { "answer": "curMax is the best sum ending here; curMin is the worst sum ending here; a wrapping answer is total − bestMin.", "wrong": ["bestMax + bestMin = total.", "The best subarray always wraps.", "curMin never goes below the smallest element."], "why": "Edge case: if bestMax < 0 every element is negative, and total − bestMin would be the empty subarray, so return bestMax." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(2n log n)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(2n)", "O(log n)"], "why": "Five scalars." },
+    "whyNot": { "wrong": ["A deque can't hold negative numbers.", "Monotonic deques only find minimums.", "The deque approach is O(n²)."] },
+    "approach": "Run Kadane for max and min together, track total. If bestMax < 0 return bestMax; else return max(bestMax, total − bestMin)."
   }
 ]

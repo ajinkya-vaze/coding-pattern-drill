@@ -88,5 +88,113 @@
     "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(maxHeight)"], "why": "The stack." },
     "whyNot": { "wrong": ["Two pointers can't compute areas.", "Two pointers need the heights sorted.", "Two pointers only work on even numbers of bars."] },
     "approach": "Append height 0. For each i: while heights[top] > heights[i], pop h; width = stack empty ? i : i − newTop − 1; best = max(best, h × width). Push i."
+  },
+  {
+    "id": "basic-calculator-ii", "title": "Basic Calculator II", "slug": "basic-calculator-ii", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Evaluate a string expression of non-negative integers, spaces and the operators + - * / (integer division truncating toward zero), with no parentheses. Multiplication and division bind tighter than addition and subtraction. Don't use a built-in eval.",
+    "pattern": "stack", "alternates": [],
+    "nearMiss": [
+      { "p": "monotonic-stack", "why": "Nothing is kept in sorted order; the stack holds pending signed terms to add at the end." },
+      { "p": "tree-dfs", "why": "Building an expression tree works but is overkill without parentheses; one pass with a stack of terms suffices." },
+      { "p": "two-pointers", "why": "Scanning with indices finds tokens, but precedence needs somewhere to hold the pending + / − terms." }
+    ],
+    "trigger": { "answer": "bind tighter than addition and subtraction", "wrong": ["no parentheses", "integer division truncating toward zero", "Don't use a built-in eval"], "why": "Operator precedence ⇒ defer + / − terms on a stack, apply * / immediately to the top." },
+    "ds": { "answer": "ArrayDeque<Integer> as a stack of signed terms (or a running sum + last term)", "wrong": ["ArrayDeque<Character> of operators only", "Recursive descent tree of nodes", "HashMap<Character, Integer> operator → precedence only"], "why": "The O(1)-space variant keeps 'sum so far' and 'last term' instead of the stack." },
+    "invariant": { "answer": "The stack holds fully evaluated additive terms; the answer is their sum. When the previous operator is * or /, the top term is updated in place.", "wrong": ["The stack always holds exactly two numbers.", "Operators are pushed in increasing precedence.", "The top of the stack is the final answer at every step."], "why": "− pushes −num; * and / combine with the top; + pushes num." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(2ⁿ)"], "why": "One pass over the characters." },
+    "space": { "answer": "O(n) (O(1) with sum + last term)", "wrong": ["O(1) with the stack", "O(log n)", "O(n²)"], "why": "Up to one term per number." },
+    "whyNot": { "wrong": ["A monotonic stack can't hold negative terms.", "Monotonic stacks only work with parentheses.", "A monotonic stack would evaluate right to left."] },
+    "approach": "Parse num; on an operator (or end) apply the PREVIOUS op: + push num, − push −num, * push pop()·num, / push pop()/num. Sum the stack."
+  },
+  {
+    "id": "evaluate-reverse-polish-notation", "title": "Evaluate Reverse Polish Notation", "slug": "evaluate-reverse-polish-notation", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given tokens of an arithmetic expression in postfix order (each operator follows its two operands), evaluate it. Operators are + - * / and division truncates toward zero.",
+    "pattern": "stack", "alternates": [],
+    "nearMiss": [
+      { "p": "tree-dfs", "why": "You could build the expression tree and evaluate it recursively, but postfix order is already the evaluation order for a stack." },
+      { "p": "monotonic-stack", "why": "There's no ordering property to maintain; operands are pushed and popped as operators arrive." },
+      { "p": "dp-1d", "why": "No subproblems overlap; each token is used exactly once." }
+    ],
+    "trigger": { "answer": "each operator follows its two operands", "wrong": ["division truncates toward zero", "Operators are + - * /", "evaluate it"], "why": "Postfix ⇒ push operands, and each operator pops two and pushes the result." },
+    "ds": { "answer": "ArrayDeque<Integer> as an operand stack", "wrong": ["ArrayDeque<String> as a queue", "Recursive TreeNode expression tree", "int[] of operands indexed by position"], "why": "ArrayDeque push / pop (not java.util.Stack)." },
+    "invariant": { "answer": "The stack holds the values of all complete sub-expressions not yet consumed; a valid expression ends with exactly one value.", "wrong": ["The stack always holds operators.", "The stack size grows by one per token.", "The top is always the largest operand."], "why": "Pop b then a, push a op b (order matters for − and /)." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n · depth)"], "why": "Each token handled once." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(n²)"], "why": "The operand stack." },
+    "whyNot": { "wrong": ["Trees can't represent division.", "Tree DFS would evaluate operators before operands.", "A tree would need the tokens sorted."] },
+    "approach": "For each token: if operator, b = pop, a = pop, push(a op b); else push(parseInt). Return pop()."
+  },
+  {
+    "id": "asteroid-collision", "title": "Asteroid Collision", "slug": "asteroid-collision", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Asteroids in a row move right if positive and left if negative, with size |value|. When a right-mover meets a left-mover, the smaller explodes (both if equal). Return the asteroids that remain after all collisions.",
+    "pattern": "stack", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Collisions cascade: a big left-mover can destroy several earlier right-movers, so you need everything unresolved behind you, not just two indices." },
+      { "p": "monotonic-stack", "why": "Pops happen because of a collision rule, not to keep values sorted; the surviving stack isn't monotonic in size." },
+      { "p": "greedy", "why": "There's no choice to make; the physics decides. The question is how to replay it efficiently." }
+    ],
+    "trigger": { "answer": "When a right-mover meets a left-mover", "wrong": ["the smaller explodes", "Return the asteroids that remain", "Asteroids in a row"], "why": "The newest item interacts with the most recent unresolved ones ⇒ a stack." },
+    "ds": { "answer": "ArrayDeque<Integer> as a stack of survivors", "wrong": ["PriorityQueue<Integer> by size", "Two ArrayDeques (left-movers, right-movers)", "int[] with two pointers"], "why": "Read survivors bottom to top at the end." },
+    "invariant": { "answer": "The stack holds survivors so far, and no collision is pending among them (no right-mover directly below a left-mover).", "wrong": ["The stack is sorted by size.", "The stack only holds right-movers.", "Every asteroid is pushed exactly once and never popped."], "why": "A new left-mover pops smaller right-movers until it dies or nothing can hit it." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n · max size)"], "why": "Each asteroid is pushed and popped at most once." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(n²)"], "why": "The stack." },
+    "whyNot": { "wrong": ["Two pointers can't handle negative values.", "Two pointers would need the asteroids sorted by size.", "Two pointers only work when all asteroids move the same way."] },
+    "approach": "For a: while a < 0 and top > 0: if top < −a pop and continue; if top == −a pop and a dies; else a dies. If a survives push it."
+  },
+  {
+    "id": "next-greater-element-ii", "title": "Next Greater Element II", "slug": "next-greater-element-ii", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a circular integer array (after the last element comes the first), return for every element the first strictly larger value found by walking forward, or -1 if none exists.",
+    "pattern": "monotonic-stack", "alternates": [],
+    "nearMiss": [
+      { "p": "stack", "why": "A plain stack isn't enough: the key is keeping it DECREASING so each pop answers a waiting element." },
+      { "p": "two-pointers", "why": "Scanning forward per element is O(n²)." },
+      { "p": "monotonic-deque", "why": "Nothing expires from the front: there's no window, just pending elements waiting for a bigger value." }
+    ],
+    "trigger": { "answer": "the first strictly larger value found by walking forward", "wrong": ["circular integer array", "or -1 if none exists", "for every element"], "why": "'Next greater' ⇒ monotonic stack; circular ⇒ iterate 2n indices using i % n." },
+    "ds": { "answer": "ArrayDeque<Integer> of indices with decreasing values, plus int[] result filled with -1", "wrong": ["PriorityQueue<int[]> of (value, index)", "TreeMap<Integer, Integer> value → index", "int[] doubled copy of the array"], "why": "Indices let you write the answer when popped; i % n avoids copying." },
+    "invariant": { "answer": "The stack holds indices still waiting for a greater value, with values strictly decreasing from bottom to top.", "wrong": ["The stack holds the k largest values seen.", "Values increase from bottom to top.", "Each index is pushed twice."], "why": "Only push during the first pass (i < n); the second pass only pops." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(2n log n)"], "why": "Each index is pushed and popped at most once." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(2n²)"], "why": "Stack and result." },
+    "whyNot": { "wrong": ["A plain stack can't store indices.", "Stacks don't work on circular arrays.", "A plain stack would find the previous greater instead."] },
+    "approach": "For i in 0..2n−1: x = nums[i % n]; while stack non-empty and nums[top] < x, result[pop] = x; if i < n push i."
+  },
+  {
+    "id": "online-stock-span", "title": "Online Stock Span", "slug": "online-stock-span", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Design a class that receives one daily stock price at a time. For each new price, return its span: the number of consecutive days ending today (including today) whose price was less than or equal to today's.",
+    "pattern": "monotonic-stack", "alternates": [],
+    "nearMiss": [
+      { "p": "design", "why": "It is a class, but the whole trick is one monotonic stack; there's nothing to combine." },
+      { "p": "sliding-window", "why": "The window length isn't fixed or budgeted; it reaches back to the previous greater price." },
+      { "p": "binary-search", "why": "Prices aren't sorted, so you can't binary-search for the previous greater one." }
+    ],
+    "trigger": { "answer": "consecutive days ending today", "wrong": ["one daily stock price at a time", "less than or equal to today's", "Design a class"], "why": "Span = distance to the previous GREATER element ⇒ monotonic stack, folding the spans of popped days into the new one." },
+    "ds": { "answer": "ArrayDeque<int[]> of (price, span) with strictly decreasing prices", "wrong": ["ArrayList<Integer> of all prices, scanned back", "PriorityQueue<int[]> by price", "TreeMap<Integer, Integer> price → day"], "why": "Storing the span lets you skip the popped days without keeping them." },
+    "invariant": { "answer": "Prices on the stack strictly decrease from bottom to top, and each entry's span covers the days it absorbed.", "wrong": ["The stack holds every price seen.", "Spans on the stack are increasing.", "The top is always yesterday's price."], "why": "Popped days can never be the 'previous greater' for any later day." },
+    "time": { "answer": "O(1) amortised per call", "wrong": ["O(n) per call", "O(log n) per call", "O(n²) total"], "why": "Each price is pushed and popped once in total." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(n²)"], "why": "Worst case strictly decreasing prices." },
+    "whyNot": { "wrong": ["Design problems can't return integers.", "A design problem would need a database.", "Design classes must use a HashMap."] },
+    "approach": "span = 1; while top.price ≤ price: span += pop().span; push(price, span); return span."
+  },
+  {
+    "id": "remove-k-digits", "title": "Remove K Digits", "slug": "remove-k-digits", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a non-negative integer as a string and an integer k, remove exactly k digits so that the remaining number is the smallest possible. Return it as a string without leading zeros (\"0\" if empty).",
+    "pattern": "monotonic-stack", "alternates": ["greedy"],
+    "nearMiss": [
+      { "p": "backtracking", "why": "Trying every set of k removals is combinatorial." },
+      { "p": "dp-1d", "why": "No overlapping subproblems are needed: a local rule (drop a digit bigger than its successor) is always safe." },
+      { "p": "heap-topk", "why": "Removing the k largest digits is wrong: position matters more than size (\"1432219\", k=3 → \"1219\")." }
+    ],
+    "trigger": { "answer": "the remaining number is the smallest possible", "wrong": ["remove exactly k digits", "without leading zeros", "a non-negative integer as a string"], "why": "Smallest result after deletions ⇒ keep digits non-decreasing from the left: pop a larger previous digit while removals remain." },
+    "ds": { "answer": "StringBuilder or ArrayDeque<Character> used as a non-decreasing stack", "wrong": ["PriorityQueue<Character> of digits", "int[][] dp[i][removed]", "TreeMap<Character, Integer> digit → count"], "why": "A StringBuilder doubles as the stack and the output." },
+    "invariant": { "answer": "The kept digits are non-decreasing; a digit is popped only if a smaller one follows it and removals remain.", "wrong": ["The kept digits are non-increasing.", "Exactly one digit is removed per step.", "The first digit is never removed."], "why": "Leftover k: trim from the end; then strip leading zeros." },
+    "time": { "answer": "O(n)", "wrong": ["O(n · k)", "O(n log n)", "O(C(n, k))"], "why": "Each digit pushed and popped at most once." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(k)", "O(n · k)"], "why": "The stack/output." },
+    "whyNot": { "wrong": ["Backtracking can't handle strings.", "Backtracking would only remove one digit.", "Backtracking gives the largest number."] },
+    "approach": "For each digit d: while k > 0 and top > d: pop, k−−. push d. Remove k more from the end, strip leading zeros, return \"0\" if empty."
   }
 ]

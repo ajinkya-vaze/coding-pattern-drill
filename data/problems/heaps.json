@@ -105,7 +105,22 @@
     "time": { "answer": "O(N log k), N = total nodes", "wrong": ["O(N · k)", "O(N log N)", "O(k log N)"], "why": "N polls and offers on a heap of size k." },
     "space": { "answer": "O(k)", "wrong": ["O(N)", "O(1)", "O(N log k)"], "why": "The heap (the output reuses the input nodes)." },
     "whyNot": { "wrong": ["Two pointers can't work on linked lists.", "Two pointers only work on arrays of equal length.", "Two pointers would lose the sorted order."] },
-    "approach": "Offer all non-null heads to a min-heap. Poll the smallest, append to tail, offer its next. Return dummy.next. (Divide-and-conquer pairwise merging is also O(N log k).)"
+    "approach": "Offer all non-null heads to a min-heap. Poll the smallest, append to tail, offer its next. Return dummy.next. (Divide-and-conquer pairwise merging is also O(N log k).)",
+    "twists": [
+      {
+        "change": "There are only two lists.",
+        "statement": "Given the heads of two sorted linked lists, splice them into one sorted list and return its head.",
+        "pattern": "linked-list", "alternates": ["two-pointers"], "trigger": "two sorted linked lists",
+        "ds": "ListNode dummy and tail pointer",
+        "nearMiss": [
+          { "p": "k-way-merge", "why": "With two lists the heap only ever compares two heads: comparing them directly is simpler and O(1) space." },
+          { "p": "heap-topk", "why": "Nothing is ranked; the order already exists in the inputs." },
+          { "p": "partition", "why": "Nothing is split around a pivot." }
+        ],
+        "why": "Two sorted lists ⇒ dummy head and pick the smaller head each step.",
+        "approach": "dummy, tail; while both: tail.next = smaller; advance. Attach the rest."
+      }
+    ]
   },
   {
     "id": "find-k-pairs-with-smallest-sums", "title": "Find K Pairs with Smallest Sums", "slug": "find-k-pairs-with-smallest-sums", "difficulty": "Medium",
@@ -124,5 +139,128 @@
     "space": { "answer": "O(k)", "wrong": ["O(m · n)", "O(1)", "O(m + n)"], "why": "The heap and the output." },
     "whyNot": { "wrong": ["Two pointers can't add numbers.", "Two pointers need equal-length arrays.", "Two pointers would return pairs from the same array."] },
     "approach": "Push (nums1[i] + nums2[0], i, 0) for i < min(k, m). Repeat k times: pop (s, i, j), record the pair, push (i, j + 1) if j + 1 < n."
+  },
+  {
+    "id": "k-closest-points-to-origin", "title": "K Closest Points to Origin", "slug": "k-closest-points-to-origin", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a list of points on a plane and an integer k, return the k points closest to the origin (Euclidean distance), in any order.",
+    "pattern": "heap-topk", "alternates": ["partition"],
+    "nearMiss": [
+      { "p": "k-way-merge", "why": "There are no sorted lists to merge; it's selection of the k smallest from one unsorted list." },
+      { "p": "binary-search", "why": "Binary-searching a distance threshold works but is fiddly; a size-k heap or quickselect is direct." },
+      { "p": "intervals", "why": "Points aren't ranges; nothing overlaps." }
+    ],
+    "trigger": { "answer": "the k points closest to the origin", "wrong": ["in any order", "points on a plane", "Euclidean distance"], "why": "k smallest by a key ⇒ size-k max-heap (or quickselect, average O(n))." },
+    "ds": { "answer": "PriorityQueue<int[]> max-heap by x² + y², capped at size k", "wrong": ["Min-heap of all n points, then poll k", "TreeMap<Double, int[]> by distance", "int[] sorted by Math.sqrt distance"], "why": "Compare squared distances: no sqrt, no doubles. A min-heap of all n is O(n + k log n): fine, but the capped max-heap is O(k) space." },
+    "invariant": { "answer": "The heap holds the k closest points seen so far, and its top is the farthest of them; a closer point replaces it.", "wrong": ["The heap is sorted by x-coordinate.", "The heap top is the closest point seen so far.", "The heap holds every point at distance < k."], "why": "Max-heap of size k = the top is the eviction candidate." },
+    "time": { "answer": "O(n log k)", "wrong": ["O(n log n) is required", "O(n · k)", "O(k log n) only"], "why": "Each point does an O(log k) offer/poll. Quickselect is O(n) average." },
+    "space": { "answer": "O(k)", "wrong": ["O(n)", "O(1)", "O(n log k)"], "why": "The heap." },
+    "whyNot": { "wrong": ["k-way merge can't use distances.", "Merging needs exactly two lists.", "k-way merge would return the k farthest points."] },
+    "approach": "Max-heap by squared distance; offer each point; if size > k poll. Return the heap contents."
+  },
+  {
+    "id": "minimum-cost-to-hire-k-workers", "title": "Minimum Cost to Hire K Workers", "slug": "minimum-cost-to-hire-k-workers", "difficulty": "Hard",
+    "companies": ["Apple"],
+    "statement": "Worker i has quality q[i] and minimum wage w[i]. Hire exactly k workers: each must be paid at least their minimum wage, and pay within the group must be proportional to quality. Return the least total cost.",
+    "pattern": "heap-topk", "alternates": [],
+    "nearMiss": [
+      { "p": "greedy", "why": "Sorting by wage/quality ratio is the greedy half, but you still need the k smallest qualities among workers with ratio ≤ the current one: that's a heap." },
+      { "p": "two-heaps", "why": "Only one heap is needed (largest quality to evict); there's no median or two-sided balance." },
+      { "p": "knapsack", "why": "It looks like choosing a subset, but the cost structure (ratio × total quality) makes a sort + heap exact; no DP table." }
+    ],
+    "trigger": { "answer": "pay within the group must be proportional to quality", "wrong": ["Hire exactly k workers", "at least their minimum wage", "the least total cost"], "why": "Proportional pay ⇒ the group's rate is set by its max wage/quality ratio; cost = ratio × sum of qualities. Sweep ratios ascending, keep the k smallest qualities in a max-heap." },
+    "ds": { "answer": "Workers sorted by w/q, plus PriorityQueue<Integer> max-heap of qualities (Comparator.reverseOrder()) and a running quality sum", "wrong": ["Min-heap of wages of size k", "int[][] dp[i][k]", "TreeMap<Double, Integer> ratio → quality"], "why": "Evict the largest quality when the heap exceeds k." },
+    "invariant": { "answer": "When processing worker i (sorted by ratio), the heap holds the k smallest qualities among workers 0..i, so cost = ratio_i × qualitySum is the best group with captain i.", "wrong": ["The heap holds the k cheapest minimum wages.", "The ratio decreases as i increases.", "Every worker in the heap is paid exactly their minimum wage."], "why": "Worker i's ratio is the max in the group, so everyone is paid at least their minimum." },
+    "time": { "answer": "O(n log n)", "wrong": ["O(n · k)", "O(C(n, k))", "O(n²)"], "why": "Sort plus heap operations." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(k²)", "O(n · k)"], "why": "Sorted workers and the heap." },
+    "whyNot": { "wrong": ["Greedy can't handle ratios.", "Greedy would hire the k cheapest workers, which is optimal.", "Greedy only works when k = 1."] },
+    "approach": "Sort workers by w/q. For each: push q, sum += q; if size > k sum −= poll(); if size == k best = min(best, sum × ratio)."
+  },
+  {
+    "id": "last-stone-weight", "title": "Last Stone Weight", "slug": "last-stone-weight", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Repeatedly take the two heaviest stones and smash them: equal stones both vanish, otherwise the lighter vanishes and the heavier loses that much weight. Return the weight of the last stone, or 0 if none remain.",
+    "pattern": "heap-topk", "alternates": [],
+    "nearMiss": [
+      { "p": "knapsack", "why": "That's Last Stone Weight II, where you choose pairings. Here the rule is fixed: always the two heaviest." },
+      { "p": "greedy", "why": "The rule is already given; the question is how to fetch the two heaviest repeatedly in O(log n)." },
+      { "p": "two-pointers", "why": "Sorting once doesn't help: the remainder must be re-inserted in order every round." }
+    ],
+    "trigger": { "answer": "take the two heaviest stones", "wrong": ["equal stones both vanish", "the weight of the last stone", "or 0 if none remain"], "why": "Repeatedly extract the max and re-insert a new value ⇒ max-heap." },
+    "ds": { "answer": "PriorityQueue<Integer> max-heap (Comparator.reverseOrder())", "wrong": ["int[] sorted once", "TreeSet<Integer> (drops duplicates)", "ArrayDeque<Integer> as a stack"], "why": "TreeSet would lose equal weights; a heap keeps duplicates." },
+    "invariant": { "answer": "The heap always holds exactly the stones still alive, with the heaviest on top.", "wrong": ["The heap size halves every round.", "The heap top is always the original heaviest stone.", "The heap holds stones in insertion order."], "why": "Each round removes two and may add one." },
+    "time": { "answer": "O(n log n)", "wrong": ["O(n)", "O(n²)", "O(2ⁿ)"], "why": "At most n rounds of O(log n)." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(log n)", "O(n²)"], "why": "The heap." },
+    "whyNot": { "wrong": ["Knapsack can't handle stone weights.", "Knapsack would give the heaviest last stone.", "Knapsack needs exactly two stones."] },
+    "approach": "Heap all stones. While size > 1: a = poll, b = poll; if a != b offer a − b. Return isEmpty ? 0 : peek.",
+    "twists": [
+      {
+        "change": "You choose which two stones to smash each time.",
+        "statement": "Stones have weights. Each turn you choose any two stones and smash them (the difference survives, or nothing if equal). Return the smallest possible weight of the final stone.",
+        "pattern": "knapsack", "alternates": [], "trigger": "choose any two stones",
+        "ds": "boolean[] (or BitSet) of reachable subset sums up to total / 2",
+        "nearMiss": [
+          { "p": "heap-topk", "why": "Always smashing the two heaviest is one fixed strategy, not the best one." },
+          { "p": "greedy", "why": "No local rule is optimal; the result is a split into two groups with a minimal difference." },
+          { "p": "backtracking", "why": "Trying every smashing order is exponential; subset sums capture all outcomes." }
+        ],
+        "why": "Any smashing order ends as (sum of one group) − (sum of the other) ⇒ find the subset sum closest to total / 2.",
+        "approach": "dp[0] = true; for w: for s from total/2 down to w: dp[s] |= dp[s − w]. Answer = total − 2 · (largest reachable s)."
+      }
+    ]
+  },
+  {
+    "id": "sliding-window-median", "title": "Sliding Window Median", "slug": "sliding-window-median", "difficulty": "Hard",
+    "companies": [],
+    "statement": "Given an integer array and a window size k, return the median of every contiguous window of size k as the window slides from left to right.",
+    "pattern": "two-heaps", "alternates": [],
+    "nearMiss": [
+      { "p": "monotonic-deque", "why": "A monotonic deque gives the window max or min, not the middle element." },
+      { "p": "sliding-window", "why": "The window part is easy; the hard part is a running median, which needs two balanced halves." },
+      { "p": "heap-topk", "why": "One heap gives only one end; a median needs the boundary between the lower and upper halves." }
+    ],
+    "trigger": { "answer": "the median of every contiguous window", "wrong": ["a window size k", "slides from left to right", "an integer array"], "why": "Running median ⇒ two heaps; sliding ⇒ removals too (lazy deletion, or TreeMap/TreeSet halves in Java)." },
+    "ds": { "answer": "Two halves: max-heap low, min-heap high (with lazy-delete counts) or two TreeSet<Integer> of indices ordered by value", "wrong": ["One PriorityQueue<Integer> of the window", "ArrayDeque<Integer> monotonic deque", "int[] window re-sorted each step"], "why": "PriorityQueue.remove(Object) is O(k); a TreeSet ordered by (value, index) removes in O(log k)." },
+    "invariant": { "answer": "Every value in low ≤ every value in high, and low has the same size as high or one more; the median comes from their tops.", "wrong": ["low holds the first half of the window by position.", "Both heaps are always the same size.", "high's top is always the newest element."], "why": "Add, remove the outgoing element, then rebalance." },
+    "time": { "answer": "O(n log k)", "wrong": ["O(n · k log k)", "O(n · k)", "O(n log n) regardless of k"], "why": "Each slide does O(1) heap/set operations of O(log k)." },
+    "space": { "answer": "O(k)", "wrong": ["O(n)", "O(1)", "O(n · k)"], "why": "The two halves (plus pending lazy deletions)." },
+    "whyNot": { "wrong": ["Deques can't store negative numbers.", "A monotonic deque would give the median of the whole array.", "Monotonic deques only work for k = 2."] },
+    "approach": "Keep low (max side) and high (min side) as TreeSets of indices compared by (value, index). Insert the new index, remove i − k, rebalance sizes, read the median from low.last() / high.first() (use long or double to avoid overflow)."
+  },
+  {
+    "id": "kth-smallest-element-in-a-sorted-matrix", "title": "Kth Smallest Element in a Sorted Matrix", "slug": "kth-smallest-element-in-a-sorted-matrix", "difficulty": "Medium",
+    "companies": [],
+    "statement": "In an n × n matrix every row and every column is sorted ascending. Return the k-th smallest element overall, using less than O(n²) memory.",
+    "pattern": "k-way-merge", "alternates": ["bs-answer"],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "A size-k heap over all n² cells ignores the sorted rows and reads everything; seeding one pointer per row is the k-way merge." },
+      { "p": "binary-search", "why": "Rows aren't chained end to end, so you can't search the matrix as one flat sorted array." },
+      { "p": "matrix", "why": "No in-place traversal trick; the order comes from merging sorted rows." }
+    ],
+    "trigger": { "answer": "every row and every column is sorted", "wrong": ["the k-th smallest element overall", "less than O(n²) memory", "an n × n matrix"], "why": "n sorted lists + k-th smallest ⇒ k-way merge with a min-heap of row heads (or binary search on the value with a staircase count)." },
+    "ds": { "answer": "PriorityQueue<int[]> of {value, row, col} ordered by value, seeded with column 0 of each row", "wrong": ["int[] flattened and sorted", "Max-heap of size k over all cells", "TreeMap<Integer, Integer> value → count"], "why": "Poll k − 1 times, pushing the next cell in the same row." },
+    "invariant": { "answer": "The heap holds the smallest unconsumed cell of each row; after i polls, the i smallest elements have been removed in order.", "wrong": ["The heap holds the k largest values.", "Each poll removes a whole row.", "The heap top is always on the diagonal."], "why": "Same invariant as merging k sorted lists." },
+    "time": { "answer": "O(k log n)", "wrong": ["O(n² log n)", "O(n²)", "O(k · n)"], "why": "k polls on a heap of at most n entries." },
+    "space": { "answer": "O(n)", "wrong": ["O(n²)", "O(k)", "O(1)"], "why": "One entry per row." },
+    "whyNot": { "wrong": ["A heap can't hold matrix cells.", "Heaps need the matrix to be square.", "A top-k heap would return the k-th largest instead."] },
+    "approach": "Offer (matrix[r][0], r, 0) for each row. Poll k − 1 times, offering (matrix[r][c+1], r, c+1) when c + 1 < n. Return the top value."
+  },
+  {
+    "id": "smallest-range-covering-elements-from-k-lists", "title": "Smallest Range Covering Elements from K Lists", "slug": "smallest-range-covering-elements-from-k-lists", "difficulty": "Hard",
+    "companies": [],
+    "statement": "You have k lists of integers, each sorted ascending. Find the smallest range [a, b] that includes at least one number from each of the k lists (ties broken by the smaller a).",
+    "pattern": "k-way-merge", "alternates": ["sliding-window"],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "With two lists, two pointers suffice; with k lists you need the minimum of k heads at every step, which is a heap." },
+      { "p": "intervals", "why": "The answer is a range, but the inputs are points in sorted lists, not intervals to merge." },
+      { "p": "heap-topk", "why": "We're not selecting k largest; the heap holds one current element per list while advancing the minimum." }
+    ],
+    "trigger": { "answer": "at least one number from each of the k lists", "wrong": ["each sorted ascending", "smallest range [a, b]", "ties broken by the smaller a"], "why": "One pointer per sorted list + always advance the smallest ⇒ k-way merge, tracking the current max alongside the heap's min." },
+    "ds": { "answer": "PriorityQueue<int[]> of {value, list, index} ordered by value, plus an int currentMax", "wrong": ["Max-heap of all values", "TreeMap<Integer, Integer> value → list over all values", "int[] merged array with HashMap counts only"], "why": "Merging everything then sliding a window with counts also works (the alternate)." },
+    "invariant": { "answer": "The heap holds exactly one element from every list, so [heap min, currentMax] always covers all k lists; advancing the min is the only way to shrink it.", "wrong": ["The heap holds the k smallest values overall.", "currentMax only decreases.", "Each list is fully consumed before the next."], "why": "Stop when the list of the polled minimum is exhausted." },
+    "time": { "answer": "O(N log k), N = total elements", "wrong": ["O(N · k)", "O(N log N) only", "O(k²)"], "why": "Each element enters the heap once." },
+    "space": { "answer": "O(k)", "wrong": ["O(N)", "O(1)", "O(k²)"], "why": "One entry per list." },
+    "whyNot": { "wrong": ["Two pointers can't handle negative numbers.", "Two pointers need the lists merged first, which is impossible.", "Two pointers would find the largest range."] },
+    "approach": "Seed the heap with each list's first element, max = largest of them. Loop: poll min; update best if max − min is smaller; if its list has a next element, offer it and update max; else stop."
   }
 ]

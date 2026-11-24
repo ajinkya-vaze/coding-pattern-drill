@@ -132,6 +132,7 @@ export function renderProgress(root, ctx) {
   });
   const weak = rows.filter((r) => r.acc !== null && isLearned(state, r.p.id)).sort((a, b) => a.acc - b.acc).slice(0, 5);
   const overrides = Object.values(state.problems).reduce((n, r) => n + (r.overrides || 0), 0);
+  const slow = Object.values(state.problems).reduce((n, r) => n + (r.slow || 0), 0);
 
   const rowEl = (r) => h('li', { class: 'progress-row' },
     h('a', { href: `#/learn/${r.p.id}` },
@@ -150,6 +151,7 @@ export function renderProgress(root, ctx) {
       h('span', {}, h('i', { class: 'seg s3' }), 'L3'), h('span', {}, h('i', { class: 'seg s4' }), 'Mastered')),
     weak.length ? h('section', {}, h('h2', {}, 'Needs attention'), h('ul', { class: 'progress-list' }, weak.map(rowEl))) : null,
     overrides ? h('p', { class: 'muted small' }, `“I meant that” overrides used: ${overrides}. Keep these honest.`) : null,
+    slow ? h('p', { class: 'muted small' }, `Slow answers (timer ran out): ${slow}.`) : null,
     h('section', {}, h('h2', {}, 'All patterns'), h('ul', { class: 'progress-list' }, rows.map(rowEl))),
   );
 }
@@ -190,6 +192,8 @@ export function renderSync(root, ctx) {
   const settings = state.settings;
   const unlearned = h('input', { type: 'checkbox', id: 'opt-unlearned', checked: settings.includeUnlearned || null,
     onchange: (e) => { settings.includeUnlearned = e.target.checked; ctx.save(); } });
+  const timer = h('input', { type: 'checkbox', id: 'opt-timer', checked: settings.timer || null,
+    onchange: (e) => { settings.timer = e.target.checked; ctx.save(); } });
   const size = h('select', { id: 'opt-size', onchange: (e) => { settings.sessionSize = Number(e.target.value); ctx.save(); } },
     [5, 10, 15, 20].map((n) => h('option', { value: n, selected: settings.sessionSize === n || null }, `${n} problems`)));
 
@@ -226,6 +230,7 @@ export function renderSync(root, ctx) {
     h('section', { class: 'panel' },
       h('h2', {}, 'Play settings'),
       h('label', { class: 'toggle', for: 'opt-unlearned' }, unlearned, h('span', {}, 'Include patterns I have not learned yet (cold self-test)')),
+      h('label', { class: 'toggle', for: 'opt-timer' }, timer, h('span', {}, '60-second timer at L3 recall and L4 twists. Running out logs a slow attempt; the answer still counts.')),
       h('label', { class: 'field', for: 'opt-size' }, h('span', {}, 'Session length'), size)),
     h('section', { class: 'panel' },
       h('h2', {}, `Reported questions (${state.reports.length})`),

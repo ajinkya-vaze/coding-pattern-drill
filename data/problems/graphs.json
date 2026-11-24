@@ -15,7 +15,22 @@
     "time": { "answer": "O(rows × cols)", "wrong": ["O((rows × cols)²)", "O(rows + cols)", "O(rows × cols × log)"], "why": "Each cell visited a constant number of times." },
     "space": { "answer": "O(rows × cols) worst case for the recursion stack or queue", "wrong": ["O(1) always", "O(rows + cols) always", "O((rows × cols)²)"], "why": "A grid full of land makes the DFS stack (or BFS queue) large." },
     "whyNot": { "wrong": ["DP can't be used on grids.", "DP would count water instead of land.", "DP needs the grid to be square."] },
-    "approach": "For each cell == '1': count++, then DFS/BFS sinking all connected '1's to '0'."
+    "approach": "For each cell == '1': count++, then DFS/BFS sinking all connected '1's to '0'.",
+    "twists": [
+      {
+        "change": "Land is added one cell at a time, and you report the island count after each addition.",
+        "statement": "A grid starts as all water. Positions are turned into land one at a time; after each addition, return the current number of islands (4-directionally connected land).",
+        "pattern": "union-find", "alternates": [], "trigger": "after each addition",
+        "ds": "int[] parent over m · n cells with path compression, plus an island counter",
+        "nearMiss": [
+          { "p": "graph-traversal", "why": "A fresh flood fill after every addition is O(k · m · n); DSU merges incrementally." },
+          { "p": "multi-source-bfs", "why": "There are no distances to compute; only components merging." },
+          { "p": "matrix", "why": "No in-place traversal trick tracks merging components." }
+        ],
+        "why": "Online connectivity with only merges ⇒ union-find: each new land cell is +1 island, and each union with a land neighbour is −1.",
+        "approach": "On add (r, c): if already land, repeat the count; else count++, then for each land neighbour if union succeeds count−−. Record count."
+      }
+    ]
   },
   {
     "id": "word-ladder", "title": "Word Ladder", "slug": "word-ladder", "difficulty": "Hard",
@@ -33,7 +48,22 @@
     "time": { "answer": "O(N · L · 26), N words of length L (×L more for building strings)", "wrong": ["O(N²)", "O(26ᴸ)", "O(N!)"], "why": "Each word generates L · 26 candidate neighbours." },
     "space": { "answer": "O(N · L)", "wrong": ["O(1)", "O(26ᴸ)", "O(N²)"], "why": "The set and the queue hold words." },
     "whyNot": { "wrong": ["Backtracking can't change letters.", "Backtracking needs the word list sorted.", "Backtracking only works on words of length 3."] },
-    "approach": "BFS from beginWord, level by level. For each word, try every position × 'a'..'z'; if the candidate is in the set, remove it and enqueue. Return level + 1 when endWord appears."
+    "approach": "BFS from beginWord, level by level. For each word, try every position × 'a'..'z'; if the candidate is in the set, remove it and enqueue. Return level + 1 when endWord appears.",
+    "twists": [
+      {
+        "change": "Each letter change has its own cost.",
+        "statement": "Transform beginWord into endWord by changing one letter at a time through dictionary words, where changing a letter to c costs cost[c]. Return the minimum total cost.",
+        "pattern": "shortest-path", "alternates": [], "trigger": "Return the minimum total cost",
+        "ds": "PriorityQueue<Object[]> of {cost, word} and HashMap<String, Integer> best",
+        "nearMiss": [
+          { "p": "graph-traversal", "why": "BFS minimises the number of steps, which is wrong once steps have different costs." },
+          { "p": "multi-source-bfs", "why": "There's one source, and edges aren't unit-weight." },
+          { "p": "topo-sort", "why": "The word graph has cycles and no dependency order." }
+        ],
+        "why": "Weighted edges, non-negative ⇒ Dijkstra over the word graph.",
+        "approach": "Dijkstra from beginWord; neighbours by changing each position to each letter (if in the dictionary) with weight cost[letter]."
+      }
+    ]
   },
   {
     "id": "clone-graph", "title": "Clone Graph", "slug": "clone-graph", "difficulty": "Medium",
@@ -51,7 +81,22 @@
     "time": { "answer": "O(V + E)", "wrong": ["O(V²)", "O(V · E)", "O(E log V)"], "why": "Each node and edge once." },
     "space": { "answer": "O(V)", "wrong": ["O(1)", "O(E²)", "O(V²)"], "why": "The map and recursion/queue." },
     "whyNot": { "wrong": ["Tree DFS can't copy values.", "Tree DFS only works on binary trees with sorted keys.", "Tree DFS would copy each node twice."] },
-    "approach": "clone(node): if in map return it; copy = new Node(val); map.put(node, copy); for each neighbour add clone(neighbour); return copy."
+    "approach": "clone(node): if in map return it; copy = new Node(val); map.put(node, copy); for each neighbour add clone(neighbour); return copy.",
+    "twists": [
+      {
+        "change": "The structure is a linked list with random pointers, and extra space must be O(1).",
+        "statement": "Each node of a linked list has a next pointer and a random pointer to any node or null. Deep-copy the list using O(1) extra space beyond the new nodes.",
+        "pattern": "linked-list", "alternates": [], "trigger": "using O(1) extra space beyond the new nodes",
+        "ds": "ListNode references: interleave copies (A → A' → B → B'), then split",
+        "nearMiss": [
+          { "p": "graph-traversal", "why": "Traversal with an old → new HashMap works but uses O(n) extra space." },
+          { "p": "hashing", "why": "The map is exactly the O(n) space you're not allowed." },
+          { "p": "fast-slow", "why": "There's no cycle or middle to find." }
+        ],
+        "why": "Weave each copy right after its original so copy.random = original.random.next, then unweave.",
+        "approach": "Pass 1: insert copies after originals. Pass 2: set copy.random. Pass 3: restore originals' next and link the copies."
+      }
+    ]
   },
   {
     "id": "rotting-oranges", "title": "Rotting Oranges", "slug": "rotting-oranges", "difficulty": "Medium",
@@ -69,7 +114,22 @@
     "time": { "answer": "O(rows × cols)", "wrong": ["O((rows × cols)²)", "O(k × rows × cols) for k rotten", "O(rows + cols)"], "why": "Each cell enqueued at most once." },
     "space": { "answer": "O(rows × cols)", "wrong": ["O(1)", "O(rows + cols)", "O(k)"], "why": "The queue in the worst case." },
     "whyNot": { "wrong": ["BFS can't work on grids.", "Plain BFS can't detect unreachable oranges.", "BFS would need the grid sorted."] },
-    "approach": "Enqueue all 2s, count 1s. BFS layer by layer, rotting fresh neighbours and decrementing fresh; minutes++ per non-final layer. Return fresh == 0 ? minutes : −1."
+    "approach": "Enqueue all 2s, count 1s. BFS layer by layer, rotting fresh neighbours and decrementing fresh; minutes++ per non-final layer. Return fresh == 0 ? minutes : −1.",
+    "twists": [
+      {
+        "change": "Each fresh orange takes its own number of minutes to rot once a neighbour is rotten.",
+        "statement": "In a grid of oranges, rot spreads from rotten oranges to adjacent fresh ones, but fresh orange (r, c) takes delay[r][c] minutes to rot once a neighbour has rotted. Return when the last orange rots, or -1.",
+        "pattern": "shortest-path", "alternates": [], "trigger": "takes delay[r][c] minutes to rot",
+        "ds": "PriorityQueue<int[]> of {time, r, c} seeded with every rotten orange",
+        "nearMiss": [
+          { "p": "multi-source-bfs", "why": "BFS levels assume every step takes one minute; with different delays a FIFO queue no longer pops in time order." },
+          { "p": "graph-traversal", "why": "Plain flood fill ignores timing." },
+          { "p": "dp-2d", "why": "Rot spreads in all directions, so there's no fill order." }
+        ],
+        "why": "Many sources + weighted steps ⇒ Dijkstra seeded with all sources.",
+        "approach": "Push all rotten at time 0; poll earliest; for a fresh neighbour, t = time + delay; relax if better. Answer = max time, or -1 if any fresh remains."
+      }
+    ]
   },
   {
     "id": "01-matrix", "title": "01 Matrix", "slug": "01-matrix", "difficulty": "Medium",
@@ -105,7 +165,22 @@
     "time": { "answer": "O(V + E)", "wrong": ["O(V²)", "O(V · E)", "O(E log V)"], "why": "Each node and edge once." },
     "space": { "answer": "O(V + E)", "wrong": ["O(1)", "O(V²) always", "O(E²)"], "why": "Adjacency lists and in-degrees." },
     "whyNot": { "wrong": ["Union-Find can't store course numbers.", "Union-Find is too slow for 2000 courses.", "Union-Find only works on trees."] },
-    "approach": "Build adjacency b → a and in-degrees. Queue all 0-in-degree courses; pop, count, decrement neighbours, enqueue new zeros. Return count == numCourses."
+    "approach": "Build adjacency b → a and in-degrees. Queue all 0-in-degree courses; pop, count, decrement neighbours, enqueue new zeros. Return count == numCourses.",
+    "twists": [
+      {
+        "change": "Links between courses are undirected 'related' pairs, and you ask whether they contain a loop.",
+        "statement": "Courses are joined by undirected 'related to' pairs. Decide whether these links contain a cycle.",
+        "pattern": "union-find", "alternates": ["graph-traversal"], "trigger": "undirected 'related to' pairs",
+        "ds": "int[] parent with path compression",
+        "nearMiss": [
+          { "p": "topo-sort", "why": "In-degrees only make sense with directed edges; on an undirected graph every edge counts both ways." },
+          { "p": "shortest-path", "why": "Distances don't matter." },
+          { "p": "backtracking", "why": "There's nothing to choose; it's a connectivity check." }
+        ],
+        "why": "Undirected cycle ⇒ an edge whose endpoints are already connected.",
+        "approach": "For each pair: if find(a) == find(b) return true; else union(a, b). Return false."
+      }
+    ]
   },
   {
     "id": "course-schedule-ii", "title": "Course Schedule II", "slug": "course-schedule-ii", "difficulty": "Medium",
@@ -195,7 +270,22 @@
     "time": { "answer": "O(E log V)", "wrong": ["O(V + E)", "O(V³)", "O(V · E)"], "why": "Each edge relaxation may push onto the heap." },
     "space": { "answer": "O(V + E)", "wrong": ["O(1)", "O(V²) always", "O(E²)"], "why": "Graph, heap and dist." },
     "whyNot": { "wrong": ["BFS can't handle directed edges.", "BFS needs every node reachable.", "BFS only works when n is small."] },
-    "approach": "Dijkstra from k. If any dist is still infinity return −1, else return the maximum dist."
+    "approach": "Dijkstra from k. If any dist is still infinity return −1, else return the maximum dist.",
+    "twists": [
+      {
+        "change": "Every edge takes exactly one unit of time.",
+        "statement": "A signal starts at node k of a directed graph and every edge takes exactly one unit of time to cross. Return how long until all nodes receive it, or -1.",
+        "pattern": "graph-traversal", "alternates": ["multi-source-bfs"], "trigger": "every edge takes exactly one unit of time",
+        "ds": "ArrayDeque<Integer> BFS queue and int[] dist",
+        "nearMiss": [
+          { "p": "shortest-path", "why": "Dijkstra still works, but with unit weights a FIFO queue already pops nodes in distance order: the heap is wasted." },
+          { "p": "topo-sort", "why": "The graph may have cycles; arrival time isn't a dependency order." },
+          { "p": "union-find", "why": "Edges are directed and you need times, not components." }
+        ],
+        "why": "Unit weights ⇒ BFS levels are shortest times.",
+        "approach": "BFS from k; answer = max dist, or -1 if any node is unreached."
+      }
+    ]
   },
   {
     "id": "cheapest-flights-within-k-stops", "title": "Cheapest Flights Within K Stops", "slug": "cheapest-flights-within-k-stops", "difficulty": "Medium",
@@ -214,5 +304,203 @@
     "space": { "answer": "O(V)", "wrong": ["O(V · E)", "O(1)", "O(Vᵏ)"], "why": "Two price arrays." },
     "whyNot": { "wrong": ["Greedy can't handle prices.", "Greedy needs the flights sorted by city number.", "Greedy only works when k = 0."] },
     "approach": "prices = ∞ except src = 0. Repeat k + 1 times: tmp = copy; for each flight (u, v, p) if prices[u] + p < tmp[v] then tmp[v] = prices[u] + p; prices = tmp. Return prices[dst] or −1."
+  },
+  {
+    "id": "pacific-atlantic-water-flow", "title": "Pacific Atlantic Water Flow", "slug": "pacific-atlantic-water-flow", "difficulty": "Medium",
+    "companies": [],
+    "statement": "A grid of heights touches the Pacific on its top and left edges and the Atlantic on its bottom and right edges. Water flows to a neighbour of equal or lower height. Return every cell from which water can reach both oceans.",
+    "pattern": "graph-traversal", "alternates": ["multi-source-bfs"],
+    "nearMiss": [
+      { "p": "dp-2d", "why": "Flow can go up, down, left and right, so there's no acyclic order to fill a table in." },
+      { "p": "shortest-path", "why": "We only need reachability, not distances or costs." },
+      { "p": "union-find", "why": "Flow is directed (downhill only), and DSU only models undirected connectivity." }
+    ],
+    "trigger": { "answer": "reach both oceans", "wrong": ["Water flows to a neighbour of equal or lower height", "top and left edges", "A grid of heights"], "why": "Searching from every cell is O((mn)²). Reverse it: flood uphill from each ocean's border and intersect the two reachable sets." },
+    "ds": { "answer": "Two boolean[m][n] reachable grids, filled by DFS/BFS seeded from each ocean's border cells", "wrong": ["int[][] dp of max height reachable", "PriorityQueue<int[]> by height", "One boolean[][] visited reused for both oceans"], "why": "One set per ocean; the answer is their intersection." },
+    "invariant": { "answer": "pacific[r][c] is true iff water from (r, c) can flow to the Pacific; the reverse search only steps to neighbours of equal or greater height.", "wrong": ["Cells on the diagonal always reach both oceans.", "A cell reaches an ocean iff it is higher than all neighbours.", "Each cell is visited once in total across both searches."], "why": "Reversing edges turns 'can reach the ocean' into 'reachable from the ocean'." },
+    "time": { "answer": "O(m · n)", "wrong": ["O((m · n)²)", "O(m · n log(m · n))", "O(2^(m · n))"], "why": "Each cell is visited at most once per ocean." },
+    "space": { "answer": "O(m · n)", "wrong": ["O(1)", "O(m + n)", "O((m · n)²)"], "why": "Two visited grids plus the stack/queue." },
+    "whyNot": { "wrong": ["DP can't handle grids.", "DP would need the heights sorted.", "DP would only find one ocean."] },
+    "approach": "DFS/BFS from all top/left cells into pac, from all bottom/right cells into atl, moving to neighbours with height ≥ current. Collect cells true in both."
+  },
+  {
+    "id": "max-area-of-island", "title": "Max Area of Island", "slug": "max-area-of-island", "difficulty": "Medium",
+    "companies": [],
+    "statement": "In a binary grid, an island is a group of 1s connected up, down, left or right. Return the area of the largest island, or 0 if there are none.",
+    "pattern": "graph-traversal", "alternates": ["union-find"],
+    "nearMiss": [
+      { "p": "dp-2d", "why": "Islands can snake in any direction, so a top-left-to-bottom-right table can't add up their area." },
+      { "p": "multi-source-bfs", "why": "We need each island's size separately, not distances from a set of sources." },
+      { "p": "matrix", "why": "No rotation/spiral/in-place trick; it's connected-component search." }
+    ],
+    "trigger": { "answer": "connected up, down, left or right", "wrong": ["the area of the largest island", "a binary grid", "or 0 if there are none"], "why": "4-directional connected components on a grid ⇒ flood fill from each unvisited 1, counting cells." },
+    "ds": { "answer": "Recursive DFS (or ArrayDeque<int[]> BFS) that marks cells visited by setting them to 0", "wrong": ["int[][] dp of running area", "PriorityQueue<int[]> by area", "HashMap<Integer, Integer> row → count"], "why": "Mutating the grid doubles as the visited set." },
+    "invariant": { "answer": "Each flood fill visits exactly one island, every one of its cells once, and returns its size.", "wrong": ["Each row contains at most one island.", "Islands are visited in order of size.", "A cell can belong to two islands."], "why": "Marked cells are never revisited." },
+    "time": { "answer": "O(m · n)", "wrong": ["O((m · n)²)", "O(m · n log(m · n))", "O(m² · n²)"], "why": "Each cell is processed once." },
+    "space": { "answer": "O(m · n) worst-case recursion/queue", "wrong": ["O(1)", "O(m + n)", "O(min(m, n))"], "why": "A grid full of land." },
+    "whyNot": { "wrong": ["DP can't count cells.", "DP would only find square islands.", "DP needs the grid to be square."] },
+    "approach": "For each 1: area = dfs(r, c) where dfs sets the cell to 0 and returns 1 + dfs of four neighbours; track the max."
+  },
+  {
+    "id": "surrounded-regions", "title": "Surrounded Regions", "slug": "surrounded-regions", "difficulty": "Medium",
+    "companies": [],
+    "statement": "A board contains 'X' and 'O'. Capture every region of 'O's that is fully enclosed by 'X' (no cell of the region on the border) by flipping it to 'X'. Modify the board in place.",
+    "pattern": "graph-traversal", "alternates": ["union-find"],
+    "nearMiss": [
+      { "p": "matrix", "why": "It is an in-place grid update, but the decision depends on connectivity to the border, which needs a search." },
+      { "p": "dp-2d", "why": "Whether a region touches the border can't be decided in one sweep direction." },
+      { "p": "multi-source-bfs", "why": "BFS from all border 'O's does work, but distances don't matter; it's plain reachability (any traversal)." }
+    ],
+    "trigger": { "answer": "no cell of the region on the border", "wrong": ["Modify the board in place", "flipping it to 'X'", "A board contains 'X' and 'O'"], "why": "Invert the question: flood from border 'O's to mark the safe ones, then flip everything else." },
+    "ds": { "answer": "DFS/BFS from border 'O's marking them with a temporary character (e.g. '#')", "wrong": ["boolean[][] per region checked separately", "PriorityQueue<int[]> of border cells", "int[][] dp of distances to the border"], "why": "The temporary mark acts as the visited set." },
+    "invariant": { "answer": "After the border floods, every 'O' still unmarked can't reach the border, so it must be surrounded.", "wrong": ["Every 'O' next to an 'X' is surrounded.", "Regions are captured in order of size.", "Border cells are always flipped."], "why": "Final pass: 'O' → 'X', '#' → 'O'." },
+    "time": { "answer": "O(m · n)", "wrong": ["O((m · n)²)", "O(m · n · (m + n))", "O(m · n log(m · n))"], "why": "Each cell visited a constant number of times." },
+    "space": { "answer": "O(m · n) worst-case recursion/queue", "wrong": ["O(1)", "O(m + n)", "O(regions²)"], "why": "A board full of 'O'." },
+    "whyNot": { "wrong": ["In-place matrix tricks can't read characters.", "Matrix traversal only works on square boards.", "Matrix problems can't modify the input."] },
+    "approach": "Flood from every border 'O', marking '#'. Then flip remaining 'O' to 'X' and '#' back to 'O'."
+  },
+  {
+    "id": "as-far-from-land-as-possible", "title": "As Far from Land as Possible", "slug": "as-far-from-land-as-possible", "difficulty": "Medium",
+    "companies": [],
+    "statement": "In an n × n grid of 0 (water) and 1 (land), find the water cell whose distance to the nearest land cell is as large as possible, and return that distance (Manhattan). Return -1 if there is no land or no water.",
+    "pattern": "multi-source-bfs", "alternates": ["dp-2d"],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "A BFS from each water cell is O((n²)²); starting from ALL land cells at once gives every distance in one pass." },
+      { "p": "shortest-path", "why": "Every step costs 1, so Dijkstra adds a log factor for nothing." },
+      { "p": "bs-answer", "why": "Binary-searching the distance with a feasibility check is possible but slower and more complex." }
+    ],
+    "trigger": { "answer": "distance to the nearest land cell", "wrong": ["as large as possible", "no land or no water", "an n × n grid"], "why": "'Distance to the nearest of many sources' for every cell ⇒ seed the BFS queue with all sources." },
+    "ds": { "answer": "ArrayDeque<int[]> seeded with every land cell; the grid (or int[][] dist) records distances", "wrong": ["PriorityQueue<int[]> by distance", "One BFS queue per water cell", "int[] distance per row"], "why": "Two DP sweeps (top-left, bottom-right) also work as the alternate." },
+    "invariant": { "answer": "Cells are dequeued in non-decreasing distance from the nearest land, so the first time a water cell is reached is its final distance.", "wrong": ["Each land cell's BFS runs separately.", "Distances decrease as the queue empties.", "Water cells are only visited from their nearest land cell's BFS."], "why": "The last level reached is the answer." },
+    "time": { "answer": "O(n²)", "wrong": ["O(n⁴)", "O(n² log n)", "O(n³)"], "why": "Each cell enqueued once." },
+    "space": { "answer": "O(n²)", "wrong": ["O(1)", "O(n)", "O(n⁴)"], "why": "The queue." },
+    "whyNot": { "wrong": ["Graph traversal can't measure distance.", "Graph BFS only works on trees.", "A single-source BFS would need weighted edges."] },
+    "approach": "Queue all land; if none or all, return -1. BFS by levels, turning water to visited; return the number of levels − 1."
+  },
+  {
+    "id": "shortest-bridge", "title": "Shortest Bridge", "slug": "shortest-bridge", "difficulty": "Medium",
+    "companies": [],
+    "statement": "A binary grid contains exactly two islands (4-directionally connected 1s). Return the smallest number of 0s you must flip to 1 to connect the two islands.",
+    "pattern": "multi-source-bfs", "alternates": [],
+    "nearMiss": [
+      { "p": "shortest-path", "why": "Every flip costs 1, so BFS levels are already the shortest distances." },
+      { "p": "union-find", "why": "DSU can tell when the islands join if you add water cells, but in what order? BFS from one whole island answers 'how many' directly." },
+      { "p": "dp-2d", "why": "Paths between islands can wind in any direction." }
+    ],
+    "trigger": { "answer": "exactly two islands", "wrong": ["smallest number of 0s you must flip", "4-directionally connected 1s", "A binary grid"], "why": "Find one island (DFS), then BFS outward from ALL its cells at once until you touch the other island." },
+    "ds": { "answer": "DFS to collect island A into an ArrayDeque<int[]>, then level-by-level BFS from that queue", "wrong": ["PriorityQueue<int[]> by flips", "BFS from a single cell of island A", "int[][] dp of flips"], "why": "Starting from one cell would overcount distances." },
+    "invariant": { "answer": "After d BFS levels, the visited region is every cell within d flips of island A; the first time island B is touched, d is the answer.", "wrong": ["Both islands grow at the same time.", "The BFS starts from the island's centre.", "Each level flips exactly one cell."], "why": "Multi-source BFS = distance to the nearest source cell." },
+    "time": { "answer": "O(n²)", "wrong": ["O(n⁴)", "O(n² log n)", "O(n³)"], "why": "Each cell visited a constant number of times." },
+    "space": { "answer": "O(n²)", "wrong": ["O(1)", "O(n)", "O(n⁴)"], "why": "Queue and visited marks." },
+    "whyNot": { "wrong": ["Dijkstra can't run on grids.", "Dijkstra needs negative weights here.", "Dijkstra would return the longest bridge."] },
+    "approach": "Find the first 1, DFS its island, marking 2 and enqueueing. BFS levels: on reaching a 1 return level; else mark water and enqueue."
+  },
+  {
+    "id": "find-all-possible-recipes-from-given-supplies", "title": "Find All Possible Recipes from Given Supplies", "slug": "find-all-possible-recipes-from-given-supplies", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Each recipe lists ingredients; an ingredient may itself be another recipe. You start with unlimited supplies of some basic items. Return every recipe you can eventually make.",
+    "pattern": "topo-sort", "alternates": ["graph-traversal"],
+    "nearMiss": [
+      { "p": "hashing", "why": "A set of available items is part of it, but repeatedly scanning all recipes until nothing changes is O(n²); in-degrees schedule them directly." },
+      { "p": "union-find", "why": "Dependencies are directed: making A needs B, not the other way, so DSU's undirected groups don't fit." },
+      { "p": "backtracking", "why": "There's no choice to try and undo; a recipe is makeable once all its ingredients are." }
+    ],
+    "trigger": { "answer": "an ingredient may itself be another recipe", "wrong": ["unlimited supplies", "every recipe you can eventually make", "Each recipe lists ingredients"], "why": "Items depend on other items ⇒ dependency graph; makeable = reached by Kahn's algorithm (cycles never reach in-degree 0)." },
+    "ds": { "answer": "HashMap<String, List<String>> ingredient → recipes, HashMap<String, Integer> in-degree, ArrayDeque<String> seeded with supplies", "wrong": ["HashSet<String> rescanned in a loop", "Recursive DFS without cycle detection", "PriorityQueue<String> by name"], "why": "In-degree = number of ingredients still missing." },
+    "invariant": { "answer": "An item is dequeued only after all of its ingredients were dequeued, so every dequeued recipe is makeable; recipes in a cycle never reach in-degree 0.", "wrong": ["Recipes are made in alphabetical order.", "Every recipe is dequeued exactly once.", "Supplies are only used once."], "why": "Kahn's algorithm naturally excludes cycles." },
+    "time": { "answer": "O(R + I + S) for recipes, ingredient edges and supplies", "wrong": ["O(R²)", "O(R · I · S)", "O(2^R)"], "why": "Each edge processed once." },
+    "space": { "answer": "O(R + I + S)", "wrong": ["O(1)", "O(R²)", "O(2^R)"], "why": "Graph and maps." },
+    "whyNot": { "wrong": ["Hashing can't store strings.", "Hashing would give the recipes in the wrong order.", "Hashing only works if there are no supplies."] },
+    "approach": "inDeg[recipe] = #ingredients; edges ingredient → recipe. Queue supplies. Pop item; for each dependent recipe: if −−inDeg == 0, add to answer and queue."
+  },
+  {
+    "id": "minimum-height-trees", "title": "Minimum Height Trees", "slug": "minimum-height-trees", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given an undirected tree with n nodes as an edge list, return all nodes that, if chosen as the root, give a tree of minimum height.",
+    "pattern": "topo-sort", "alternates": [],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "BFS from every node to measure height is O(n²); peeling leaves finds the centre in O(n)." },
+      { "p": "tree-dfs", "why": "Rerooting DP works but is more intricate; the input is a general tree as edges, not a rooted binary tree." },
+      { "p": "shortest-path", "why": "Edges are unweighted, and we want the centre, not one distance." }
+    ],
+    "trigger": { "answer": "give a tree of minimum height", "wrong": ["an undirected tree with n nodes", "as an edge list", "return all nodes"], "why": "Minimum height roots are the tree's centre (1 or 2 nodes) ⇒ peel leaves layer by layer, Kahn-style with degrees." },
+    "ds": { "answer": "List<List<Integer>> adjacency, int[] degree, ArrayDeque<Integer> of current leaves", "wrong": ["int[] height computed by BFS from each node", "PriorityQueue<Integer> by degree", "boolean[] visited only"], "why": "Leaves are degree-1 nodes." },
+    "invariant": { "answer": "After removing a layer of leaves, the remaining nodes form a tree with the same centre; stop when ≤ 2 nodes remain.", "wrong": ["The centre is the node with the highest degree.", "Each round removes exactly one node.", "The answer is always a single node."], "why": "Trimming leaves shortens every longest path at both ends." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n · diameter)"], "why": "Each node and edge removed once." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(n²)", "O(log n)"], "why": "Adjacency and degrees." },
+    "whyNot": { "wrong": ["Graph traversal can't be used on trees.", "BFS would find the leaves, not the roots.", "BFS needs edge weights."] },
+    "approach": "If n ≤ 2 return all. Queue leaves. remaining = n. While remaining > 2: pop the whole leaf layer, decrement neighbours' degrees, queue new leaves. Return the queue."
+  },
+  {
+    "id": "number-of-provinces", "title": "Number of Provinces", "slug": "number-of-provinces", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given an n × n adjacency matrix where isConnected[i][j] = 1 means cities i and j are directly linked, return the number of groups of cities that are connected directly or indirectly.",
+    "pattern": "union-find", "alternates": ["graph-traversal"],
+    "nearMiss": [
+      { "p": "topo-sort", "why": "Links are undirected and order doesn't matter; there are no dependencies." },
+      { "p": "matrix", "why": "The matrix is just an adjacency encoding; walking it spirally or in place has no meaning." },
+      { "p": "shortest-path", "why": "Only connectivity matters, not distances." }
+    ],
+    "trigger": { "answer": "connected directly or indirectly", "wrong": ["an n × n adjacency matrix", "the number of groups", "directly linked"], "why": "Count connected components of an undirected graph ⇒ union-find (or DFS from each unvisited city)." },
+    "ds": { "answer": "int[] parent with path compression and union by rank, plus a components counter", "wrong": ["ArrayDeque<Integer> topological queue", "int[][] dist with Floyd–Warshall", "PriorityQueue<int[]> of edges"], "why": "Each successful union reduces the count by one." },
+    "invariant": { "answer": "Two cities share a root iff the edges processed so far connect them; components = n − successful unions.", "wrong": ["parent[i] is always i's direct neighbour.", "Roots are always the smallest index.", "Every union reduces the count."], "why": "Unions of already-connected cities don't change the count." },
+    "time": { "answer": "O(n² · α(n))", "wrong": ["O(n³)", "O(n² log n)", "O(n)"], "why": "The matrix has n² entries; DSU operations are near-constant." },
+    "space": { "answer": "O(n)", "wrong": ["O(n²)", "O(1)", "O(log n)"], "why": "parent and rank arrays." },
+    "whyNot": { "wrong": ["Topological sort can't count groups.", "Topological sort only works on trees.", "Topo sort would need the matrix sorted."] },
+    "approach": "count = n; for i < j with isConnected[i][j] == 1: if union(i, j) count−−. Return count."
+  },
+  {
+    "id": "satisfiability-of-equality-equations", "title": "Satisfiability of Equality Equations", "slug": "satisfiability-of-equality-equations", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Each equation is a string like \"a==b\" or \"a!=b\" over single lowercase-letter variables. Return true if you can assign integers to the variables so that all equations hold.",
+    "pattern": "union-find", "alternates": ["graph-traversal"],
+    "nearMiss": [
+      { "p": "backtracking", "why": "Trying assignments is exponential; equality is transitive, so grouping is enough." },
+      { "p": "hashing", "why": "A map of direct equalities misses transitive ones (a==b, b==c ⇒ a==c)." },
+      { "p": "topo-sort", "why": "Equalities are symmetric; there's no direction or ordering." }
+    ],
+    "trigger": { "answer": "assign integers to the variables so that all equations hold", "wrong": ["\"a==b\" or \"a!=b\"", "single lowercase-letter variables", "Each equation is a string"], "why": "== is an equivalence relation ⇒ union all equalities first, then any != inside one group is a contradiction." },
+    "ds": { "answer": "int[26] parent (union-find over letters)", "wrong": ["HashMap<Character, Integer> assignment tried recursively", "HashMap<Character, Character> direct equals only", "ArrayDeque<Character> queue"], "why": "26 variables, tiny DSU." },
+    "invariant": { "answer": "After processing all == equations, two variables share a root iff they must be equal; a != between same-root variables is unsatisfiable.", "wrong": ["Each variable has at most one equal partner.", "!= equations are unioned too.", "The order of equations changes the answer."], "why": "Two passes: all == first, then check !=." },
+    "time": { "answer": "O(n · α(26)), effectively O(n)", "wrong": ["O(26ⁿ)", "O(n²)", "O(n log n)"], "why": "Two passes over the equations." },
+    "space": { "answer": "O(1) (26 parents)", "wrong": ["O(n)", "O(26²)", "O(n²)"], "why": "Fixed alphabet." },
+    "whyNot": { "wrong": ["Backtracking can't assign integers.", "Backtracking would need the equations sorted.", "Backtracking only handles != equations."] },
+    "approach": "Pass 1: union(x, y) for every \"x==y\". Pass 2: for every \"x!=y\", if find(x) == find(y) return false. Return true."
+  },
+  {
+    "id": "path-with-minimum-effort", "title": "Path With Minimum Effort", "slug": "path-with-minimum-effort", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Walk from the top-left to the bottom-right cell of a height grid, moving in four directions. A route's effort is the largest absolute height difference between consecutive cells on it. Return the minimum effort.",
+    "pattern": "shortest-path", "alternates": ["bs-answer", "union-find"],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "Plain BFS counts steps; here edges have different costs and the path cost is a maximum, so you need a priority order." },
+      { "p": "dp-2d", "why": "Moves go in all four directions, so there's no acyclic fill order." },
+      { "p": "multi-source-bfs", "why": "There's one source, and edges aren't unit-weight." }
+    ],
+    "trigger": { "answer": "the largest absolute height difference between consecutive cells", "wrong": ["from the top-left to the bottom-right", "moving in four directions", "Return the minimum effort"], "why": "Minimise the bottleneck of a path ⇒ Dijkstra with cost = max(cost so far, edge) (also: binary search the effort + BFS, or Kruskal-style DSU)." },
+    "ds": { "answer": "PriorityQueue<int[]> of {effort, r, c}, int[][] best filled with Integer.MAX_VALUE", "wrong": ["ArrayDeque<int[]> plain BFS queue", "int[][] dp filled row by row", "TreeSet<Integer> of heights"], "why": "Dijkstra works because max(·) never decreases along a path." },
+    "invariant": { "answer": "When a cell is polled with effort e, e is the minimum possible bottleneck to reach it.", "wrong": ["Cells are polled in order of their height.", "best[r][c] only ever increases.", "The first path found to the target is the shortest in steps."], "why": "Same proof as Dijkstra, with max instead of +." },
+    "time": { "answer": "O(m · n · log(m · n))", "wrong": ["O(m · n)", "O((m · n)²)", "O(4^(m · n))"], "why": "Each cell may be pushed a few times." },
+    "space": { "answer": "O(m · n)", "wrong": ["O(1)", "O(m + n)", "O((m · n)²)"], "why": "best grid and heap." },
+    "whyNot": { "wrong": ["BFS can't move in four directions.", "BFS would need a sorted grid.", "BFS gives the maximum effort instead."] },
+    "approach": "Dijkstra from (0, 0) with cost 0; relax neighbour with max(cost, |Δh|) if it improves best. Return when the target is polled."
+  },
+  {
+    "id": "swim-in-rising-water", "title": "Swim in Rising Water", "slug": "swim-in-rising-water", "difficulty": "Hard",
+    "companies": [],
+    "statement": "In an n × n grid, cell values are distinct elevations. At time t the water level is t and you can swim between adjacent cells whose elevations are both at most t. Return the least time at which you can get from the top-left to the bottom-right.",
+    "pattern": "shortest-path", "alternates": ["bs-answer", "union-find"],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "A BFS for a FIXED t is the check; finding the least t needs priority order (or a search over t)." },
+      { "p": "dp-2d", "why": "You can swim in any direction, so there's no fill order." },
+      { "p": "heap-topk", "why": "The heap is ordering a frontier by path bottleneck, not selecting k items." }
+    ],
+    "trigger": { "answer": "Return the least time", "wrong": ["cell values are distinct elevations", "both at most t", "the water level is t"], "why": "The time a path needs is its maximum elevation ⇒ minimise a path's bottleneck: Dijkstra with max (or binary search t + flood fill)." },
+    "ds": { "answer": "PriorityQueue<int[]> of {maxElevationSoFar, r, c} and boolean[][] visited", "wrong": ["ArrayDeque<int[]> BFS by steps", "int[][] dp by rows", "TreeMap<Integer, int[]> elevation → cell only"], "why": "Pop the reachable cell with the lowest elevation each time." },
+    "invariant": { "answer": "The polled cell's key is the least water level at which it becomes reachable from the start.", "wrong": ["Cells are polled row by row.", "Time increases by 1 per cell visited.", "The key is the number of steps taken."], "why": "Bottleneck Dijkstra." },
+    "time": { "answer": "O(n² log n)", "wrong": ["O(n²)", "O(n⁴)", "O(n² · max elevation)"], "why": "n² cells through a heap." },
+    "space": { "answer": "O(n²)", "wrong": ["O(1)", "O(n)", "O(n⁴)"], "why": "Heap and visited." },
+    "whyNot": { "wrong": ["BFS can't handle elevations above n.", "BFS needs the grid sorted.", "BFS would give the most time."] },
+    "approach": "Heap from (grid[0][0], 0, 0). Poll; if target return key; mark visited; push unvisited neighbours with max(key, grid[nr][nc])."
   }
 ]

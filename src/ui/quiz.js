@@ -7,12 +7,12 @@ import { lessonEl, problemDigEl } from './lesson.js';
 import { buildRecognise, buildProbe, triggerRange } from '../engine/questions.js';
 import { gradeRecall } from '../engine/grading.js';
 import {
-  getRecord, levelFor, recordRecognise, recordProbe, recordRecall, STAGE, INTERVALS,
+  getRecord, levelFor, recordRecognise, recordProbe, recordRecall, recordTwist, twistFor, STAGE, INTERVALS,
   drillComplete, markLearned,
 } from '../engine/scheduler.js';
 import { leetcodeUrl } from '../engine/util.js';
 
-const LEVEL_NAMES = { 1: 'L1 · Recognise', 2: 'L2 · Probe', 3: 'L3 · Recall' };
+const LEVEL_NAMES = { 1: 'L1 · Recognise', 2: 'L2 · Probe', 3: 'L3 · Recall', 4: 'L4 · Twist' };
 const STEP_NAMES = { trigger: 'Trigger', ds: 'Java DS', invariant: 'Invariant', time: 'Time', space: 'Space', whyNot: 'Why not?' };
 
 export function runSession(root, ctx, { mode, queue, patternId = null }) {
@@ -188,14 +188,61 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
     draw();
   }
 
-  // ---------- L3 ----------
-  function renderRecall(problem) {
+  // ---------- L3 recall and L4 twist (same screen) ----------
+  // Optional countdown (Sync → Play settings). Running out only marks the
+  // attempt as slow; the answer is still graded normally.
+  function timerEl(onExpire) {
+    const SECONDS = 60;
+    const el = h('div', { class: 'timer', role: 'timer', 'aria-live': 'off' },
+      h('span', { class: 'timer-bar' }, h('span', { class: 'timer-fill' })),
+      h('span', { class: 'timer-num' }, `${SECONDS}s`));
+    const fill = el.querySelector('.timer-fill');
+    const num = el.querySelector('.timer-num');
+    const started = Date.now();
+    let expired = false;
+    const tick = () => {
+      if (!el.isConnected && Date.now() - started > 1000) return stop();
+      const left = Math.max(0, SECONDS - Math.floor((Date.now() - started) / 1000));
+      num.textContent = `${left}s`;
+      fill.style.width = `${(left / SECONDS) * 100}%`;
+      if (left === 0 && !expired) {
+        expired = true;
+        el.classList.add('expired');
+        num.textContent = 'Time';
+        onExpire();
+        stop();
+      }
+    };
+    const handle = setInterval(tick, 250);
+    function stop() { clearInterval(handle); }
+    return { el, stop, expired: () => expired };
+  }
+
+  /**
+   * L3 asks the problem itself; L4 asks one of its twists (same problem, one
+   * constraint changed so the pattern changes). Both: type the pattern, with
+   * three optional hints (highlight the signal, show the DS, show 4 options).
+   */
+  function renderRecall(problem, level = 3) {
     const rec = getRecord(ctx.state, problem.id);
-    const pattern = bank.patternsById[problem.pattern];
+    const twist = level === 4 ? twistFor(rec, problem) : null;
+    const subject = twist
+      ? {
+        statement: twist.statement, pattern: twist.pattern, alternates: twist.alternates || [],
+        trigger: twist.trigger, ds: twist.ds, nearMiss: twist.nearMiss, why: twist.why, approach: twist.approach,
+      }
+      : {
+        statement: problem.statement, pattern: problem.pattern, alternates: problem.alternates || [],
+        trigger: problem.trigger.answer, ds: problem.ds.answer, nearMiss: problem.nearMiss, why: problem.trigger.why, approach: problem.approach,
+      };
+    const record = twist ? recordTwist : recordRecall;
+    const where = twist ? 'L4 twist' : 'L3 recall';
+    const pattern = bank.patternsById[subject.pattern];
+    const range = () => triggerRange({ statement: subject.statement, trigger: { answer: subject.trigger } });
     let hints = 0;
     let peeked = false;
     let done = false;
-    let statement = statementEl(problem.statement);
+    let statement = statementEl(subject.statement);
     const hintArea = h('div', { class: 'hint-area' });
     const area = h('div', { class: 'q-area' });
     const input = h('input', {
@@ -205,14 +252,22 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
     });
     const checkBtn = h('button', { class: 'btn primary', onclick: () => check() }, 'Check');
     const hintBtn = h('button', { class: 'btn ghost', onclick: () => nextHint() }, 'Hint 1 of 3');
+    const timer = ctx.state.settings.timer
+      ? timerEl(() => { if (!done) toast('Time is up. Answer anyway: it counts as a slow attempt, not a miss.'); })
+      : null;
+    const slow = () => Boolean(timer?.expired());
 
-    render(root, 
-      header(problem, 3),
-      rec.stage === STAGE.MASTERED ? h('p', { class: 'eyebrow' }, 'Spaced review') : null,
-      titleEl(problem), statement,
-      h('p', { class: 'q-prompt' }, 'Which pattern solves this? No options this time.'),
+    render(root,
+      header(problem, level),
+      twist ? h('p', { class: 'eyebrow' }, 'Twist · same problem, one change')
+        : rec.stage === STAGE.MASTERED ? h('p', { class: 'eyebrow' }, 'Spaced review') : null,
+      titleEl(problem),
+      twist ? h('p', { class: 'twist-change' }, h('strong', {}, 'Changed: '), rich(twist.change)) : null,
+      statement,
+      timer?.el,
+      h('p', { class: 'q-prompt' }, twist ? 'With that change, which pattern solves it now?' : 'Which pattern solves this? No options this time.'),
       area,
-      toolsRow(problem, () => 'L3 recall', { beforeAnswer: () => () => { if (!done) { peeked = true; toast('Peeking counts as a hint.'); } } }),
+      toolsRow(problem, () => where, { beforeAnswer: () => () => { if (!done) { peeked = true; toast('Peeking counts as a hint.'); } } }),
     );
     area.append(h('div', { class: 'answer-row' }, input, checkBtn), h('div', { class: 'hint-row' }, hintBtn), hintArea);
     setTimeout(() => input.focus({ preventScroll: true }), 50);
@@ -220,25 +275,30 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
     function nextHint() {
       hints += 1;
       if (hints === 1) {
-        const fresh = statementEl(problem.statement, triggerRange(problem));
+        const fresh = statementEl(subject.statement, range());
         statement.replaceWith(fresh);
         statement = fresh;
         hintArea.append(h('p', { class: 'hint' }, 'Hint 1: the highlighted phrase is the signal.'));
         hintBtn.textContent = 'Hint 2 of 3';
       } else if (hints === 2) {
-        hintArea.append(rich(`Hint 2: the data structure is ${problem.ds.answer}.`, 'p', 'hint'));
+        hintArea.append(rich(`Hint 2: the data structure is ${subject.ds}.`, 'p', 'hint'));
         hintBtn.textContent = 'Hint 3 of 3: show options';
       } else {
         hintBtn.remove();
         input.closest('.answer-row').remove();
-        const q = buildRecognise(problem, bank.patternsById);
+        const q = buildRecognise({ pattern: subject.pattern, nearMiss: subject.nearMiss, trigger: { why: subject.why } }, bank.patternsById);
         hintArea.append(h('p', { class: 'hint' }, 'Hint 3: pick from four.'));
         hintArea.append(optionButtons(q.options, (opt) => {
           done = true;
-          recordRecall(ctx.state, problem.id, { correct: opt.correct, hinted: true }, Date.now());
+          timer?.stop();
+          if (!opt.correct) {
+            reveal('wrong', null); // reveal() logs the miss (once)
+            return;
+          }
+          record(ctx.state, problem.id, { correct: true, hinted: true, slow: slow() }, Date.now());
           ctx.save();
-          results.push({ id: problem.id, level: 3, pass: false });
-          reveal(opt.correct ? 'correct-hinted' : 'wrong', null);
+          results.push({ id: problem.id, level, pass: false });
+          reveal('correct-hinted', null);
         }));
       }
     }
@@ -246,16 +306,19 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
     function check() {
       if (done) return;
       done = true;
+      timer?.stop();
       const answer = input.value.trim();
       const hinted = hints > 0 || peeked;
-      const g = answer ? gradeRecall(answer, problem, ctx.aliasIndex, bank.families, bank.patternsById) : { verdict: 'wrong', matched: null };
+      const g = answer
+        ? gradeRecall(answer, { pattern: subject.pattern, alternates: subject.alternates }, ctx.aliasIndex, bank.families, bank.patternsById)
+        : { verdict: 'wrong', matched: null };
       input.disabled = true;
       checkBtn.disabled = true;
       hintBtn.disabled = true;
       if (g.verdict === 'correct') {
-        recordRecall(ctx.state, problem.id, { correct: true, hinted }, Date.now());
+        record(ctx.state, problem.id, { correct: true, hinted, slow: slow() }, Date.now());
         ctx.save();
-        results.push({ id: problem.id, level: 3, pass: !hinted });
+        results.push({ id: problem.id, level, pass: !hinted, slow: slow() });
         reveal(hinted ? 'correct-hinted' : 'correct', g);
       } else {
         reveal(g.verdict, g, answer, hinted);
@@ -269,19 +332,24 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
     }
 
     function reveal(verdict, g, answer = '', hinted = false) {
-      const fresh = statementEl(problem.statement, triggerRange(problem));
+      const fresh = statementEl(subject.statement, range());
       statement.replaceWith(fresh);
       statement = fresh;
       const after = getRecord(ctx.state, problem.id);
       const lines = [
-        `Signal: “${problem.trigger.answer}”. ${problem.trigger.why}`,
-        h('p', {}, h('strong', {}, 'Approach: '), rich(problem.approach)),
+        `Signal: “${subject.trigger}”. ${subject.why}`,
+        h('p', {}, h('strong', {}, 'Approach: '), rich(subject.approach)),
+        twist ? h('p', { class: 'why-row' }, h('strong', {}, `Original: ${bank.patternsById[problem.pattern].name}. `),
+          rich(twist.nearMiss.find((nm) => nm.p === problem.pattern)?.why || '')) : null,
+        slow() ? h('p', { class: 'muted small' }, 'Logged as a slow attempt (over 60 s).') : null,
       ];
       let head;
       if (verdict === 'correct') {
-        head = after.stage === STAGE.MASTERED ? `${pattern.name}. Next review in ${INTERVALS[after.box]} day${INTERVALS[after.box] === 1 ? '' : 's'}.` : pattern.name;
+        head = after.stage === STAGE.MASTERED
+          ? `${pattern.name}. Next review in ${INTERVALS[after.box]} day${INTERVALS[after.box] === 1 ? '' : 's'}.`
+          : pattern.name;
       } else if (verdict === 'correct-hinted') {
-        head = `${pattern.name}. Right, but with a hint: it stays at L3.`;
+        head = `${pattern.name}. Right, but with a hint: ${twist ? 'this twist comes back' : 'it stays at L3'}.`;
       } else if (verdict === 'family') {
         head = `Close: “${matchedName(g)}” is the broader idea. The specific pattern is ${pattern.name}.`;
       } else {
@@ -297,9 +365,9 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
           h('button', {
             class: 'btn ghost',
             onclick: () => {
-              recordRecall(ctx.state, problem.id, { correct: true, hinted, override: true }, Date.now());
+              record(ctx.state, problem.id, { correct: true, hinted, override: true, slow: slow() }, Date.now());
               ctx.save();
-              results.push({ id: problem.id, level: 3, pass: !hinted, override: true });
+              results.push({ id: problem.id, level, pass: !hinted, override: true });
               toast('Counted as correct (logged as an override).');
               go();
             },
@@ -316,9 +384,9 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
     }
 
     function recordMiss() {
-      recordRecall(ctx.state, problem.id, { correct: false }, Date.now());
+      record(ctx.state, problem.id, { correct: false, slow: slow() }, Date.now());
       ctx.save();
-      results.push({ id: problem.id, level: 3, pass: false });
+      results.push({ id: problem.id, level, pass: false });
     }
   }
 
@@ -337,10 +405,10 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
     const problem = bank.problemsById[queue[index]];
     window.scrollTo({ top: 0 });
     if (mode === 'drill') return renderRecognise(problem);
-    const level = levelFor(getRecord(ctx.state, problem.id));
+    const level = levelFor(getRecord(ctx.state, problem.id), problem);
     if (level === 1) renderRecognise(problem);
     else if (level === 2) renderProbe(problem);
-    else renderRecall(problem);
+    else renderRecall(problem, level);
   }
 
   function finish(early) {
@@ -378,7 +446,7 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
       h('p', { class: 'big-stat' }, `${passes} / ${results.length}`, h('span', { class: 'muted' }, ' clean passes')),
       h('ul', { class: 'result-list' }, results.map((r) => h('li', {},
         h('span', { class: r.pass ? 'ok' : 'miss' }, r.pass ? '✓' : '✗'), ' ',
-        bank.problemsById[r.id].title, h('span', { class: 'muted' }, ` · L${r.level}${r.override ? ' (override)' : ''}`)))),
+        bank.problemsById[r.id].title, h('span', { class: 'muted' }, ` · L${r.level}${r.override ? ' (override)' : ''}${r.slow ? ' (slow)' : ''}`)))),
       body,
     );
   }

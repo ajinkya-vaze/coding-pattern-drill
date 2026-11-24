@@ -33,7 +33,22 @@
     "time": { "answer": "O(n)", "wrong": ["O(log n)", "O(n log n)", "O(h²)"], "why": "Each node visited once." },
     "space": { "answer": "O(h)", "wrong": ["O(1)", "O(n²)", "O(log n) always"], "why": "Recursion stack." },
     "whyNot": { "wrong": ["Binary search can't run on trees.", "Binary search would return the deepest node.", "Binary search needs p and q to be leaves."] },
-    "approach": "If node is null, p or q, return node. left = lca(node.left), right = lca(node.right). Both non-null ⇒ node; else return the non-null one."
+    "approach": "If node is null, p or q, return node. left = lca(node.left), right = lca(node.right). Both non-null ⇒ node; else return the non-null one.",
+    "twists": [
+      {
+        "change": "You are given the two nodes with parent pointers, but not the root.",
+        "statement": "Each tree node has a parent pointer. Given two nodes p and q (the root is not given), return their lowest common ancestor.",
+        "pattern": "hashing", "alternates": ["two-pointers"], "trigger": "the root is not given",
+        "ds": "HashSet<Node> of p's ancestors (or two pointers that switch starts)",
+        "nearMiss": [
+          { "p": "tree-dfs", "why": "The recursive LCA search starts at the root, which you don't have." },
+          { "p": "tree-bfs", "why": "There's no root to start a level order from." },
+          { "p": "union-find", "why": "There are no merges; the parent chain is already given." }
+        ],
+        "why": "Two upward paths meet at the LCA ⇒ the 'intersection of two linked lists' problem: a visited set, or two pointers that restart at the other node.",
+        "approach": "Walk up from p adding to a set; walk up from q until a node is in the set. (O(1) space: a = p, b = q; a = a.parent ?? q, b = b.parent ?? p until equal.)"
+      }
+    ]
   },
   {
     "id": "binary-tree-maximum-path-sum", "title": "Binary Tree Maximum Path Sum", "slug": "binary-tree-maximum-path-sum", "difficulty": "Hard",
@@ -106,5 +121,113 @@
     "space": { "answer": "O(n)", "wrong": ["O(1)", "O(h)", "O(w²)"], "why": "Queue and column lists." },
     "whyNot": { "wrong": ["DFS can't compute columns.", "DFS only works for complete trees.", "DFS needs a heap to visit nodes."] },
     "approach": "BFS with (node, col). Append node.val to map[col]; enqueue (left, col − 1), (right, col + 1). Output map from minCol to maxCol."
+  },
+  {
+    "id": "diameter-of-binary-tree", "title": "Diameter of Binary Tree", "slug": "diameter-of-binary-tree", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Return the length (in edges) of the longest path between any two nodes of a binary tree. The path does not have to pass through the root.",
+    "pattern": "tree-dfs", "alternates": [],
+    "nearMiss": [
+      { "p": "tree-bfs", "why": "Level order gives depths per level, but the longest path bends at some node: you need left and right heights at every node, bottom-up." },
+      { "p": "graph-traversal", "why": "Two BFS passes (farthest node, then farthest from it) work on general trees, but recursion on a binary tree is simpler." },
+      { "p": "dp-1d", "why": "There's no array of states; the 'DP' is the post-order return value." }
+    ],
+    "trigger": { "answer": "does not have to pass through the root", "wrong": ["longest path between any two nodes", "length (in edges)", "a binary tree"], "why": "Best path can bend at any node ⇒ post-order DFS returning height, updating a global best with left + right." },
+    "ds": { "answer": "Recursion returning height, plus an int field (or int[1]) for the best diameter", "wrong": ["ArrayDeque<TreeNode> queue", "HashMap<TreeNode, Integer> heights computed top-down", "int[] depth per level"], "why": "Return one thing, record another." },
+    "invariant": { "answer": "height(node) = 1 + max(height(left), height(right)); at each node the longest path bending there is height(left) + height(right).", "wrong": ["The diameter always includes the root.", "The diameter equals the tree's height × 2.", "Leaves have height 1 and contribute 1 edge."], "why": "With null → 0, left + right counts edges." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(h²)"], "why": "Each node once (calling height() at every node from the top would be O(n²))." },
+    "space": { "answer": "O(h)", "wrong": ["O(1)", "O(n²)", "O(2ʰ)"], "why": "Recursion depth." },
+    "whyNot": { "wrong": ["BFS can't measure edges.", "BFS only works on balanced trees.", "BFS would count nodes instead of edges, which is wrong by one."] },
+    "approach": "int height(n): if null return 0; l = height(n.left); r = height(n.right); best = max(best, l + r); return 1 + max(l, r)."
+  },
+  {
+    "id": "serialize-and-deserialize-binary-tree", "title": "Serialize and Deserialize Binary Tree", "slug": "serialize-and-deserialize-binary-tree", "difficulty": "Hard",
+    "companies": [],
+    "statement": "Design two functions: one turns a binary tree into a string and the other rebuilds exactly the same tree (same shape and values) from that string. Any encoding is allowed.",
+    "pattern": "tree-dfs", "alternates": ["tree-bfs"],
+    "nearMiss": [
+      { "p": "design", "why": "It is two methods on a class, but there's no combination of structures: one traversal order with null markers is the whole trick." },
+      { "p": "stack", "why": "An explicit stack can drive an iterative pre-order, but the idea is the traversal with null markers, not stack matching." },
+      { "p": "hashing", "why": "Hashing values loses structure; duplicates and shape can't be rebuilt from a map." }
+    ],
+    "trigger": { "answer": "rebuilds exactly the same tree", "wrong": ["Any encoding is allowed", "Design two functions", "turns a binary tree into a string"], "why": "One traversal (pre-order) that also records nulls is enough to rebuild a unique tree recursively." },
+    "ds": { "answer": "StringBuilder for pre-order with \"#\" for null; on decode, an Iterator<String> / ArrayDeque<String> of tokens consumed recursively", "wrong": ["In-order string only", "HashMap<Integer, TreeNode> value → node", "int[] heap-style array indexed 2i + 1"], "why": "In-order alone is ambiguous; heap indexing blows up on skewed trees." },
+    "invariant": { "answer": "The decoder consumes tokens in exactly the order the encoder wrote them: node, then its whole left subtree, then its whole right subtree; '#' closes a branch.", "wrong": ["Each level is written on its own line.", "Values must be unique for decoding to work.", "The string length equals the number of nodes."], "why": "Null markers make the pre-order sequence unambiguous." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(2ʰ)"], "why": "Each node (and null) once each way." },
+    "space": { "answer": "O(n)", "wrong": ["O(h) including the string", "O(1)", "O(2ʰ)"], "why": "The string and recursion." },
+    "whyNot": { "wrong": ["Design problems can't use recursion.", "A design approach would need a database.", "Design classes must store the tree in a HashMap."] },
+    "approach": "serialize: pre-order, append val or '#', comma-separated. deserialize: split into a queue; build(): t = poll; if '#' return null; node = new TreeNode(t); node.left = build(); node.right = build()."
+  },
+  {
+    "id": "construct-binary-tree-from-preorder-and-inorder-traversal", "title": "Construct Binary Tree from Preorder and Inorder Traversal", "slug": "construct-binary-tree-from-preorder-and-inorder-traversal", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given the preorder and inorder traversal arrays of a binary tree with unique values, rebuild and return the tree.",
+    "pattern": "tree-dfs", "alternates": [],
+    "nearMiss": [
+      { "p": "tree-bfs", "why": "Neither array is level order; the recursion follows pre-order." },
+      { "p": "binary-search", "why": "The inorder array isn't sorted (it's a binary tree, not a BST), so you look the root up in a map instead." },
+      { "p": "stack", "why": "An iterative stack solution exists, but the recognisable shape is recursive split: root, left range, right range." }
+    ],
+    "trigger": { "answer": "preorder and inorder traversal arrays", "wrong": ["unique values", "rebuild and return the tree", "a binary tree"], "why": "Pre-order gives the next root; its inorder position splits left and right subtrees ⇒ recursive divide." },
+    "ds": { "answer": "HashMap<Integer, Integer> value → inorder index, plus a pre-order cursor and recursion on index ranges", "wrong": ["ArrayDeque<TreeNode> level queue", "Arrays.copyOfRange for each subtree", "TreeMap<Integer, TreeNode>"], "why": "The map makes each split O(1); copying subarrays makes it O(n²)." },
+    "invariant": { "answer": "build(lo, hi) consumes the next pre-order value as the root of the inorder range [lo, hi]; everything left of it in inorder is its left subtree.", "wrong": ["The root is the middle of the inorder array.", "Pre-order and inorder have the root at the same index.", "Left subtrees are built after right subtrees."], "why": "Build left before right so the pre-order cursor stays in sync." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(h · n)"], "why": "Each node is created once with an O(1) lookup." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(h) including the map", "O(n²)"], "why": "The map plus recursion." },
+    "whyNot": { "wrong": ["BFS can't build trees.", "BFS needs a sorted inorder array.", "BFS would build the mirror image."] },
+    "approach": "Map inorder value → index. pre = 0. build(lo, hi): if lo > hi null; root = preorder[pre++]; m = idx[root]; root.left = build(lo, m − 1); root.right = build(m + 1, hi)."
+  },
+  {
+    "id": "kth-smallest-element-in-a-bst", "title": "Kth Smallest Element in a BST", "slug": "kth-smallest-element-in-a-bst", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given the root of a binary search tree and an integer k, return the k-th smallest value among its nodes (1-indexed).",
+    "pattern": "tree-dfs", "alternates": [],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "A size-k heap over all nodes ignores the BST order, which already yields sorted values via in-order traversal." },
+      { "p": "tree-bfs", "why": "Level order doesn't visit values in sorted order." },
+      { "p": "binary-search", "why": "Without subtree sizes stored, you can't decide left/right by rank; in-order counting is the direct way." }
+    ],
+    "trigger": { "answer": "binary search tree", "wrong": ["an integer k", "1-indexed", "return the k-th smallest value"], "why": "BST + 'k-th smallest' ⇒ in-order traversal visits values ascending; stop at the k-th." },
+    "ds": { "answer": "Iterative in-order with ArrayDeque<TreeNode> as a stack (or recursion with a counter)", "wrong": ["PriorityQueue<Integer> max-heap of size k", "ArrayList<Integer> of all values, then sort", "ArrayDeque<TreeNode> as a BFS queue"], "why": "Stops early after k nodes." },
+    "invariant": { "answer": "In-order visits nodes in ascending order, so the counter equals the rank of the current node.", "wrong": ["The leftmost leaf is always the k-th smallest.", "The root is always the median.", "The counter equals the node's depth."], "why": "Follow-up with frequent updates: store subtree sizes." },
+    "time": { "answer": "O(h + k)", "wrong": ["O(n log n)", "O(k log n)", "O(n²)"], "why": "Descend to the minimum, then k steps." },
+    "space": { "answer": "O(h)", "wrong": ["O(n)", "O(k)", "O(1)"], "why": "The stack holds one root-to-node path." },
+    "whyNot": { "wrong": ["A heap can't store tree values.", "A heap would give the k-th largest.", "Heaps don't work for k > 1."] },
+    "approach": "Push lefts from root; pop node, if −−k == 0 return node.val; go to node.right and push its lefts."
+  },
+  {
+    "id": "binary-tree-zigzag-level-order-traversal", "title": "Binary Tree Zigzag Level Order Traversal", "slug": "binary-tree-zigzag-level-order-traversal", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Return the values of a binary tree level by level, alternating direction: the first level left to right, the next right to left, and so on.",
+    "pattern": "tree-bfs", "alternates": [],
+    "nearMiss": [
+      { "p": "tree-dfs", "why": "DFS with a depth index can fill per-level lists, but you'd still insert at the front on odd levels; BFS gives levels naturally." },
+      { "p": "stack", "why": "Two stacks can produce zigzag order, but the underlying shape is still level-by-level traversal." },
+      { "p": "matrix", "why": "There's no grid to walk; the 'zigzag' is only the output order per level." }
+    ],
+    "trigger": { "answer": "level by level, alternating direction", "wrong": ["the first level left to right", "and so on", "a binary tree"], "why": "Per-level output ⇒ BFS with level size; alternate by adding to the front or back of each level's list." },
+    "ds": { "answer": "ArrayDeque<TreeNode> queue plus a LinkedList<Integer> / ArrayDeque<Integer> per level (addFirst or addLast)", "wrong": ["Recursion with a global list", "PriorityQueue<TreeNode> by depth", "Two ArrayDeque<TreeNode> sorted by value"], "why": "Children are queued in normal order; only the output list flips." },
+    "invariant": { "answer": "At the start of each round the queue holds exactly the next level; leftToRight decides where each value goes in that level's list.", "wrong": ["The queue alternates children order each level.", "The queue holds two levels at once.", "Values are sorted within each level."], "why": "Flip leftToRight after every level." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(h²)"], "why": "Each node once." },
+    "space": { "answer": "O(w) for the widest level (O(n) worst case)", "wrong": ["O(1)", "O(log n) always", "O(h²)"], "why": "The queue." },
+    "whyNot": { "wrong": ["DFS can't record depth.", "DFS would visit levels in reverse order only.", "DFS needs a balanced tree."] },
+    "approach": "BFS by level size; for each node add val to the level list's back if leftToRight else front; enqueue children left then right; flip."
+  },
+  {
+    "id": "minimum-depth-of-binary-tree", "title": "Minimum Depth of Binary Tree", "slug": "minimum-depth-of-binary-tree", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Return the number of nodes on the shortest path from the root of a binary tree down to the nearest leaf (a node with no children).",
+    "pattern": "tree-bfs", "alternates": ["tree-dfs"],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "It is BFS, but on a tree: no visited set, no grid, just levels." },
+      { "p": "multi-source-bfs", "why": "There is a single source, the root." },
+      { "p": "shortest-path", "why": "All edges have weight 1, so plain BFS already finds the shortest path." }
+    ],
+    "trigger": { "answer": "nearest leaf", "wrong": ["number of nodes", "from the root", "a node with no children"], "why": "Nearest = shortest unweighted distance ⇒ BFS, returning at the first leaf reached (DFS must explore every branch)." },
+    "ds": { "answer": "ArrayDeque<TreeNode> queue processed level by level", "wrong": ["PriorityQueue<TreeNode> by value", "Recursion returning 1 + min(depth(left), depth(right))", "HashMap<TreeNode, Integer> depth"], "why": "Naive min(left, right) + 1 returns 1 for a node with a single child." },
+    "invariant": { "answer": "Levels are processed in increasing depth, so the first leaf dequeued is at minimum depth.", "wrong": ["The leftmost leaf is always the nearest.", "The queue only ever holds leaves.", "Depth increases with every node dequeued."], "why": "BFS can stop early, which DFS cannot." },
+    "time": { "answer": "O(n) worst case, often much less", "wrong": ["O(n log n)", "O(n²)", "O(1)"], "why": "Stops at the first leaf." },
+    "space": { "answer": "O(w) for the widest level reached", "wrong": ["O(1)", "O(n²)", "O(h²)"], "why": "The queue." },
+    "whyNot": { "wrong": ["Graph traversal can't be used on trees.", "Graph BFS would need edge weights.", "Graph traversal only works on grids."] },
+    "approach": "depth = 1; BFS by level; if a node has no children return depth; after each level depth++."
   }
 ]

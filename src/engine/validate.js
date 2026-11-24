@@ -11,6 +11,41 @@ function label(item) {
   return typeof item === 'string' ? item : item && item.t;
 }
 
+/**
+ * L4 twist: the same problem with one constraint changed so the pattern
+ * changes. Its near-misses must include the original pattern (the trap).
+ */
+export function validateTwist(t, q, patternIds, err) {
+  for (const f of ['change', 'statement', 'trigger', 'ds', 'why', 'approach']) {
+    if (typeof t?.[f] !== 'string' || !t[f].trim()) err(`missing ${f}`);
+  }
+  if (!t || typeof t !== 'object') return;
+  if (!patternIds.has(t.pattern)) err(`unknown pattern ${t.pattern}`);
+  const alternates = t.alternates || [];
+  if (!Array.isArray(alternates)) err('alternates must be an array');
+  for (const a of alternates) if (!patternIds.has(a)) err(`unknown alternate ${a}`);
+  if (t.pattern === q.pattern || alternates.includes(q.pattern)) {
+    err(`the twist must change the pattern, but ${q.pattern} is still accepted`);
+  }
+  if (t.statement && t.trigger && !t.statement.toLowerCase().includes(t.trigger.toLowerCase())) {
+    err(`trigger phrase "${t.trigger}" is not in the twist statement`);
+  }
+  if (t.statement && q.statement && t.statement.trim() === q.statement.trim()) err('statement is unchanged');
+  if (!Array.isArray(t.nearMiss) || t.nearMiss.length !== 3) {
+    err('needs exactly 3 nearMiss entries');
+    return;
+  }
+  const seen = new Set([t.pattern]);
+  for (const nm of t.nearMiss) {
+    if (!patternIds.has(nm.p)) err(`unknown nearMiss ${nm.p}`);
+    if (alternates.includes(nm.p)) err(`nearMiss ${nm.p} is also an accepted alternate`);
+    if (seen.has(nm.p)) err(`nearMiss ${nm.p} duplicates the answer or another near-miss`);
+    seen.add(nm.p);
+    if (!nm.why) err(`nearMiss ${nm.p} needs a why`);
+  }
+  if (!t.nearMiss.some((nm) => nm.p === q.pattern)) err(`nearMiss must include the original pattern ${q.pattern}`);
+}
+
 export function validateBank({ patterns, families = [], problems }) {
   const errors = [];
   const warnings = [];
@@ -53,6 +88,7 @@ export function validateBank({ patterns, families = [], problems }) {
   }
 
   const problemIds = new Set();
+  let twists = 0;
   const perPattern = Object.fromEntries([...patternIds].map((id) => [id, 0]));
   for (const q of problems) {
     const w = `problem ${q.id}`;
@@ -93,6 +129,11 @@ export function validateBank({ patterns, families = [], problems }) {
     else if (q.nearMiss?.[0] && new Set([q.nearMiss[0].why, ...q.whyNot.wrong.map(label)]).size !== 4) {
       err(w, 'whyNot options are not distinct');
     }
+    if (q.twists !== undefined) {
+      if (Array.isArray(q.twists)) twists += q.twists.length;
+      if (!Array.isArray(q.twists)) err(w, 'twists must be an array');
+      else q.twists.forEach((t, i) => validateTwist(t, q, patternIds, (msg) => err(`${w} twist ${i + 1}`, msg)));
+    }
   }
   // Every alias must classify back to its own pattern/family, otherwise L3
   // grading would mark the canonical answer wrong.
@@ -108,5 +149,5 @@ export function validateBank({ patterns, families = [], problems }) {
     if (n === 0) err(`pattern ${id}`, 'has no problems');
     else if (n < 2) warn(`pattern ${id}`, 'has only 1 problem (aim for ≥2)');
   }
-  return { errors, warnings, counts: { patterns: patterns.length, problems: problems.length } };
+  return { errors, warnings, counts: { patterns: patterns.length, problems: problems.length, twists } };
 }

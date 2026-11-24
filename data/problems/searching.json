@@ -33,7 +33,22 @@
     "time": { "answer": "O(log min(m, n))", "wrong": ["O(m + n)", "O((m + n) log(m + n))", "O(log m · log n)"], "why": "Binary search over the shorter array's cut positions." },
     "space": { "answer": "O(1)", "wrong": ["O(m + n)", "O(log(m + n))", "O(min(m, n))"], "why": "A few indices and values." },
     "whyNot": { "wrong": ["Two pointers can't handle arrays of different sizes.", "Two pointers only work on a single array.", "Two pointers would give the mean, not the median."] },
-    "approach": "Binary search i in the shorter array A; j = (m + n + 1) / 2 − i. If A[i−1] > B[j] move left; if B[j−1] > A[i] move right; else the median comes from max(left sides) and min(right sides)."
+    "approach": "Binary search i in the shorter array A; j = (m + n + 1) / 2 − i. If A[i−1] > B[j] move left; if B[j−1] > A[i] move right; else the median comes from max(left sides) and min(right sides).",
+    "twists": [
+      {
+        "change": "Numbers arrive one at a time and you need the median after each.",
+        "statement": "Numbers arrive one at a time from a stream. After each arrival, return the median of all numbers seen so far.",
+        "pattern": "two-heaps", "alternates": [], "trigger": "After each arrival, return the median",
+        "ds": "Max-heap low and min-heap high (PriorityQueue with Comparator.reverseOrder() for low)",
+        "nearMiss": [
+          { "p": "binary-search", "why": "Binary search needs sorted arrays up front; inserting into a sorted list each time is O(n)." },
+          { "p": "heap-topk", "why": "One heap gives one end; the median sits between two halves." },
+          { "p": "sliding-window", "why": "Nothing leaves; the set only grows." }
+        ],
+        "why": "Running median ⇒ two balanced heaps whose tops straddle the middle.",
+        "approach": "Add to low, move low's top to high, rebalance so low.size ≥ high.size; median from the tops."
+      }
+    ]
   },
   {
     "id": "time-based-key-value-store", "title": "Time Based Key-Value Store", "slug": "time-based-key-value-store", "difficulty": "Medium",
@@ -88,5 +103,110 @@
     "space": { "answer": "O(1)", "wrong": ["O(n)", "O(days)", "O(n · days)"], "why": "Counters only." },
     "whyNot": { "wrong": ["Greedy can't keep packages in order.", "Greedy needs the weights sorted.", "Greedy only works when days = 1."] },
     "approach": "Binary search capacity in [max, sum]. Check: walk weights, start a new day when the load would exceed capacity; feasible if days used ≤ D."
+  },
+  {
+    "id": "find-first-and-last-position-of-element-in-sorted-array", "title": "Find First and Last Position of Element in Sorted Array", "slug": "find-first-and-last-position-of-element-in-sorted-array", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given an integer array sorted in non-decreasing order (values may repeat) and a target, return the first and last index of target, or [-1, -1]. Your algorithm must run in O(log n).",
+    "pattern": "binary-search", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Scanning in from both ends finds both positions, but it's O(n), which the problem rules out." },
+      { "p": "hashing", "why": "A map from value to its index range needs an O(n) pass to build." },
+      { "p": "bs-answer", "why": "The search is over array indices of a sorted array, not over a range of candidate answers checked by a feasibility function." }
+    ],
+    "trigger": { "answer": "must run in O(log n)", "wrong": ["values may repeat", "return the first and last index", "or [-1, -1]"], "why": "Sorted + O(log n) ⇒ binary search; duplicates ⇒ two boundary searches (lower bound of target, lower bound of target + 1)." },
+    "ds": { "answer": "int lo / hi indices on the array (a lowerBound helper)", "wrong": ["HashMap<Integer, int[]> value → range", "TreeMap<Integer, Integer> value → count", "Two pointers from both ends"], "why": "Two calls to the same lower-bound search." },
+    "invariant": { "answer": "For the first position: everything before lo is < target and everything from hi on is ≥ target; lo == hi is the first index ≥ target.", "wrong": ["nums[mid] == target at every step.", "lo and hi always point at copies of target.", "The range [lo, hi] shrinks by one each step."], "why": "A half-open lower-bound search never loses the boundary." },
+    "time": { "answer": "O(log n)", "wrong": ["O(n)", "O(log n + k) for k copies", "O(n log n)"], "why": "Two binary searches. Expanding outward from one hit would be O(k)." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(k)"], "why": "A few indices." },
+    "whyNot": { "wrong": ["Two pointers can't handle duplicates.", "Two pointers need the array unsorted.", "Two pointers would only find the last position."] },
+    "approach": "first = lowerBound(target); if first == n or nums[first] != target return [-1, -1]; last = lowerBound(target + 1) − 1."
+  },
+  {
+    "id": "find-minimum-in-rotated-sorted-array", "title": "Find Minimum in Rotated Sorted Array", "slug": "find-minimum-in-rotated-sorted-array", "difficulty": "Medium",
+    "companies": [],
+    "statement": "A sorted array of distinct integers was rotated at an unknown pivot (for example [3,4,5,1,2]). Return its minimum element in O(log n) time.",
+    "pattern": "binary-search", "alternates": [],
+    "nearMiss": [
+      { "p": "two-pointers", "why": "Walking to the drop point is O(n)." },
+      { "p": "heap-topk", "why": "A heap finds the minimum in O(n) to build; the rotation structure gives O(log n)." },
+      { "p": "bs-answer", "why": "The answer is an index found by comparing with nums[hi], not a value range tested with a feasibility check." }
+    ],
+    "trigger": { "answer": "rotated at an unknown pivot", "wrong": ["distinct integers", "Return its minimum element", "for example [3,4,5,1,2]"], "why": "A rotated sorted array still lets one comparison discard half: compare nums[mid] with nums[hi]." },
+    "ds": { "answer": "int lo / hi indices", "wrong": ["PriorityQueue<Integer>", "int[] sorted copy", "TreeSet<Integer>"], "why": "No extra structure." },
+    "invariant": { "answer": "The minimum always lies in [lo, hi]: if nums[mid] > nums[hi] it is right of mid, otherwise at mid or left of it.", "wrong": ["nums[lo] is always the minimum so far.", "nums[mid] < nums[hi] means the minimum is right of mid.", "The left half is always sorted."], "why": "Stop when lo == hi." },
+    "time": { "answer": "O(log n)", "wrong": ["O(n)", "O(n log n)", "O(log² n)"], "why": "Halving each step." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(√n)"], "why": "Two indices." },
+    "whyNot": { "wrong": ["Two pointers only work on unsorted arrays.", "Two pointers can't find minimums.", "Two pointers need the pivot index given."] },
+    "approach": "lo = 0, hi = n − 1. While lo < hi: mid; if nums[mid] > nums[hi] lo = mid + 1 else hi = mid. Return nums[lo]."
+  },
+  {
+    "id": "search-a-2d-matrix", "title": "Search a 2D Matrix", "slug": "search-a-2d-matrix", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Each row of an m × n matrix is sorted, and the first value of each row is greater than the last value of the row above. Decide whether target is in the matrix in O(log(m · n)) time.",
+    "pattern": "binary-search", "alternates": [],
+    "nearMiss": [
+      { "p": "matrix", "why": "No in-place traversal trick is needed; the rows chain into one sorted sequence." },
+      { "p": "two-pointers", "why": "The staircase walk from the top-right corner works but is O(m + n), slower than required." },
+      { "p": "k-way-merge", "why": "Rows don't need merging: they are already globally ordered end to end." }
+    ],
+    "trigger": { "answer": "the first value of each row is greater than the last value of the row above", "wrong": ["Each row of an m × n matrix is sorted", "Decide whether target is in the matrix", "O(log(m · n)) time"], "why": "Row-major order is fully sorted ⇒ treat it as one array of length m · n and binary-search." },
+    "ds": { "answer": "int lo / hi over 0..m·n − 1, mapping mid → (mid / n, mid % n)", "wrong": ["int[] flattened copy", "HashSet<Integer> of all values", "PriorityQueue<int[]> of row heads"], "why": "Index arithmetic, no copy." },
+    "invariant": { "answer": "If target is present, its flat index lies in [lo, hi].", "wrong": ["lo always points at the first column.", "Each step discards one row.", "mid / n is always the target row."], "why": "Standard binary search on the virtual flat array." },
+    "time": { "answer": "O(log(m · n))", "wrong": ["O(m + n)", "O(m · n)", "O(m log n)"], "why": "One binary search over m · n cells." },
+    "space": { "answer": "O(1)", "wrong": ["O(m · n)", "O(m)", "O(log(m · n))"], "why": "Indices only." },
+    "whyNot": { "wrong": ["Matrix traversal can't find a single value.", "Matrix problems need the matrix to be square.", "In-place matrix tricks would change the sorted order."] },
+    "approach": "lo = 0, hi = m·n − 1; v = matrix[mid / n][mid % n]; compare and halve.",
+    "twists": [
+      {
+        "change": "Rows and columns are each sorted, but rows no longer chain into one sorted sequence.",
+        "statement": "Every row of an m × n matrix is sorted left to right and every column top to bottom, but a row's first value may be smaller than the previous row's last. Decide whether target is present.",
+        "pattern": "two-pointers", "alternates": [], "trigger": "a row's first value may be smaller than the previous row's last",
+        "ds": "Two int indices (r, c) starting at the top-right corner",
+        "nearMiss": [
+          { "p": "binary-search", "why": "The rows no longer form one sorted array; binary-searching each row works but is O(m log n), worse than the staircase." },
+          { "p": "k-way-merge", "why": "Merging rows finds k-th smallest values, not membership." },
+          { "p": "matrix", "why": "No in-place transformation is needed." }
+        ],
+        "why": "From the top-right, a bigger value means drop the column, a smaller one means drop the row ⇒ staircase walk.",
+        "approach": "r = 0, c = n − 1; while in bounds: equal ⇒ true; v > target ⇒ c−−; else r++."
+      }
+    ]
+  },
+  {
+    "id": "split-array-largest-sum", "title": "Split Array Largest Sum", "slug": "split-array-largest-sum", "difficulty": "Hard",
+    "companies": [],
+    "statement": "Split an array of non-negative integers into k non-empty contiguous parts so that the largest part sum is as small as possible. Return that minimised largest sum.",
+    "pattern": "bs-answer", "alternates": ["dp-2d"],
+    "nearMiss": [
+      { "p": "greedy", "why": "Greedy packing is the FEASIBILITY check ('can I do it with max sum ≤ x?'); on its own it can't pick x." },
+      { "p": "prefix-sum", "why": "Prefix sums speed up part sums, but don't decide where to cut." },
+      { "p": "sliding-window", "why": "The parts are not one window: the whole array is cut into k pieces." }
+    ],
+    "trigger": { "answer": "the largest part sum is as small as possible", "wrong": ["k non-empty contiguous parts", "non-negative integers", "Split an array"], "why": "Minimise a maximum + a monotonic check (a larger cap never needs more parts) ⇒ binary search on the answer." },
+    "ds": { "answer": "long lo = max(nums), hi = sum(nums) plus a greedy partsNeeded(cap) loop", "wrong": ["int[][] dp[i][k] only", "PriorityQueue<Integer> of part sums", "int[] prefix sums with a TreeMap"], "why": "DP over (index, parts) also works in O(k · n²)." },
+    "invariant": { "answer": "Every cap below lo needs more than k parts and hi needs at most k; the gap halves each step.", "wrong": ["Each part sum equals the cap exactly.", "The number of parts increases with the cap.", "lo and hi are always prefix sums."], "why": "partsNeeded(cap) is non-increasing in cap." },
+    "time": { "answer": "O(n log S), S = total sum", "wrong": ["O(k · n²)", "O(n · S)", "O(2ⁿ)"], "why": "log S guesses × O(n) greedy check." },
+    "space": { "answer": "O(1)", "wrong": ["O(k · n)", "O(n)", "O(S)"], "why": "Counters." },
+    "whyNot": { "wrong": ["Greedy can't handle k > 2.", "Greedy would need the array sorted.", "Greedy gives the largest possible sum instead of the smallest."] },
+    "approach": "lo = max, hi = sum. While lo < hi: mid; if partsNeeded(mid) ≤ k hi = mid else lo = mid + 1. partsNeeded: start a new part whenever adding x would exceed mid."
+  },
+  {
+    "id": "minimum-number-of-days-to-make-m-bouquets", "title": "Minimum Number of Days to Make m Bouquets", "slug": "minimum-number-of-days-to-make-m-bouquets", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Flower i blooms on day bloomDay[i]. A bouquet needs k adjacent bloomed flowers, and each flower can be used once. Return the minimum number of days to wait so you can make m bouquets, or -1 if impossible.",
+    "pattern": "bs-answer", "alternates": [],
+    "nearMiss": [
+      { "p": "sliding-window", "why": "Counting runs of k adjacent bloomed flowers is the check for ONE day; it can't choose the day." },
+      { "p": "heap-topk", "why": "Picking the earliest-blooming flowers ignores the adjacency requirement." },
+      { "p": "greedy", "why": "Greedy left-to-right grouping is the feasibility check, not the answer." }
+    ],
+    "trigger": { "answer": "minimum number of days to wait", "wrong": ["k adjacent bloomed flowers", "each flower can be used once", "or -1 if impossible"], "why": "Minimum day such that a check passes, and waiting longer never hurts ⇒ binary search over days." },
+    "ds": { "answer": "int lo / hi over days and a counting loop", "wrong": ["PriorityQueue<Integer> of bloom days", "int[] dp of bouquets per day", "TreeMap<Integer, Integer> day → count"], "why": "No extra structure besides the input." },
+    "invariant": { "answer": "Days below lo can't produce m bouquets and day hi can; feasibility is monotonic in the day.", "wrong": ["Each bouquet blooms on the same day.", "The answer is always the k-th smallest bloom day.", "lo and hi are indices into bloomDay."], "why": "If m · k > n return -1 up front." },
+    "time": { "answer": "O(n log D), D = max bloom day", "wrong": ["O(n · D)", "O(n log n)", "O(n · k)"], "why": "log D guesses × linear check." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(D)", "O(m · k)"], "why": "Counters." },
+    "whyNot": { "wrong": ["A sliding window can't count bouquets.", "Sliding windows need the bloom days sorted.", "A sliding window gives the maximum day."] },
+    "approach": "If m·k > n return -1. Binary-search day in [min, max]; check: scan, count consecutive flowers with bloomDay ≤ day, every k of them makes a bouquet."
   }
 ]

@@ -18,7 +18,7 @@ const failed = results.filter((r) => !r.pass).length;
 
 const bank = await loadBank(readJson);
 const v = validateBank(bank);
-console.log(`\nbank: ${v.counts.patterns} patterns, ${v.counts.problems} problems`);
+console.log(`\nbank: ${v.counts.patterns} patterns, ${v.counts.problems} problems, ${v.counts.twists} twists`);
 for (const e of v.errors) console.log(`ERROR ${e}`);
 for (const w of v.warnings) console.log(`warn  ${w}`);
 

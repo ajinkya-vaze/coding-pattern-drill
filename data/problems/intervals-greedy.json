@@ -87,7 +87,22 @@
     "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(2ⁿ)"], "why": "One pass." },
     "space": { "answer": "O(1)", "wrong": ["O(n)", "O(n²)", "O(log n)"], "why": "One variable." },
     "whyNot": { "wrong": ["BFS can't handle arrays.", "BFS would need the jumps sorted.", "BFS only works when all jumps are 1."] },
-    "approach": "farthest = 0; for i: if i > farthest return false; farthest = max(farthest, i + nums[i]). Return true."
+    "approach": "farthest = 0; for i: if i > farthest return false; farthest = max(farthest, i + nums[i]). Return true.",
+    "twists": [
+      {
+        "change": "From index i you jump to exactly i + nums[i] or i − nums[i], and the goal is any index holding 0.",
+        "statement": "Start at index start. From index i you may jump to exactly i + nums[i] or i − nums[i] (staying in bounds). Decide whether you can reach any index whose value is 0.",
+        "pattern": "graph-traversal", "alternates": [], "trigger": "i + nums[i] or i − nums[i]",
+        "ds": "ArrayDeque<Integer> queue (or recursion) and boolean[] visited",
+        "nearMiss": [
+          { "p": "greedy", "why": "The 'farthest reach' trick needs jumps of ANY length up to nums[i] in one direction; exact two-way jumps break it." },
+          { "p": "dp-1d", "why": "Jumps go both ways, so there's no order to fill a table in." },
+          { "p": "two-pointers", "why": "Nothing converges; it's reachability in an implicit graph." }
+        ],
+        "why": "Each index has two outgoing edges ⇒ BFS/DFS with a visited set.",
+        "approach": "BFS from start; if nums[i] == 0 return true; enqueue unvisited in-bounds i ± nums[i]. Return false."
+      }
+    ]
   },
   {
     "id": "task-scheduler", "title": "Task Scheduler", "slug": "task-scheduler", "difficulty": "Medium",
@@ -106,5 +121,95 @@
     "space": { "answer": "O(1)", "wrong": ["O(T)", "O(n)", "O(T · n)"], "why": "26 counters." },
     "whyNot": { "wrong": ["Sliding windows can't count letters.", "A window would need the tasks sorted.", "Sliding window only works when n = 0."] },
     "approach": "Count tasks; maxCount = top count; ties = number of tasks with that count. Answer = max(tasks.length, (maxCount − 1) × (n + 1) + ties)."
+  },
+  {
+    "id": "meeting-rooms", "title": "Meeting Rooms", "slug": "meeting-rooms", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Given an array of meeting time intervals [start, end], decide whether one person could attend all of them, i.e. whether any two meetings overlap.",
+    "pattern": "intervals", "alternates": [],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "A min-heap of end times counts rooms (Meeting Rooms II); for a yes/no overlap check, sorting and comparing neighbours is enough." },
+      { "p": "hashing", "why": "Hashing exact times can't detect partial overlaps." },
+      { "p": "greedy", "why": "There is no selection to optimise: every meeting must be attended, so it's purely an overlap check." }
+    ],
+    "trigger": { "answer": "whether any two meetings overlap", "wrong": ["attend all of them", "an array of meeting time intervals", "[start, end]"], "why": "Overlap between intervals ⇒ sort by start and compare each with the previous end." },
+    "ds": { "answer": "int[][] sorted with Arrays.sort(a, Comparator.comparingInt(x -> x[0]))", "wrong": ["PriorityQueue<Integer> of end times", "boolean[] timeline of every minute", "HashSet<Integer> of start times"], "why": "After sorting, only neighbours can overlap first." },
+    "invariant": { "answer": "After sorting by start, if no meeting starts before the previous one ends, no pair overlaps at all.", "wrong": ["Meetings are sorted by end time.", "Each meeting overlaps at most one other.", "The earliest meeting is also the shortest."], "why": "A later meeting starts even later, so checking adjacent pairs is sufficient." },
+    "time": { "answer": "O(n log n)", "wrong": ["O(n)", "O(n²)", "O(max end time)"], "why": "The sort dominates." },
+    "space": { "answer": "O(1) beyond the sort", "wrong": ["O(n²)", "O(max end time)", "O(n) for a heap"], "why": "In-place sort plus a loop." },
+    "whyNot": { "wrong": ["A heap can't hold intervals.", "Heaps need the intervals pre-merged.", "A heap would return the longest meeting."] },
+    "approach": "Sort by start; for i ≥ 1 if a[i][0] < a[i − 1][1] return false. Return true."
+  },
+  {
+    "id": "interval-list-intersections", "title": "Interval List Intersections", "slug": "interval-list-intersections", "difficulty": "Medium",
+    "companies": [],
+    "statement": "You are given two lists of closed intervals; each list is pairwise disjoint and sorted. Return the intersection of the two lists: every overlap between an interval from the first and one from the second.",
+    "pattern": "intervals", "alternates": ["two-pointers"],
+    "nearMiss": [
+      { "p": "k-way-merge", "why": "With two lists, two indices are enough; a heap adds nothing." },
+      { "p": "binary-search", "why": "Binary-searching each interval in the other list is O(n log m) and still has to walk overlaps." },
+      { "p": "heap-topk", "why": "There's nothing to rank; both lists are already in order." }
+    ],
+    "trigger": { "answer": "every overlap between an interval from the first and one from the second", "wrong": ["pairwise disjoint and sorted", "two lists of closed intervals", "Return the intersection"], "why": "Two sorted interval lists ⇒ walk both: overlap = [max starts, min ends]; advance whichever ends first." },
+    "ds": { "answer": "Two int indices i, j and List<int[]> result", "wrong": ["PriorityQueue<int[]> of all intervals", "TreeMap<Integer, Integer> boundary → delta", "boolean[] timeline"], "why": "Already sorted: no sort, no heap." },
+    "invariant": { "answer": "All intersections involving intervals before i (in A) or before j (in B) are already recorded; the interval that ends first can't overlap anything further.", "wrong": ["i and j always advance together.", "A[i] and B[j] always overlap.", "The result is built in reverse order."], "why": "lo = max(starts), hi = min(ends); if lo ≤ hi record it." },
+    "time": { "answer": "O(m + n)", "wrong": ["O(m · n)", "O((m + n) log(m + n))", "O(n log m)"], "why": "Each step advances one index." },
+    "space": { "answer": "O(1) beyond the output", "wrong": ["O(m · n)", "O(m + n) extra", "O(log n)"], "why": "Two indices." },
+    "whyNot": { "wrong": ["A heap can't store closed intervals.", "k-way merge needs at least three lists to be correct.", "k-way merge would union the intervals instead."] },
+    "approach": "While i < A.length and j < B.length: lo = max(A[i][0], B[j][0]); hi = min(A[i][1], B[j][1]); if lo ≤ hi add [lo, hi]; advance the one with the smaller end."
+  },
+  {
+    "id": "gas-station", "title": "Gas Station", "slug": "gas-station", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Stations on a circular route give gas[i] fuel, and driving from station i to i + 1 costs cost[i]. Starting with an empty tank, return the index of the station from which you can complete the full circuit, or -1. If a solution exists it is unique.",
+    "pattern": "greedy", "alternates": [],
+    "nearMiss": [
+      { "p": "prefix-sum", "why": "Net-gain prefix sums are part of the reasoning (start after the lowest point), but the single-pass reset rule is the whole algorithm." },
+      { "p": "kadane", "why": "It resembles a running sum that resets, but the goal is a feasible start, not a maximum-sum subarray." },
+      { "p": "dp-1d", "why": "Simulating from every start is O(n²); no DP state is needed once you see the reset argument." }
+    ],
+    "trigger": { "answer": "complete the full circuit", "wrong": ["Starting with an empty tank", "it is unique", "a circular route"], "why": "If the tank goes negative between start and i, no station in that stretch can be the start ⇒ reset the start to i + 1 (greedy)." },
+    "ds": { "answer": "Scalars: total, tank, start", "wrong": ["int[] prefix sums of length 2n", "PriorityQueue<Integer> of net gains", "ArrayDeque<Integer> of candidate starts"], "why": "One pass." },
+    "invariant": { "answer": "tank is the fuel accumulated from start to i; when it goes negative, every station from start to i is ruled out as a starting point.", "wrong": ["tank never goes negative.", "The answer is the station with the most gas.", "total and tank are always equal."], "why": "Answer: start if total ≥ 0, else -1." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(2n log n)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(2n)", "O(log n)"], "why": "Three scalars." },
+    "whyNot": { "wrong": ["Prefix sums can't handle circular arrays.", "Prefix sums need sorted gas values.", "Prefix sums would give the farthest station reachable."] },
+    "approach": "For i: diff = gas[i] − cost[i]; total += diff; tank += diff; if tank < 0 { start = i + 1; tank = 0; }. Return total ≥ 0 ? start : -1."
+  },
+  {
+    "id": "jump-game-ii", "title": "Jump Game II", "slug": "jump-game-ii", "difficulty": "Medium",
+    "companies": [],
+    "statement": "From index i you can jump forward up to nums[i] steps. Starting at index 0, return the minimum number of jumps needed to reach the last index (it is always reachable).",
+    "pattern": "greedy", "alternates": ["graph-traversal"],
+    "nearMiss": [
+      { "p": "dp-1d", "why": "dp[i] = min jumps works but is O(n²) in the worst case; the greedy level-by-level reach is O(n)." },
+      { "p": "shortest-path", "why": "Every edge costs 1, so Dijkstra is overkill; it's an implicit BFS, done greedily with two scalars." },
+      { "p": "sliding-window", "why": "The 'window' is a BFS level, not a contiguous range with a sum or budget." }
+    ],
+    "trigger": { "answer": "the minimum number of jumps", "wrong": ["it is always reachable", "jump forward up to nums[i] steps", "Starting at index 0"], "why": "Fewest jumps = BFS levels over indices; the greedy version tracks the current level's end and the farthest next reach." },
+    "ds": { "answer": "Scalars: jumps, currentEnd, farthest", "wrong": ["int[] dp of min jumps", "ArrayDeque<Integer> BFS queue of indices", "PriorityQueue<int[]> by jumps"], "why": "The BFS frontier is a contiguous range, so two ints describe it." },
+    "invariant": { "answer": "All indices ≤ currentEnd are reachable in `jumps` jumps; farthest is how far one more jump can get from them.", "wrong": ["farthest always equals i + nums[i].", "jumps increases at every index.", "currentEnd only increases by 1 each step."], "why": "At i == currentEnd: jumps++, currentEnd = farthest." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(n · max jump)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(max jump)"], "why": "Three scalars." },
+    "whyNot": { "wrong": ["DP can't count jumps.", "DP would only say whether the end is reachable.", "DP needs nums sorted."] },
+    "approach": "For i in 0..n−2: farthest = max(farthest, i + nums[i]); if i == currentEnd { jumps++; currentEnd = farthest; }. Return jumps."
+  },
+  {
+    "id": "partition-labels", "title": "Partition Labels", "slug": "partition-labels", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Split a string of lowercase letters into as many parts as possible so that each letter appears in at most one part. Return the sizes of the parts in order.",
+    "pattern": "greedy", "alternates": ["intervals"],
+    "nearMiss": [
+      { "p": "sliding-window", "why": "The part's end is pushed by each letter's LAST occurrence, not by a count budget; you never shrink from the left." },
+      { "p": "union-find", "why": "Merging overlapping letter spans with DSU works but is heavy; one pass with last positions is enough." },
+      { "p": "dp-1d", "why": "No choices need comparing: the earliest valid cut is always the best." }
+    ],
+    "trigger": { "answer": "each letter appears in at most one part", "wrong": ["as many parts as possible", "lowercase letters", "Return the sizes"], "why": "Each letter spans [first, last]; parts are merged spans ⇒ record last positions, extend the current end, cut when i reaches it." },
+    "ds": { "answer": "int[26] last index of each letter, plus scalars start and end", "wrong": ["HashMap<Character, List<Integer>> of all positions", "ArrayDeque<Character> as a stack", "TreeMap<Integer, Integer> interval starts"], "why": "Only the last occurrence matters." },
+    "invariant": { "answer": "end is the furthest last-occurrence of any letter seen in the current part; when i == end, no letter in the part appears later.", "wrong": ["Each part contains distinct letters only.", "end only moves when a new letter appears.", "Parts all have equal length."], "why": "Cutting as early as possible maximises the number of parts." },
+    "time": { "answer": "O(n)", "wrong": ["O(n²)", "O(n log n)", "O(26 · n²)"], "why": "Two passes." },
+    "space": { "answer": "O(1) (26 slots)", "wrong": ["O(n)", "O(n²)", "O(26 · n)"], "why": "Fixed alphabet." },
+    "whyNot": { "wrong": ["Sliding windows can't handle letters.", "A sliding window would give the fewest parts.", "Sliding windows need the string sorted."] },
+    "approach": "last[c] = final index of c. For i: end = max(end, last[s[i]]); if i == end, add end − start + 1, start = i + 1."
   }
 ]

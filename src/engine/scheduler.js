@@ -1,5 +1,6 @@
-// The per-problem ladder (L1 → L2 → L3 → Mastered), Leitner spacing for
-// mastered problems, pattern status, and the interleaved session builder.
+// The per-problem ladder (L1 → L2 → L3 → Mastered, then L4 twists on review),
+// Leitner spacing for mastered problems, pattern status, and the interleaved
+// session builder.
 
 import { epochDay, shuffle } from './util.js';
 
@@ -16,13 +17,18 @@ export function emptyState() {
     problems: {},
     patterns: {},
     reports: [],
-    settings: { includeUnlearned: false, sessionSize: 10 },
+    settings: { includeUnlearned: false, sessionSize: 10, timer: false },
     lastExport: 0,
   };
 }
 
 export function defaultRecord() {
-  return { stage: STAGE.RECOGNISE, box: 0, due: 0, hist: '', overrides: 0, masteredDay: null, updatedAt: 0 };
+  // tw: index of the next twist to ask · l4: the next review is a twist ·
+  // slow: answers given after the optional timer ran out.
+  return {
+    stage: STAGE.RECOGNISE, box: 0, due: 0, hist: '', overrides: 0, masteredDay: null,
+    tw: 0, l4: false, slow: 0, updatedAt: 0,
+  };
 }
 
 export function getRecord(state, id) {
@@ -67,14 +73,19 @@ export function recordProbe(state, id, { allCorrect }, now = Date.now()) {
  * - Correct with a hint → attempt logged, stage unchanged.
  * - Wrong while Mastered → back to L2.
  * An "I meant that" override counts as correct but is tallied separately.
+ * `slow` (the optional timer ran out) still counts as correct, but is logged
+ * as 's' in the history and tallied.
+ * A clean pass makes the next review an L4 twist (if the problem has any).
  */
-export function recordRecall(state, id, { correct, hinted = false, override = false }, now = Date.now()) {
+export function recordRecall(state, id, { correct, hinted = false, override = false, slow = false }, now = Date.now()) {
   const rec = getRecord(state, id);
   const today = epochDay(now);
   if (override) rec.overrides += 1;
+  if (slow) rec.slow += 1;
   let mark;
   if (correct && !hinted) {
-    mark = override ? 'o' : '+';
+    mark = override ? 'o' : slow ? 's' : '+';
+    rec.l4 = true;
     if (rec.stage === STAGE.MASTERED) {
       rec.box = Math.min(rec.box + 1, INTERVALS.length - 1);
     } else {
@@ -98,11 +109,49 @@ export function recordRecall(state, id, { correct, hinted = false, override = fa
   return save(state, id, rec, mark, now);
 }
 
-/** Which level a problem is asked at next. */
-export function levelFor(rec) {
+/**
+ * L4: the same problem with one constraint changed so the pattern changes.
+ * Only asked on reviews of Mastered problems; L3 and L4 reviews alternate.
+ * - Correct, no hint → next Leitner box, next twist, next review is L3 again.
+ * - Correct with a hint → logged, due again today, same twist.
+ * - Wrong → stays Mastered (the base problem is still known) but the box
+ *   resets, so the same twist comes back tomorrow.
+ */
+export function recordTwist(state, id, { correct, hinted = false, override = false, slow = false }, now = Date.now()) {
+  const rec = getRecord(state, id);
+  const today = epochDay(now);
+  if (override) rec.overrides += 1;
+  if (slow) rec.slow += 1;
+  let mark;
+  if (correct && !hinted) {
+    mark = override ? 'o' : slow ? 's' : '+';
+    rec.box = Math.min(rec.box + 1, INTERVALS.length - 1);
+    rec.tw += 1;
+    rec.l4 = false;
+    rec.due = today + INTERVALS[rec.box];
+  } else if (correct && hinted) {
+    mark = 'h';
+    rec.due = today;
+  } else {
+    mark = '-';
+    rec.box = 0;
+    rec.due = today + INTERVALS[0];
+  }
+  return save(state, id, rec, mark, now);
+}
+
+/** Which level a problem is asked at next. Pass the problem so L4 can see its twists. */
+export function levelFor(rec, problem = null) {
   if (rec.stage === STAGE.RECOGNISE) return 1;
   if (rec.stage === STAGE.PROBE) return 2;
+  if (rec.stage === STAGE.MASTERED && rec.l4 && problem?.twists?.length) return 4;
   return 3;
+}
+
+/** The twist asked next for a problem (cycles through its twists). */
+export function twistFor(rec, problem) {
+  const list = problem?.twists || [];
+  return list.length ? list[rec.tw % list.length] : null;
 }
 
 export function isLearned(state, patternId) {
@@ -132,10 +181,10 @@ export function patternStatus(state, patternId, problemsOfPattern) {
   return 'new';
 }
 
-/** Share of recent answers that were clean passes, or null if never attempted. */
+/** Share of recent answers that were clean passes (slow ones included), or null if never attempted. */
 export function recentAccuracy(rec) {
   if (!rec.hist) return null;
-  const passes = [...rec.hist].filter((c) => c === '+').length;
+  const passes = [...rec.hist].filter((c) => c === '+' || c === 's').length;
   return passes / rec.hist.length;
 }
 

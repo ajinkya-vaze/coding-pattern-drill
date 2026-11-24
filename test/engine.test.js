@@ -2,7 +2,9 @@ import { test, ok, eq, rejects } from './harness.js';
 import {
   emptyState, recordRecognise, recordProbe, recordRecall, getRecord, STAGE, INTERVALS,
   buildSession, interleave, markLearned, patternStatus, drillComplete, levelFor,
+  recordTwist, twistFor, recentAccuracy,
 } from '../src/engine/scheduler.js';
+import { validateTwist } from '../src/engine/validate.js';
 import { buildAliasIndex, classify, gradeRecall, normalise, levenshtein } from '../src/engine/grading.js';
 import { encodeProgress, decodeProgress, mergeProgress, PREFIX } from '../src/engine/progressCode.js';
 import { buildRecognise, buildProbe, triggerRange } from '../src/engine/questions.js';
@@ -73,6 +75,107 @@ test('override counts as correct but is tallied', () => {
   recordRecall(s, 'a', { correct: true, override: true }, T0);
   eq(getRecord(s, 'a').overrides, 1);
   eq(getRecord(s, 'a').hist, 'o');
+});
+
+// ---------- L4 twists ----------
+
+const TWISTED = { id: 'a', pattern: 'hashing', twists: [{ pattern: 'two-pointers' }, { pattern: 'prefix-sum' }] };
+const mastered = (extra = {}) => ({ stage: STAGE.MASTERED, box: 0, due: 0, hist: '', overrides: 0, masteredDay: 1, updatedAt: 1, ...extra });
+
+test('mastering at L3 makes the next review a twist, only if the problem has twists', () => {
+  const s = emptyState();
+  s.problems.a = { stage: STAGE.RECALL, box: 0, due: 0, hist: '', overrides: 0, masteredDay: null, updatedAt: 1 };
+  recordRecall(s, 'a', { correct: true }, T0);
+  const r = getRecord(s, 'a');
+  eq(levelFor(r, TWISTED), 4);
+  eq(levelFor(r, { id: 'a', pattern: 'hashing' }), 3);
+  eq(levelFor(r), 3);
+  eq(twistFor(r, TWISTED).pattern, 'two-pointers');
+});
+
+test('a record from before twists existed defaults to L3 with no twist pending', () => {
+  const s = emptyState();
+  s.problems.a = { stage: STAGE.MASTERED, box: 2, due: 0, hist: '+', overrides: 0, masteredDay: 1, updatedAt: 1 };
+  const r = getRecord(s, 'a');
+  eq([r.tw, r.l4, r.slow], [0, false, 0]);
+  eq(levelFor(r, TWISTED), 3);
+});
+
+test('L4 clean pass climbs a box, moves to the next twist and alternates back to L3', () => {
+  const s = emptyState();
+  s.problems.a = mastered({ box: 1, l4: true });
+  recordTwist(s, 'a', { correct: true }, T0);
+  let r = getRecord(s, 'a');
+  eq([r.stage, r.box, r.tw, r.l4], [STAGE.MASTERED, 2, 1, false]);
+  eq(r.due, epochDay(T0) + INTERVALS[2]);
+  eq(levelFor(r, TWISTED), 3);
+  recordRecall(s, 'a', { correct: true }, T0 + 7 * DAY);
+  r = getRecord(s, 'a');
+  eq(levelFor(r, TWISTED), 4);
+  eq(twistFor(r, TWISTED).pattern, 'prefix-sum');
+  recordTwist(s, 'a', { correct: true }, T0 + 20 * DAY);
+  eq(twistFor(getRecord(s, 'a'), TWISTED).pattern, 'two-pointers', 'twists cycle');
+});
+
+test('L4 hinted pass keeps the same twist due today', () => {
+  const s = emptyState();
+  s.problems.a = mastered({ box: 2, l4: true });
+  recordTwist(s, 'a', { correct: true, hinted: true }, T0);
+  const r = getRecord(s, 'a');
+  eq([r.box, r.tw, r.l4, r.due, r.hist], [2, 0, true, epochDay(T0), 'h']);
+});
+
+test('L4 miss keeps the problem mastered but resets the box and retries the twist tomorrow', () => {
+  const s = emptyState();
+  s.problems.a = mastered({ box: 3, l4: true, masteredDay: 7 });
+  recordTwist(s, 'a', { correct: false }, T0);
+  const r = getRecord(s, 'a');
+  eq([r.stage, r.box, r.tw, r.l4, r.masteredDay], [STAGE.MASTERED, 0, 0, true, 7]);
+  eq(r.due, epochDay(T0) + 1);
+  eq(levelFor(r, TWISTED), 4);
+});
+
+test('a slow answer still passes but is logged and tallied', () => {
+  const s = emptyState();
+  s.problems.a = { stage: STAGE.RECALL, box: 0, due: 0, hist: '', overrides: 0, masteredDay: null, updatedAt: 1 };
+  recordRecall(s, 'a', { correct: true, slow: true }, T0);
+  let r = getRecord(s, 'a');
+  eq([r.stage, r.hist, r.slow], [STAGE.MASTERED, 's', 1]);
+  recordTwist(s, 'a', { correct: false, slow: true }, T0 + DAY);
+  r = getRecord(s, 'a');
+  eq([r.hist, r.slow], ['s-', 2]);
+  eq(recentAccuracy(r), 0.5);
+});
+
+test('the timer setting is off by default', () => {
+  eq(emptyState().settings.timer, false);
+});
+
+const IDS = new Set(['hashing', 'two-pointers', 'prefix-sum', 'binary-search', 'sliding-window']);
+const BASE_Q = { id: 'two-sum', pattern: 'hashing', statement: 'Find two numbers that add up to target.' };
+const GOOD_TWIST = {
+  change: 'The array is sorted.',
+  statement: 'The array is sorted in non-decreasing order. Find two numbers that add up to target in O(1) space.',
+  pattern: 'two-pointers', alternates: ['binary-search'], trigger: 'sorted in non-decreasing order',
+  ds: 'Two int indices', why: 'Sorted order lets the ends converge.', approach: 'Move lo or hi by the sum.',
+  nearMiss: [{ p: 'hashing', why: 'Works but O(n) space.' }, { p: 'sliding-window', why: 'Not contiguous.' }, { p: 'prefix-sum', why: 'Not a range sum.' }],
+};
+const twistErrors = (t) => { const out = []; validateTwist(t, BASE_Q, IDS, (m) => out.push(m)); return out; };
+
+test('a well-formed twist validates', () => {
+  eq(twistErrors(GOOD_TWIST), []);
+});
+
+test('twist validation catches an unchanged pattern, a missing trap and a trigger not in the statement', () => {
+  ok(twistErrors({ ...GOOD_TWIST, pattern: 'hashing' }).some((e) => /must change the pattern/.test(e)));
+  ok(twistErrors({ ...GOOD_TWIST, alternates: ['hashing'] }).some((e) => /must change the pattern/.test(e)));
+  ok(twistErrors({ ...GOOD_TWIST, trigger: 'unsorted' }).some((e) => /not in the twist statement/.test(e)));
+  const noTrap = { ...GOOD_TWIST, nearMiss: [{ p: 'sliding-window', why: 'a' }, { p: 'prefix-sum', why: 'b' }, { p: 'binary-search', why: 'c' }] };
+  const errs = twistErrors(noTrap);
+  ok(errs.some((e) => /include the original pattern/.test(e)), errs.join('; '));
+  ok(errs.some((e) => /also an accepted alternate/.test(e)), errs.join('; '));
+  ok(twistErrors({ ...GOOD_TWIST, ds: '' }).some((e) => /missing ds/.test(e)));
+  ok(twistErrors({ ...GOOD_TWIST, nearMiss: GOOD_TWIST.nearMiss.slice(0, 2) }).some((e) => /exactly 3/.test(e)));
 });
 
 const P = (id, pattern) => ({ id, pattern });

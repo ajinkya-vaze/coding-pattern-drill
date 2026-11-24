@@ -147,6 +147,7 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); 
 .chip-level.l1 { background: var(--surface-2); color: var(--text); }
 .chip-level.l2 { background: var(--accent-soft); color: var(--accent); }
 .chip-level.l3 { background: var(--accent); color: var(--accent-ink); }
+.chip-level.l4 { background: var(--good); color: var(--accent-ink); }
 .chip-diff.easy { color: var(--good); }
 .chip-diff.medium { color: #b7791f; }
 .chip-diff.hard { color: var(--bad); }
@@ -242,6 +243,12 @@ mark { background: var(--mark); color: inherit; padding: 0 2px; border-radius: 3
 }
 .answer-input:focus { outline: none; border-color: var(--accent); }
 .hint-row { margin-top: 8px; }
+.twist-change { background: var(--warn-soft); padding: 8px 12px; border-radius: 8px; margin: 8px 0 0; font-size: 0.95rem; }
+.timer { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 0.85rem; color: var(--muted); }
+.timer-bar { flex: 1; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.timer-fill { display: block; height: 100%; width: 100%; background: var(--accent); transition: width 0.25s linear; }
+.timer-num { min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; }
+.timer.expired .timer-num { color: var(--bad); font-weight: 600; }
 .hint { background: var(--warn-soft); padding: 8px 12px; border-radius: 8px; font-size: 0.92rem; margin: 8px 0; }
 .big-stat { font-size: 2rem; font-weight: 700; margin: 8px 0; }
 .big-stat .muted { font-size: 1rem; font-weight: 500; }

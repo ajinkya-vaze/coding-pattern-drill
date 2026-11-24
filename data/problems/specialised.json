@@ -177,7 +177,22 @@
     "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(log n)"], "why": "One pass." },
     "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(32n)"], "why": "One int." },
     "whyNot": { "wrong": ["A HashMap can't count negative numbers.", "HashMap lookups are O(n) each.", "A HashMap would return the most frequent element."] },
-    "approach": "acc = 0; for x: acc ^= x; return acc."
+    "approach": "acc = 0; for x: acc ^= x; return acc.",
+    "twists": [
+      {
+        "change": "The other values may appear any number of times (two or three).",
+        "statement": "In an integer array exactly one value appears once; every other value appears either two or three times. Return the value that appears once.",
+        "pattern": "hashing", "alternates": [], "trigger": "either two or three times",
+        "ds": "HashMap<Integer, Integer> value → count",
+        "nearMiss": [
+          { "p": "bit", "why": "XOR cancels pairs only, and mod-3 bit counts cancel triples only; a mix of twos and threes breaks both." },
+          { "p": "two-pointers", "why": "Sorting then scanning runs works, but costs O(n log n)." },
+          { "p": "partition", "why": "Partitioning doesn't isolate a count-of-one value." }
+        ],
+        "why": "No algebraic cancellation fits mixed multiplicities ⇒ count occurrences.",
+        "approach": "Count every value; return the one with count 1."
+      }
+    ]
   },
   {
     "id": "counting-bits", "title": "Counting Bits", "slug": "counting-bits", "difficulty": "Easy",
@@ -267,7 +282,22 @@
     "time": { "answer": "O(n²)", "wrong": ["O(n)", "O(n³)", "O(n log n)"], "why": "2n − 1 centres, each expanding up to O(n). (Manacher: O(n).)" },
     "space": { "answer": "O(1)", "wrong": ["O(n²)", "O(n)", "O(log n)"], "why": "A few indices." },
     "whyNot": { "wrong": ["Sliding windows can't handle strings.", "A window needs the string sorted.", "Sliding window only finds even-length palindromes."] },
-    "approach": "For each centre c (odd: c, c; even: c, c + 1) expand while s[l] == s[r]; keep the longest span."
+    "approach": "For each centre c (odd: c, c; even: c, c + 1) expand while s[l] == s[r]; keep the longest span.",
+    "twists": [
+      {
+        "change": "The palindrome may skip characters (subsequence, not substring).",
+        "statement": "Given a string, return the length of its longest palindromic subsequence: characters kept in order, but not necessarily adjacent.",
+        "pattern": "dp-2d", "alternates": [], "trigger": "longest palindromic subsequence",
+        "ds": "int[n][n] dp over (i, j)",
+        "nearMiss": [
+          { "p": "expand-center", "why": "Expanding from a centre only grows contiguous palindromes; a subsequence can skip characters on either side." },
+          { "p": "two-pointers", "why": "A single pass from both ends can't decide which side to skip on a mismatch; both branches matter." },
+          { "p": "backtracking", "why": "Enumerating subsequences is exponential; the (i, j) states overlap." }
+        ],
+        "why": "dp[i][j] = dp[i+1][j−1] + 2 if s[i] == s[j], else max(dp[i+1][j], dp[i][j−1]). (Equivalently LCS of s and its reverse.)",
+        "approach": "Fill dp by increasing length (or i from n − 1 down, j from i up). Return dp[0][n − 1]."
+      }
+    ]
   },
   {
     "id": "palindromic-substrings", "title": "Palindromic Substrings", "slug": "palindromic-substrings", "difficulty": "Medium",
@@ -286,5 +316,221 @@
     "space": { "answer": "O(1)", "wrong": ["O(n²)", "O(n)", "O(number of palindromes)"], "why": "Counters only." },
     "whyNot": { "wrong": ["Hash sets can't store substrings.", "Hashing would count single letters twice.", "A HashSet needs the string sorted."] },
     "approach": "For every centre (odd and even) expand while characters match, incrementing the count each step."
+  },
+  {
+    "id": "replace-words", "title": "Replace Words", "slug": "replace-words", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a dictionary of root words and a sentence, replace every word in the sentence by the shortest root it starts with (words with no matching root stay as they are). Return the new sentence.",
+    "pattern": "trie", "alternates": ["hashing"],
+    "nearMiss": [
+      { "p": "binary-search", "why": "Sorting roots and binary-searching a word finds neighbours, not the SHORTEST root that is a prefix; you'd still check several candidates." },
+      { "p": "sliding-window", "why": "Prefixes all start at the word's first character; there's no window that slides." },
+      { "p": "two-pointers", "why": "Comparing a word against every root with two indices is O(words × roots × length)." }
+    ],
+    "trigger": { "answer": "the shortest root it starts with", "wrong": ["Return the new sentence", "a dictionary of root words", "every word in the sentence"], "why": "Shortest dictionary prefix of each word ⇒ walk the word down a trie and stop at the first end-of-word marker." },
+    "ds": { "answer": "Trie of roots (TrieNode[26] children + boolean isEnd), plus StringBuilder output", "wrong": ["TreeSet<String> of roots with floor()", "HashMap<Character, List<String>> first letter → roots", "PriorityQueue<String> by length"], "why": "A HashSet of roots and trying each prefix length also works (O(L²) per word)." },
+    "invariant": { "answer": "While walking a word, the current trie node represents the prefix read so far; the first node marked isEnd is the shortest root.", "wrong": ["Each trie node stores a whole word.", "The deepest matching node is the answer.", "Words are inserted into the trie as they are replaced."], "why": "Stop early: no need to read the rest of the word." },
+    "time": { "answer": "O(total characters of roots + sentence)", "wrong": ["O(words × roots × L)", "O(roots log roots + words log roots)", "O(L²) per word always"], "why": "Each character is visited a constant number of times." },
+    "space": { "answer": "O(total characters of roots)", "wrong": ["O(1)", "O(words²)", "O(26^L)"], "why": "The trie." },
+    "whyNot": { "wrong": ["Binary search can't compare strings.", "Binary search would return the longest root, which is what's asked.", "Binary search needs the sentence sorted."] },
+    "approach": "Insert roots into a trie. For each word, walk the trie: if a node is end, use that prefix; if a child is missing, keep the word."
+  },
+  {
+    "id": "search-suggestions-system", "title": "Search Suggestions System", "slug": "search-suggestions-system", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Given a list of product names and a search word, after each character typed return up to three products that start with the typed prefix, in lexicographic order.",
+    "pattern": "trie", "alternates": ["binary-search", "two-pointers"],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "A heap per prefix would re-scan all products each keystroke; the sorted order gives the three smallest directly." },
+      { "p": "hashing", "why": "A map from every prefix to its products works but stores every prefix of every product." },
+      { "p": "sliding-window", "why": "The candidate range only ever narrows as you type, but it's defined by a prefix, not a count budget." }
+    ],
+    "trigger": { "answer": "start with the typed prefix", "wrong": ["up to three products", "in lexicographic order", "after each character typed"], "why": "Prefix lookups as you type ⇒ trie with up to 3 suggestions stored per node (or sort + binary search the lower bound per prefix)." },
+    "ds": { "answer": "Trie whose nodes keep a List<String> of up to 3 words, inserted in sorted order", "wrong": ["PriorityQueue<String> rebuilt per keystroke", "HashMap<String, List<String>> of all prefixes", "ArrayDeque<String> of all products"], "why": "Sort products first so the first three inserted into each node are the smallest." },
+    "invariant": { "answer": "Each trie node lists the (at most 3) lexicographically smallest products having that node's prefix.", "wrong": ["Each node stores every product with its prefix.", "Suggestions are the three shortest products.", "The root stores the answer for the whole word."], "why": "Typing walks one node per character." },
+    "time": { "answer": "O(P log P · L) to sort, plus O(total chars) to build and O(L) to query", "wrong": ["O(L · P) per keystroke", "O(P²)", "O(26^L)"], "why": "Sorting dominates." },
+    "space": { "answer": "O(total characters)", "wrong": ["O(1)", "O(P²)", "O(26^L)"], "why": "The trie." },
+    "whyNot": { "wrong": ["A heap can't order strings.", "Heaps return suggestions in random order.", "A heap would return the three longest products."] },
+    "approach": "Sort products. Insert each into a trie, appending it to every node's list while the list has < 3 words. For each prefix, walk one node and output its list (empty after a missing child)."
+  },
+  {
+    "id": "min-stack", "title": "Min Stack", "slug": "min-stack", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Design a stack supporting push, pop, top and getMin, where getMin returns the smallest element currently in the stack. Every operation must run in O(1) time.",
+    "pattern": "design", "alternates": ["stack"],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "A heap gives the minimum, but popping the stack's top element from a heap is O(n) (or lazy deletion)." },
+      { "p": "monotonic-stack", "why": "Popping larger elements to keep it monotonic would lose stack contents; instead remember the min alongside each entry." },
+      { "p": "two-heaps", "why": "There's no median or two-sided balance; only the minimum is needed." }
+    ],
+    "trigger": { "answer": "getMin returns the smallest element currently in the stack", "wrong": ["Design a stack", "push, pop, top", "Every operation must run in O(1) time"], "why": "The minimum must survive pops ⇒ store 'min so far' with every entry (a parallel stack of minimums)." },
+    "ds": { "answer": "ArrayDeque<int[]> of {value, minSoFar} (or two ArrayDeque<Integer>)", "wrong": ["PriorityQueue<Integer> plus ArrayDeque<Integer>", "TreeMap<Integer, Integer> value → count plus a stack", "One int min field updated on push"], "why": "A single min field can't recover the previous minimum after a pop. TreeMap works but is O(log n)." },
+    "invariant": { "answer": "Each entry stores the minimum of itself and everything below it, so the top entry's minSoFar is the current minimum.", "wrong": ["The stack is sorted.", "The minimum is always at the bottom.", "getMin pops until the minimum is found."], "why": "Pop restores the previous minimum automatically." },
+    "time": { "answer": "O(1) per operation", "wrong": ["O(log n) per operation", "O(n) for getMin", "O(1) amortised, O(n) worst"], "why": "Constant work per call." },
+    "space": { "answer": "O(n)", "wrong": ["O(1)", "O(n²)", "O(log n)"], "why": "Two numbers per element." },
+    "whyNot": { "wrong": ["A heap can't hold duplicates.", "Heaps don't support push.", "A heap would return the maximum."] },
+    "approach": "push(x): stack.push({x, min(x, top.min)}). pop: stack.pop(). top: peek[0]. getMin: peek[1]."
+  },
+  {
+    "id": "lfu-cache", "title": "LFU Cache", "slug": "lfu-cache", "difficulty": "Hard",
+    "companies": [],
+    "statement": "Design a cache with a fixed capacity supporting get and put in O(1) average time. When full, evict the key used the fewest times; among keys tied on use count, evict the least recently used.",
+    "pattern": "design", "alternates": [],
+    "nearMiss": [
+      { "p": "heap-topk", "why": "A min-heap by (count, time) finds the victim, but every get changes a count, so updates cost O(log n), not O(1)." },
+      { "p": "hashing", "why": "A map gives O(1) lookup, but on its own can't find the least-frequent, least-recent key quickly." },
+      { "p": "linked-list", "why": "Doubly linked lists hold the recency order inside each frequency, but they're one part of a combined structure." }
+    ],
+    "trigger": { "answer": "the key used the fewest times", "wrong": ["a fixed capacity", "O(1) average time", "evict the least recently used"], "why": "Evict by frequency, then recency, in O(1) ⇒ key → node map + frequency → LRU list map + a minFreq pointer." },
+    "ds": { "answer": "HashMap<Integer, Node> keys, HashMap<Integer, LinkedHashSet<Integer>> freq → keys in recency order, int minFreq", "wrong": ["PriorityQueue<Node> by (count, lastUsed)", "LinkedHashMap with accessOrder = true only", "TreeMap<Integer, Integer> count → key"], "why": "LinkedHashSet keeps insertion order per frequency bucket." },
+    "invariant": { "answer": "Each key sits in exactly the bucket of its use count, ordered by recency; minFreq is the smallest non-empty bucket.", "wrong": ["minFreq only ever increases.", "Every bucket holds at most one key.", "Keys move to the bucket of count − 1 on get."], "why": "A new key resets minFreq to 1; a bucket emptying at minFreq bumps it by one." },
+    "time": { "answer": "O(1) average per operation", "wrong": ["O(log n) per operation", "O(n) per eviction", "O(capacity) per put"], "why": "Hash operations and list moves only." },
+    "space": { "answer": "O(capacity)", "wrong": ["O(1)", "O(n²)", "O(capacity · max count)"], "why": "Each key appears once in the maps." },
+    "whyNot": { "wrong": ["A heap can't store keys.", "A heap would evict the most frequent key.", "Heaps need a fixed capacity, which LFU doesn't have."] },
+    "approach": "get: move key from bucket f to f + 1 (bump minFreq if bucket f emptied and f == minFreq). put: update if present; else if full evict the first key of bucket minFreq; insert with count 1, minFreq = 1."
+  },
+  {
+    "id": "find-all-duplicates-in-an-array", "title": "Find All Duplicates in an Array", "slug": "find-all-duplicates-in-an-array", "difficulty": "Medium",
+    "companies": [],
+    "statement": "An array of n integers has values in the range 1..n, and each value appears once or twice. Return every value that appears twice, in O(n) time using only constant extra space (the output doesn't count).",
+    "pattern": "cyclic-sort", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "A HashSet finds duplicates in O(n) but needs O(n) extra space." },
+      { "p": "fast-slow", "why": "Floyd finds ONE duplicate; here there can be many, and the array may be modified." },
+      { "p": "bit", "why": "XOR tricks cancel pairs; they can't list which values occurred twice." }
+    ],
+    "trigger": { "answer": "values in the range 1..n", "wrong": ["appears once or twice", "constant extra space", "Return every value that appears twice"], "why": "Values 1..n map to indices 0..n−1 ⇒ use the array as its own visited set (negate nums[v − 1])." },
+    "ds": { "answer": "The int[] itself: sign of nums[|v| − 1] marks 'seen'", "wrong": ["HashSet<Integer> of seen values", "boolean[] seen of size n + 1", "int[] count of size n + 1"], "why": "The sign bit is free storage." },
+    "invariant": { "answer": "nums[i] is negative iff value i + 1 has been seen; meeting an already-negative slot means |v| is a duplicate.", "wrong": ["nums is sorted after the pass.", "Negative values were in the input.", "Each slot is negated twice for duplicates, so it ends positive."], "why": "Use |nums[i]| when reading because earlier flips may have negated it." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(n + duplicates²)"], "why": "One pass." },
+    "space": { "answer": "O(1) extra", "wrong": ["O(n)", "O(log n)", "O(duplicates)"], "why": "Signs in place." },
+    "whyNot": { "wrong": ["A HashSet can't store ints.", "Hashing would find each duplicate three times.", "Hashing needs the array sorted."] },
+    "approach": "For each v: i = |v| − 1; if nums[i] < 0 add |v| to the answer; else nums[i] = −nums[i]."
+  },
+  {
+    "id": "set-mismatch", "title": "Set Mismatch", "slug": "set-mismatch", "difficulty": "Easy",
+    "companies": [],
+    "statement": "An array should contain each number 1..n exactly once, but one number was replaced by a copy of another, so one value repeats and one is missing. Return [repeated, missing].",
+    "pattern": "cyclic-sort", "alternates": ["hashing", "bit"],
+    "nearMiss": [
+      { "p": "fast-slow", "why": "Floyd finds the repeated value but not the missing one, and here the array can be modified." },
+      { "p": "binary-search", "why": "The array isn't sorted, and sorting first costs O(n log n)." },
+      { "p": "prefix-sum", "why": "Sum and sum-of-squares equations do work arithmetically, but they're a math trick, not range sums; index marking is the recognisable pattern." }
+    ],
+    "trigger": { "answer": "each number 1..n exactly once", "wrong": ["one value repeats and one is missing", "Return [repeated, missing]", "replaced by a copy"], "why": "1..n values ⇒ each value has a home index; one slot gets hit twice, one slot never." },
+    "ds": { "answer": "The int[] itself (negate nums[|v| − 1] to mark, or swap values home)", "wrong": ["TreeSet<Integer> of values", "int[] sorted copy", "PriorityQueue<Integer>"], "why": "A HashSet / count array version is the O(n)-space alternate." },
+    "invariant": { "answer": "After marking, a slot found already negative names the repeated value; the one slot left positive names the missing value.", "wrong": ["The repeated value is always at index 0.", "Exactly two slots end negative.", "The missing value is always n."], "why": "Every present value marks its home index once." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(log n)"], "why": "Two passes." },
+    "space": { "answer": "O(1) extra", "wrong": ["O(n)", "O(log n)", "O(2)"], "why": "In place." },
+    "whyNot": { "wrong": ["Fast/slow pointers can't run on arrays.", "Floyd needs the list to have no cycle.", "Floyd would return the missing value instead."] },
+    "approach": "For v: i = |v| − 1; if nums[i] < 0 repeated = |v| else negate. Then the index i with nums[i] > 0 gives missing = i + 1."
+  },
+  {
+    "id": "missing-number", "title": "Missing Number", "slug": "missing-number", "difficulty": "Easy",
+    "companies": [],
+    "statement": "An array holds n distinct numbers taken from 0..n, so exactly one value in that range is absent. Return it using O(1) extra space.",
+    "pattern": "bit", "alternates": ["cyclic-sort"],
+    "nearMiss": [
+      { "p": "hashing", "why": "A HashSet of values finds it but needs O(n) space." },
+      { "p": "binary-search", "why": "Only works if the array is sorted, and sorting costs O(n log n)." },
+      { "p": "two-pointers", "why": "There's no pair to find; the answer is one value's absence." }
+    ],
+    "trigger": { "answer": "exactly one value in that range is absent", "wrong": ["n distinct numbers", "taken from 0..n", "O(1) extra space"], "why": "Every other value appears once as an index and once as a value ⇒ XOR everything and only the missing one survives (Gauss sum also works)." },
+    "ds": { "answer": "One int accumulator with ^", "wrong": ["HashSet<Integer> of values", "boolean[] present of size n + 1", "int[] sorted copy"], "why": "One int; n(n + 1)/2 minus the sum of the values works too." },
+    "invariant": { "answer": "x = (0 ^ 1 ^ … ^ n) ^ (all values); every present value cancels with its index, leaving the missing one.", "wrong": ["x is the sum of the values so far.", "x always equals the largest value seen.", "x is zero until the missing value is reached."], "why": "a ^ a = 0 and XOR is order-independent." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(log n)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(32n)"], "why": "One accumulator." },
+    "whyNot": { "wrong": ["A HashSet can't hold 0.", "Hashing would find two missing numbers.", "Hashing requires values to be sorted."] },
+    "approach": "x = n; for i: x ^= i ^ nums[i]. Return x."
+  },
+  {
+    "id": "single-number-ii", "title": "Single Number II", "slug": "single-number-ii", "difficulty": "Medium",
+    "companies": [],
+    "statement": "In an integer array every value appears exactly three times except for one value, which appears exactly once. Find that value in linear time with constant extra space.",
+    "pattern": "bit", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "Counting with a map works but uses O(n) space." },
+      { "p": "partition", "why": "Quickselect-style grouping could isolate it, but that's O(n) average with heavy bookkeeping; per-bit counting is exact and simple." },
+      { "p": "two-pointers", "why": "Sorting then scanning in steps of three is O(n log n)." }
+    ],
+    "trigger": { "answer": "appears exactly three times", "wrong": ["which appears exactly once", "linear time", "constant extra space"], "why": "Plain XOR cancels pairs, not triples ⇒ count each bit position mod 3 (or the ones/twos bitmask state machine)." },
+    "ds": { "answer": "Two int bitmasks ones and twos (or a loop over 32 bit counts)", "wrong": ["One int XOR accumulator", "HashMap<Integer, Integer> value → count", "int[] sorted copy"], "why": "A single XOR would leave the triples' bits set." },
+    "invariant": { "answer": "For every bit position, the count of 1s across the array is ≡ the single value's bit (mod 3).", "wrong": ["XOR of all values equals the single value.", "The single value is the smallest in the array.", "Each bit is set in at most one value."], "why": "Bits of the triples contribute multiples of 3." },
+    "time": { "answer": "O(n) (32 · n with the bit-count loop)", "wrong": ["O(n log n)", "O(n²)", "O(3n log n)"], "why": "Constant work per element per bit." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(32n)", "O(log n)"], "why": "Two masks or 32 counters." },
+    "whyNot": { "wrong": ["A HashMap can't count to three.", "Hashing would return a value that appears three times.", "Hashing needs the array sorted."] },
+    "approach": "For bit b in 0..31: c = Σ (x >> b) & 1; if c % 3 != 0 set bit b of the answer. (Negative values work because all 32 bits are rebuilt.)"
+  },
+  {
+    "id": "set-matrix-zeroes", "title": "Set Matrix Zeroes", "slug": "set-matrix-zeroes", "difficulty": "Medium",
+    "companies": [],
+    "statement": "For every 0 in an m × n integer matrix, set its entire row and column to 0. Do it in place using O(1) extra space.",
+    "pattern": "matrix", "alternates": [],
+    "nearMiss": [
+      { "p": "hashing", "why": "Sets of zero rows and columns work, but cost O(m + n) space; the follow-up wants O(1)." },
+      { "p": "graph-traversal", "why": "Zeros don't spread to neighbours repeatedly; one zero affects exactly its row and column." },
+      { "p": "multi-source-bfs", "why": "There's no distance from the zeros; whole rows and columns flip at once." }
+    ],
+    "trigger": { "answer": "using O(1) extra space", "wrong": ["set its entire row and column to 0", "an m × n integer matrix", "For every 0"], "why": "Row/column flags in O(1) space ⇒ store them in the first row and column, with two booleans for the first row/column themselves." },
+    "ds": { "answer": "The matrix's first row and column as marker arrays, plus two booleans", "wrong": ["HashSet<Integer> rows and HashSet<Integer> cols", "boolean[m] and boolean[n]", "A copy of the matrix"], "why": "Markers live inside the matrix." },
+    "invariant": { "answer": "matrix[r][0] == 0 marks row r and matrix[0][c] == 0 marks column c; the first row/column are zeroed last so markers aren't lost.", "wrong": ["Zeroing happens as soon as a 0 is found.", "The first row is always zeroed.", "Only the first zero found matters."], "why": "Zeroing early would create fake zeros that spread." },
+    "time": { "answer": "O(m · n)", "wrong": ["O(m · n · (m + n))", "O((m · n)²)", "O(m + n)"], "why": "Two passes over the matrix." },
+    "space": { "answer": "O(1)", "wrong": ["O(m + n)", "O(m · n)", "O(min(m, n))"], "why": "Two booleans." },
+    "whyNot": { "wrong": ["A HashSet can't store row numbers.", "Hashing would zero the wrong cells.", "Hashing needs the matrix sorted."] },
+    "approach": "Record whether row 0 / column 0 contain a 0. Mark matrix[r][0] and matrix[0][c] for every inner zero. Zero inner cells whose row or column is marked. Finally zero row 0 / column 0 if flagged."
+  },
+  {
+    "id": "game-of-life", "title": "Game of Life", "slug": "game-of-life", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Each cell of a board is live (1) or dead (0). Compute the next generation by the usual neighbour-count rules (all eight neighbours, all cells updating simultaneously), updating the board in place.",
+    "pattern": "matrix", "alternates": [],
+    "nearMiss": [
+      { "p": "graph-traversal", "why": "There's no search: each cell is updated from its eight neighbours exactly once." },
+      { "p": "multi-source-bfs", "why": "Changes don't propagate outward; every cell is decided by the previous generation only." },
+      { "p": "dp-2d", "why": "A cell's new state depends on the OLD neighbours, not on already-computed new ones." }
+    ],
+    "trigger": { "answer": "all cells updating simultaneously", "wrong": ["all eight neighbours", "live (1) or dead (0)", "the usual neighbour-count rules"], "why": "Simultaneous update in place ⇒ encode old and new state in the same cell (e.g. bit 0 = old, bit 1 = new) and shift at the end." },
+    "ds": { "answer": "The board itself with two bits per cell (old state in bit 0, next state in bit 1)", "wrong": ["A full copy of the board", "ArrayDeque<int[]> of changed cells", "HashSet<Integer> of live cells"], "why": "A copy is O(m · n) space; bit encoding is O(1)." },
+    "invariant": { "answer": "During the pass, every cell's bit 0 still holds the current generation, so neighbour counts read (cell & 1).", "wrong": ["Cells already visited hold only the next generation.", "Live counts are taken from bit 1.", "Cells are updated in order of their neighbour count."], "why": "Final pass: cell >>= 1." },
+    "time": { "answer": "O(m · n)", "wrong": ["O((m · n)²)", "O(8 · (m · n)²)", "O(m · n · log(m · n))"], "why": "Eight neighbours per cell." },
+    "space": { "answer": "O(1)", "wrong": ["O(m · n)", "O(m + n)", "O(8)"], "why": "In place." },
+    "whyNot": { "wrong": ["Graph traversal can't count neighbours.", "BFS would update cells one generation too late.", "Grid BFS only works with four neighbours."] },
+    "approach": "For each cell count live neighbours with (cell & 1). Set bit 1 if (live and 2–3 neighbours) or (dead and 3). Then shift every cell right by 1."
+  },
+  {
+    "id": "sort-array-by-parity", "title": "Sort Array By Parity", "slug": "sort-array-by-parity", "difficulty": "Easy",
+    "companies": [],
+    "statement": "Rearrange an integer array in place so that every even number comes before every odd number. Any such arrangement is acceptable.",
+    "pattern": "partition", "alternates": ["two-pointers"],
+    "nearMiss": [
+      { "p": "greedy", "why": "There's no choice to optimise; it's a two-way partition by a predicate." },
+      { "p": "heap-topk", "why": "Sorting by parity with a comparator is O(n log n); a partition is O(n)." },
+      { "p": "cyclic-sort", "why": "Values don't have home indices; only their parity class matters." }
+    ],
+    "trigger": { "answer": "every even number comes before every odd number", "wrong": ["Any such arrangement is acceptable", "in place", "an integer array"], "why": "Split by a predicate in place, order within groups irrelevant ⇒ partition (Lomuto/Hoare style)." },
+    "ds": { "answer": "The int[] itself with a boundary index (Lomuto) or two converging indices (Hoare)", "wrong": ["Two ArrayList<Integer> (evens, odds)", "PriorityQueue<Integer> by parity", "int[] counts of evens and odds"], "why": "O(1) space." },
+    "invariant": { "answer": "nums[0..boundary) are all even; everything between boundary and the scan index is odd.", "wrong": ["The evens are sorted ascending.", "Odd numbers never move.", "boundary always equals the number of odds seen."], "why": "When the scan finds an even, swap it to the boundary and advance the boundary." },
+    "time": { "answer": "O(n)", "wrong": ["O(n log n)", "O(n²)", "O(n / 2)"], "why": "One pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n)", "O(2)"], "why": "Indices only." },
+    "whyNot": { "wrong": ["Greedy can't swap elements.", "Greedy would sort the numbers by value.", "Greedy needs the array sorted first."] },
+    "approach": "b = 0; for i: if nums[i] % 2 == 0 swap(nums, i, b++)."
+  },
+  {
+    "id": "wiggle-sort-ii", "title": "Wiggle Sort II", "slug": "wiggle-sort-ii", "difficulty": "Medium",
+    "companies": [],
+    "statement": "Reorder an integer array so that nums[0] < nums[1] > nums[2] < nums[3]…, strictly alternating. Values may repeat. Follow-up: O(n) time and O(1) extra space.",
+    "pattern": "partition", "alternates": [],
+    "nearMiss": [
+      { "p": "greedy", "why": "Swapping neighbours that break the pattern works only for ≤ / ≥ (Wiggle Sort I); with strict inequalities and duplicates it fails." },
+      { "p": "heap-topk", "why": "A heap can produce sorted halves in O(n log n), missing the O(n) follow-up." },
+      { "p": "two-pointers", "why": "Sorting then interleaving the halves (reversed) is the O(n log n) solution; the O(n) one needs the median and a 3-way partition." }
+    ],
+    "trigger": { "answer": "O(n) time and O(1) extra space", "wrong": ["strictly alternating", "Values may repeat", "Reorder an integer array"], "why": "Large values on odd indices and small on even, without sorting ⇒ quickselect the median, then 3-way (Dutch flag) partition through a virtual index mapping." },
+    "ds": { "answer": "The int[] itself: quickselect for the median, then Dutch flag with index map (1 + 2i) % (n | 1)", "wrong": ["Sorted copy split into two halves", "PriorityQueue<Integer> max-heap", "TreeMap<Integer, Integer> value → count"], "why": "The sorted-copy version is O(n) space and O(n log n) time." },
+    "invariant": { "answer": "Through the virtual index mapping, values > median fill odd slots first and values < median fill even slots from the end, so equal-to-median values are kept apart.", "wrong": ["Each pair (i, i + 1) is sorted ascending.", "The median ends up at index n / 2.", "Duplicates always end up adjacent."], "why": "The mapping visits odd indices first, then even ones." },
+    "time": { "answer": "O(n) average", "wrong": ["O(n log n) required", "O(n²) always", "O(log n)"], "why": "Quickselect plus one partition pass." },
+    "space": { "answer": "O(1)", "wrong": ["O(n)", "O(log n) always", "O(n log n)"], "why": "In place (the sorting variant needs O(n))." },
+    "whyNot": { "wrong": ["Greedy can't handle negative numbers.", "Greedy would need the array sorted descending.", "Greedy only works for odd n."] },
+    "approach": "m = quickselect median. Dutch flag over virtual index A(i) = (1 + 2i) % (n | 1): > m swap to the left region, < m swap to the right region, == m advance."
   }
 ]
