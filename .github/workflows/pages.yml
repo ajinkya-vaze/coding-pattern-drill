@@ -28,12 +28,11 @@ jobs:
       - name: Engine tests + question-bank validation
         run: node tools/run-tests.mjs
 
-  deploy:
+  # Upload in its own job: deploy-pages sometimes can't see an artifact uploaded
+  # moments earlier in the same job ("No artifacts named github-pages").
+  build:
     needs: test
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
       - name: Assemble site (app files only)
@@ -44,7 +43,22 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
+    steps:
       - id: deployment
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+      - name: Wait before retrying the deploy
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 30
+      - id: deployment_retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v5
 
   links:
