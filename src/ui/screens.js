@@ -4,9 +4,10 @@ import { h, render, toast, copyText } from './dom.js';
 import { lessonEl } from './lesson.js';
 import {
   getRecord, patternStatus, STAGE, dueCount, recentAccuracy, isLearned, emptyState, buildSession,
+  drillQueue as drillOrder,
 } from '../engine/scheduler.js';
 import { encodeProgress, decodeProgress, mergeProgress } from '../engine/progressCode.js';
-import { epochDay, shuffle } from '../engine/util.js';
+import { epochDay } from '../engine/util.js';
 
 const STATUS_LABEL = { new: 'New', learning: 'Learning', learned: 'Learned', mastered: 'Mastered' };
 
@@ -28,6 +29,11 @@ function nextPatternToLearn(ctx) {
 export function exportAgeDays(state) {
   if (!state.lastExport) return null;
   return epochDay() - epochDay(state.lastExport);
+}
+
+function nextSub(ctx, patternId) {
+  const d = drillProgress(ctx, patternId);
+  return d.started ? `Drill in progress · ${d.cleared} of ${d.total} cleared` : `${d.total} problems · lesson + blocked drill`;
 }
 
 // ---------- Home ----------
@@ -56,7 +62,7 @@ export function renderHome(root, ctx) {
       next ? h('a', { class: 'card-link primary', href: `#/learn/${next.id}` },
         h('span', { class: 'card-kicker' }, 'Learn next'),
         h('span', { class: 'card-title' }, next.name),
-        h('span', { class: 'card-sub' }, `${(bank.problemsByPattern[next.id] || []).length} problems · lesson + blocked drill`)) : null,
+        h('span', { class: 'card-sub' }, nextSub(ctx, next.id))) : null,
       h('a', { class: `card-link${playable ? '' : ' disabled'}`, href: playable ? '#/play' : '#/learn' },
         h('span', { class: 'card-kicker' }, 'Play'),
         h('span', { class: 'card-title' }, due ? `Mixed session · ${due} due` : 'Mixed session'),
@@ -94,6 +100,13 @@ export function renderLearnList(root, ctx) {
   );
 }
 
+function drillCta(ctx, patternId) {
+  const d = drillProgress(ctx, patternId);
+  if (d.cleared === d.total) return 'Drill again';
+  if (d.started) return `Resume the drill · ${d.cleared} of ${d.total} cleared`;
+  return 'Start the drill';
+}
+
 // ---------- Lesson ----------
 export function renderLesson(root, ctx, patternId) {
   const { bank, state } = ctx;
@@ -108,18 +121,32 @@ export function renderLesson(root, ctx, patternId) {
     lessonEl(pattern, bank.patternsById),
     h('section', {},
       h('h3', {}, 'Problems in this drill'),
-      h('ul', { class: 'plain' }, probs.map((p) => h('li', {}, p.title, h('span', { class: 'muted small' }, ` · ${p.difficulty}`))))),
+      h('ul', { class: 'plain' }, probs.map((p) => h('li', {}, p.title,
+        h('span', { class: 'muted small' }, ` · ${p.difficulty}${STAGE_MARK[getRecord(state, p.id).stage]}`))))),
     probs.length
-      ? h('a', { class: 'btn primary block sticky-cta', href: `#/drill/${patternId}` }, status === 'new' ? 'Start the drill' : 'Drill again')
+      ? h('a', { class: 'btn primary block sticky-cta', href: `#/drill/${patternId}` }, drillCta(ctx, patternId))
       : h('p', { class: 'muted' }, 'No problems for this pattern yet.'),
   );
 }
 
 export function drillQueue(ctx, patternId) {
-  const probs = ctx.bank.problemsByPattern[patternId] || [];
-  const open = probs.filter((p) => getRecord(ctx.state, p.id).stage < STAGE.RECALL);
-  return shuffle(open.length ? open : probs).map((p) => p.id);
+  const queue = drillOrder(ctx.state, patternId, ctx.bank.problemsByPattern[patternId] || []);
+  ctx.save();
+  return queue;
 }
+
+/** How far a pattern's drill has got: problems at L3+ and problems part-way (L1 passed). */
+function drillProgress(ctx, patternId) {
+  const probs = ctx.bank.problemsByPattern[patternId] || [];
+  const stages = probs.map((p) => getRecord(ctx.state, p.id).stage);
+  return {
+    total: probs.length,
+    cleared: stages.filter((st) => st >= STAGE.RECALL).length,
+    started: stages.some((st) => st > STAGE.RECOGNISE),
+  };
+}
+
+const STAGE_MARK = { 1: '', 2: ' · L1 passed', 3: ' · cleared', 4: ' · mastered' };
 
 // ---------- Progress ----------
 export function renderProgress(root, ctx) {

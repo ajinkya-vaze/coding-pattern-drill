@@ -2,7 +2,7 @@ import { test, ok, eq, rejects } from './harness.js';
 import {
   emptyState, recordRecognise, recordProbe, recordRecall, getRecord, STAGE, INTERVALS,
   buildSession, interleave, markLearned, patternStatus, drillComplete, levelFor,
-  recordTwist, twistFor, recentAccuracy,
+  recordTwist, twistFor, recentAccuracy, drillQueue, clearDrill, saveProbeProgress, probeProgress,
 } from '../src/engine/scheduler.js';
 import { validateTwist } from '../src/engine/validate.js';
 import { buildAliasIndex, classify, gradeRecall, normalise, levenshtein } from '../src/engine/grading.js';
@@ -176,6 +176,58 @@ test('twist validation catches an unchanged pattern, a missing trap and a trigge
   ok(errs.some((e) => /also an accepted alternate/.test(e)), errs.join('; '));
   ok(twistErrors({ ...GOOD_TWIST, ds: '' }).some((e) => /missing ds/.test(e)));
   ok(twistErrors({ ...GOOD_TWIST, nearMiss: GOOD_TWIST.nearMiss.slice(0, 2) }).some((e) => /exactly 3/.test(e)));
+});
+
+// ---------- resuming a drill ----------
+
+const DRILL = ['a', 'b', 'c', 'd'].map((id) => ({ id, pattern: 'x' }));
+
+test('a drill keeps its order across visits and skips problems already cleared', () => {
+  const s = emptyState();
+  const first = drillQueue(s, 'x', DRILL, seededRng(5));
+  eq(first.slice().sort(), ['a', 'b', 'c', 'd']);
+  recordRecognise(s, first[0], { correct: true }, T0);
+  recordProbe(s, first[0], { allCorrect: true }, T0);
+  recordRecognise(s, first[1], { correct: true }, T0);
+  const again = drillQueue(s, 'x', DRILL, seededRng(99));
+  eq(again, first.slice(1), 'same order, cleared problem dropped, part-way problem first');
+});
+
+test('problems added to the bank later are appended to a saved drill order', () => {
+  const s = emptyState();
+  const first = drillQueue(s, 'x', DRILL.slice(0, 3), seededRng(5));
+  const again = drillQueue(s, 'x', DRILL, seededRng(6));
+  eq(again.slice(0, 3), first);
+  eq(again[3], 'd');
+});
+
+test('a fully cleared drill becomes a revision pass and clearDrill forgets the order', () => {
+  const s = emptyState();
+  drillQueue(s, 'x', DRILL, seededRng(5));
+  for (const p of DRILL) s.problems[p.id] = { stage: STAGE.RECALL, updatedAt: 1 };
+  eq(drillQueue(s, 'x', DRILL, seededRng(7)).length, 4);
+  clearDrill(s, 'x');
+  eq(s.drills, {});
+});
+
+test('a part-way L2 chain resumes at the next unanswered step and is cleared on finish', () => {
+  const s = emptyState();
+  recordRecognise(s, 'a', { correct: true }, T0);
+  eq(probeProgress(s, 'a', 6), null);
+  saveProbeProgress(s, 'a', 3, [true, false, true], T0);
+  eq(probeProgress(s, 'a', 6), { step: 3, tally: [true, false, true] });
+  eq(probeProgress(s, 'b', 6), null, 'other problems are not affected');
+  recordProbe(s, 'a', { allCorrect: false }, T0);
+  eq(s.inflight, null);
+  eq(probeProgress(s, 'a', 6), null);
+});
+
+test('saved L2 progress is ignored once the problem is no longer at L2', () => {
+  const s = emptyState();
+  recordRecognise(s, 'a', { correct: true }, T0);
+  saveProbeProgress(s, 'a', 2, [true, true], T0);
+  s.problems.a.stage = STAGE.RECALL; // e.g. a newer record merged from another device
+  eq(probeProgress(s, 'a', 6), null);
 });
 
 const P = (id, pattern) => ({ id, pattern });

@@ -8,7 +8,7 @@ import { buildRecognise, buildProbe, triggerRange } from '../engine/questions.js
 import { gradeRecall } from '../engine/grading.js';
 import {
   getRecord, levelFor, recordRecognise, recordProbe, recordRecall, recordTwist, twistFor, STAGE, INTERVALS,
-  drillComplete, markLearned,
+  drillComplete, markLearned, clearDrill, saveProbeProgress, probeProgress,
 } from '../engine/scheduler.js';
 import { leetcodeUrl } from '../engine/util.js';
 
@@ -19,10 +19,17 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
   const { bank } = ctx;
   const results = [];
   let index = 0;
+  // A resumed drill counts from the problems already cleared, so "3 / 6" means
+  // the third problem of the pattern, not the third of this sitting.
+  const drillTotal = mode === 'drill' ? (bank.problemsByPattern[patternId] || []).length : 0;
+  const drillOffset = mode === 'drill' && queue.length < drillTotal ? drillTotal - queue.length : 0;
+  const position = () => (mode === 'drill' && drillOffset
+    ? `${drillOffset + index + 1} / ${drillTotal}`
+    : `${index + 1} / ${queue.length}`);
 
   const header = (problem, level) => h('div', { class: 'q-head' },
     h('div', { class: 'q-meta' },
-      h('span', { class: 'chip' }, `${index + 1} / ${queue.length}`),
+      h('span', { class: 'chip' }, position()),
       h('span', { class: `chip chip-level l${level}` }, LEVEL_NAMES[level]),
       h('span', { class: `chip chip-diff ${problem.difficulty.toLowerCase()}` }, problem.difficulty)),
     h('button', { class: 'link-btn', onclick: () => finish(true) }, 'End'));
@@ -129,9 +136,12 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
   function renderProbe(problem) {
     const steps = buildProbe(problem, bank.patternsById);
     const pattern = bank.patternsById[problem.pattern];
-    let step = 0;
-    let allCorrect = true;
-    const tally = [];
+    // Resume a chain left part-way (saved after every answer).
+    const saved = probeProgress(ctx.state, problem.id, steps.length);
+    let step = saved ? saved.step : 0;
+    const tally = saved ? saved.tally.slice() : [];
+    let allCorrect = tally.every(Boolean);
+    if (saved) toast(`Picking up where you left off: step ${step + 1} of ${steps.length}.`);
 
     const draw = () => {
       const s = steps[step];
@@ -151,6 +161,10 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
       area.append(optionButtons(s.options, (opt) => {
         tally[step] = opt.correct;
         if (!opt.correct) allCorrect = false;
+        if (step < steps.length - 1) {
+          saveProbeProgress(ctx.state, problem.id, step + 1, tally, Date.now());
+          ctx.save();
+        }
         const lines = [s.why];
         if (!opt.correct && opt.why) lines.push(h('p', { class: 'why-row' }, h('strong', {}, 'Your pick: '), rich(opt.why)));
         area.append(feedbackEl(opt.correct, opt.correct ? 'Right' : `Answer: ${s.options.find((o) => o.correct).label}`, lines));
@@ -404,7 +418,10 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
   function show() {
     const problem = bank.problemsById[queue[index]];
     window.scrollTo({ top: 0 });
-    if (mode === 'drill') return renderRecognise(problem);
+    if (mode === 'drill') {
+      // L1 already passed (e.g. drill left part-way): continue at L2.
+      return getRecord(ctx.state, problem.id).stage === STAGE.PROBE ? renderProbe(problem) : renderRecognise(problem);
+    }
     const level = levelFor(getRecord(ctx.state, problem.id), problem);
     if (level === 1) renderRecognise(problem);
     else if (level === 2) renderProbe(problem);
@@ -421,6 +438,7 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
       if (drillComplete(ctx.state, probs)) {
         const first = !ctx.state.patterns[patternId]?.learned;
         markLearned(ctx.state, patternId, Date.now());
+        clearDrill(ctx.state, patternId);
         ctx.save();
         body.push(h('div', { class: 'feedback good' },
           h('p', { class: 'feedback-head' }, first ? `✓ ${pattern.name} learned` : `✓ ${pattern.name} revised`),
@@ -429,10 +447,10 @@ export function runSession(root, ctx, { mode, queue, patternId = null }) {
         const left = probs.filter((p) => getRecord(ctx.state, p.id).stage < STAGE.RECALL).length;
         body.push(h('div', { class: 'feedback bad' },
           h('p', { class: 'feedback-head' }, `${left} problem${left === 1 ? '' : 's'} still below L3`),
-          h('p', {}, 'Run the drill again: it only asks the ones you have not cleared yet.')));
+          h('p', {}, 'Run the drill again: it asks only the ones you have not cleared, starting where you left off.')));
       }
       body.push(h('div', { class: 'stack' },
-        h('a', { class: 'btn primary block', href: `#/drill/${patternId}` }, 'Drill again'),
+        h('a', { class: 'btn primary block', href: `#/drill/${patternId}` }, drillComplete(ctx.state, bank.problemsByPattern[patternId]) ? 'Drill again' : 'Resume the drill'),
         h('a', { class: 'btn block', href: '#/learn' }, 'Back to Learn'),
         h('a', { class: 'btn block', href: '#/play' }, 'Play mixed session')));
     } else {

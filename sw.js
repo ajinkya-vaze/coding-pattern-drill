@@ -2,7 +2,7 @@
 // stale-while-revalidate so new bank batches arrive on the next visit.
 // Bump VERSION when the file list changes.
 
-const VERSION = 'pd-v2';
+const VERSION = 'pd-v3';
 const SHELL = [
   './',
   'index.html',

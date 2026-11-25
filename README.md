@@ -18,7 +18,9 @@ expand-around-centre. Each pattern has a lesson card:
 - 2–3 checked external links
 
 After the card, a drill asks every problem for that pattern at L1 and L2. Passing all of them
-marks the pattern **Learned**.
+marks the pattern **Learned**. You can leave a drill at any point: it resumes on the same
+problem, at the level and L2 step you reached, and the lesson page shows how many problems are
+cleared.
 
 **Play mode (interleaved).** Play mixes problems from all the patterns you have learned. Each
 problem climbs its own ladder:

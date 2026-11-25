@@ -19,6 +19,11 @@ export function emptyState() {
     reports: [],
     settings: { includeUnlearned: false, sessionSize: 10, timer: false },
     lastExport: 0,
+    // Device-local resume state (not part of the progress code):
+    // drills: patternId → problem ids in the order that pattern's drill asks them.
+    // inflight: an L2 chain left part-way: { id, step, tally, at }.
+    drills: {},
+    inflight: null,
   };
 }
 
@@ -58,6 +63,7 @@ export function recordRecognise(state, id, { correct, peeked = false }, now = Da
  * All correct moves the problem to L3 (asked from the next session on).
  */
 export function recordProbe(state, id, { allCorrect }, now = Date.now()) {
+  if (state.inflight?.id === id) state.inflight = null;
   const rec = getRecord(state, id);
   if (allCorrect && rec.stage === STAGE.PROBE) {
     rec.stage = STAGE.RECALL;
@@ -160,6 +166,44 @@ export function isLearned(state, patternId) {
 
 export function markLearned(state, patternId, now = Date.now()) {
   state.patterns[patternId] = { learned: true, updatedAt: now };
+}
+
+/**
+ * The drill queue for a pattern: problems still below L3, in the order the
+ * drill first asked them (saved per device), so leaving and coming back
+ * resumes where you were. New problems are appended in random order. When
+ * every problem is already at L3 the drill is a revision pass over all of them.
+ */
+export function drillQueue(state, patternId, problemsOfPattern, rng = Math.random) {
+  const open = problemsOfPattern.filter((p) => getRecord(state, p.id).stage < STAGE.RECALL);
+  if (!open.length) return shuffle(problemsOfPattern, rng).map((p) => p.id);
+  const openIds = new Set(open.map((p) => p.id));
+  const saved = (state.drills?.[patternId] || []).filter((id) => openIds.has(id));
+  const fresh = shuffle(open.filter((p) => !saved.includes(p.id)), rng).map((p) => p.id);
+  const queue = [...saved, ...fresh];
+  state.drills = { ...(state.drills || {}), [patternId]: queue };
+  return queue;
+}
+
+/** Forget a pattern's saved drill order (once its drill is complete). */
+export function clearDrill(state, patternId) {
+  if (state.drills?.[patternId]) {
+    const { [patternId]: _, ...rest } = state.drills;
+    state.drills = rest;
+  }
+}
+
+/** Save an L2 chain part-way: `step` is the next unanswered step, `tally` the answers so far. */
+export function saveProbeProgress(state, id, step, tally, now = Date.now()) {
+  state.inflight = { id, step, tally: tally.slice(0, step), at: now };
+}
+
+/** The saved part-way L2 chain for a problem, or null. Only valid while it is still at L2. */
+export function probeProgress(state, id, steps) {
+  const f = state.inflight;
+  if (!f || f.id !== id || getRecord(state, id).stage !== STAGE.PROBE) return null;
+  if (!Number.isInteger(f.step) || f.step < 1 || f.step >= steps || !Array.isArray(f.tally)) return null;
+  return { step: f.step, tally: f.tally.slice(0, f.step) };
 }
 
 /** A pattern's drill is complete when every one of its problems has reached L3. */
